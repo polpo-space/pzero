@@ -14,11 +14,16 @@ builds:
     goarch:
       - amd64
       - arm64
-    dir: ./cmd/jzero
-    id: jzero
-    binary: jzero
+    dir: ./cmd/pzero
+    id: pzero
+    binary: pzero
     tags:
       - no_k8s
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Tag }}
+      - -X main.commit={{ .Commit }}
+      - -X main.date={{ .Date }}
 
 archives:
   - formats: [tar.gz]

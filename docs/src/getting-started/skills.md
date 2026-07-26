@@ -15,20 +15,20 @@ By creating skills, you can:
 - **Future-Proof Your Workflow**: Adapt as AI Agents evolve, maintaining alignment with your project's conventions
 - **Accelerate AI-Driven Development**: Get contextual, framework-aware responses without repetitive explanations
 
-The `jzero-skills` package provides comprehensive knowledge about the jzero framework, including REST API patterns, RPC services, database operations and more—making AI Agents effective collaborators in jzero projects.
+The `pzero-skills` package provides comprehensive knowledge about the pzero framework, including REST API patterns, RPC services, database operations and more—making AI Agents effective collaborators in pzero projects.
 
 ## Installation
 
 ```shell
 # Default output to ~/.claude/skills folder
-jzero skills init
+pzero skills init
 # Output to current project
-jzero skills init --output .claude/skills
+pzero skills init --output .claude/skills
 ```
 
 ## Usage Tips
 
-* Start with `jzero-skills`, then describe your requirement prompt
+* Start with `pzero-skills`, then describe your requirement prompt
 
 ## Demo
 

@@ -114,6 +114,6 @@ Detailed explanation:
 * option (jzero.api.zrpc_group) adds zrpc middleware to all methods under this service
 * option (jzero.api.zrpc) only adds zrpc middleware to specific method
 
-After executing `jzero gen`, following files will be generated, using auth as example:
+After executing `pzero gen`, following files will be generated, using auth as example:
 * internal/middleware/authmiddleware.go
 * internal/middleware/middleware_gen.go

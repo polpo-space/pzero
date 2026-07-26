@@ -1,0 +1,622 @@
+package genapi
+
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"go/ast"
+	"go/token"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"sync"
+
+	"github.com/rinchsan/gosimports"
+	"github.com/samber/lo"
+	"github.com/zeromicro/go-zero/tools/goctl/api/gogen"
+	"github.com/zeromicro/go-zero/tools/goctl/api/spec"
+	"github.com/zeromicro/go-zero/tools/goctl/util"
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/tools/go/ast/astutil"
+
+	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
+)
+
+const defaultTypesDir = "internal/types"
+
+func (ja *PzeroApi) separateTypesGo(apiFiles []string, apiSpecMap map[string]*spec.ApiSpec) error {
+	_, typesWithoutPackage, err := ja.collectAndGenerateTypesByPackage(apiFiles, apiSpecMap)
+	if err != nil {
+		return err
+	}
+
+	// Always rewrite the default types.go so old generated content does not linger.
+	if err := ja.generateDefaultTypesFile(typesWithoutPackage); err != nil {
+		return err
+	}
+
+	if err := ja.cleanupLegacyTypesDir(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// apiFileTypes 表示 API 文件的类型信息
+type apiFileTypes struct {
+	file      string
+	types     []spec.Type
+	goPackage string
+}
+
+// collectAndGenerateTypesByPackage 收集并按包生成 types.go 文件
+func (ja *PzeroApi) collectAndGenerateTypesByPackage(apiFiles []string, apiSpecMap map[string]*spec.ApiSpec) (typesWithPackage []apiFileTypes, typesWithoutPackage []spec.Type, err error) {
+	var eg errgroup.Group
+	var mu sync.Mutex
+	resultsByFile := make([]apiFileTypes, len(apiFiles))
+
+	for i, apiFile := range apiFiles {
+		index := i
+		currentFile := apiFile
+		currentSpec := apiSpecMap[apiFile]
+
+		eg.Go(func() error {
+			fileTypes, err := ja.processApiFileTypes(currentFile, currentSpec)
+			if err != nil {
+				return err
+			}
+
+			mu.Lock()
+			resultsByFile[index] = fileTypes
+			mu.Unlock()
+
+			return nil
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return nil, nil, err
+	}
+
+	results := make([]apiFileTypes, 0, len(apiFiles))
+	typesByPackage := make(map[string][]spec.Type)
+
+	for _, fileTypes := range resultsByFile {
+		if fileTypes.goPackage != "" {
+			results = append(results, fileTypes)
+			typesByPackage[fileTypes.goPackage] = append(typesByPackage[fileTypes.goPackage], fileTypes.types...)
+			continue
+		}
+
+		typesWithoutPackage = append(typesWithoutPackage, fileTypes.types...)
+	}
+
+	// 并发生成有 go_package 的 types.go 文件
+	eg = errgroup.Group{}
+	goPackages := make([]string, 0, len(typesByPackage))
+	for goPackage := range typesByPackage {
+		goPackages = append(goPackages, goPackage)
+	}
+	sort.Strings(goPackages)
+
+	for _, goPackage := range goPackages {
+		currentPackage := goPackage
+		currentTypes := typesByPackage[goPackage]
+		eg.Go(func() error {
+			return ja.writeTypesFile(currentPackage, currentTypes)
+		})
+	}
+
+	if err := eg.Wait(); err != nil {
+		return nil, nil, err
+	}
+
+	return results, typesWithoutPackage, nil
+}
+
+// processApiFileTypes 处理单个 API 文件的类型
+func (ja *PzeroApi) processApiFileTypes(apiFile string, apiSpec *spec.ApiSpec) (apiFileTypes, error) {
+	goPackage, hasGoPackage := apiSpec.Info.Properties["go_package"]
+	if !hasGoPackage || goPackage == "" {
+		return apiFileTypes{
+			file:  apiFile,
+			types: apiSpec.Types,
+		}, nil
+	}
+
+	return apiFileTypes{
+		file:      apiFile,
+		types:     apiSpec.Types,
+		goPackage: goPackage,
+	}, nil
+}
+
+// writeTypesFile 写入 types.go 文件
+func (ja *PzeroApi) writeTypesFile(goPackage string, types []spec.Type) error {
+	typesDir, err := ja.typesOutputDir(goPackage)
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(typesDir, 0o755); err != nil {
+		return err
+	}
+
+	typesGoBytes, err := ja.renderTypesFile(types, strings.ToLower(strings.ReplaceAll(goPackage, "/", "")))
+	if err != nil {
+		return err
+	}
+
+	process, err := gosimports.Process("", typesGoBytes, nil)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(filepath.Join(typesDir, "types.go"), process, 0o644)
+}
+
+// generateDefaultTypesFile 生成默认的 types.go 文件
+func (ja *PzeroApi) generateDefaultTypesFile(allTypes []spec.Type) error {
+	// 去重
+	uniqueTypes := ja.deduplicateTypes(allTypes)
+
+	typesDir, err := ja.typesOutputDir("")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(typesDir, 0o755); err != nil {
+		return err
+	}
+
+	typesGoBytes, err := ja.renderTypesFile(uniqueTypes, "types")
+	if err != nil {
+		return err
+	}
+
+	process, err := gosimports.Process("", typesGoBytes, nil)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(filepath.Join(typesDir, "types.go"), process, 0o644)
+}
+
+func (ja *PzeroApi) renderTypesFile(types []spec.Type, packageName string) ([]byte, error) {
+	typesGoString, err := gogen.BuildTypes(types)
+	if err != nil {
+		return nil, err
+	}
+
+	typesGoBytes, err := templatex.ParseTemplate("inner_types.go", map[string]any{
+		"Types":   typesGoString,
+		"Package": packageName,
+	}, []byte(`// Code generated by pzero. DO NOT EDIT.
+package {{.Package}}
+
+import (
+    "time"
+)
+
+var (
+    _ = time.Now()
+)
+
+{{.Types}}`))
+	if err != nil {
+		return nil, err
+	}
+
+	return typesGoBytes, nil
+}
+
+// deduplicateTypes 去重类型列表
+func (ja *PzeroApi) deduplicateTypes(types []spec.Type) []spec.Type {
+	var result []spec.Type
+	exist := make(map[string]struct{})
+	for _, t := range types {
+		if _, ok := exist[t.Name()]; ok {
+			continue
+		}
+		result = append(result, t)
+		exist[t.Name()] = struct{}{}
+	}
+	return result
+}
+
+func (ja *PzeroApi) updateHandlerImportedTypesPath(f *ast.File, fset *token.FileSet, file HandlerFile) error {
+	importPaths, err := ja.candidateTypesImportPaths(file.Package)
+	if err != nil {
+		return err
+	}
+
+	var hasTypesImport bool
+	for _, importPath := range importPaths {
+		if astutil.UsesImport(f, importPath) {
+			hasTypesImport = true
+		}
+		astutil.DeleteImport(fset, f, importPath)
+	}
+
+	if !hasTypesImport {
+		return nil
+	}
+
+	targetImportPath, err := ja.typesImportPath(file.Package)
+	if err != nil {
+		return err
+	}
+	astutil.AddNamedImport(fset, f, "types", targetImportPath)
+	return nil
+}
+
+func (ja *PzeroApi) updateLogicImportedTypesPath(f *ast.File, fset *token.FileSet, file LogicFile) error {
+	importPaths, err := ja.candidateTypesImportPaths(file.Package)
+	if err != nil {
+		return err
+	}
+	for _, importPath := range importPaths {
+		astutil.DeleteImport(fset, f, importPath)
+	}
+	if file.RequestType == nil && file.ResponseType == nil {
+		return nil
+	}
+
+	targetImportPath, err := ja.typesImportPath(file.Package)
+	if err != nil {
+		return err
+	}
+	astutil.AddNamedImport(fset, f, "types", targetImportPath)
+	return nil
+}
+
+func (ja *PzeroApi) typesOutputDir(goPackage string) (string, error) {
+	typesDir, err := ja.typesDir()
+	if err != nil {
+		return "", err
+	}
+	if goPackage == "" {
+		return typesDir, nil
+	}
+
+	return filepath.Join(typesDir, filepath.FromSlash(goPackage)), nil
+}
+
+func (ja *PzeroApi) typesDir() (string, error) {
+	typesDir := filepath.Clean(config.C.Gen.ApiTypesDir)
+	switch {
+	case filepath.IsAbs(typesDir):
+		return "", fmt.Errorf("gen types-dir must be relative to project root: %s", config.C.Gen.ApiTypesDir)
+	case typesDir == ".":
+		return "", errors.New("gen types-dir must not be project root")
+	case typesDir == "..", strings.HasPrefix(typesDir, ".."+string(os.PathSeparator)):
+		return "", fmt.Errorf("gen types-dir must stay within project root: %s", config.C.Gen.ApiTypesDir)
+	default:
+		return typesDir, nil
+	}
+}
+
+func (ja *PzeroApi) typesImportPath(goPackage string) (string, error) {
+	typesDir, err := ja.typesDir()
+	if err != nil {
+		return "", err
+	}
+	importPath := filepath.Join(ja.Module, typesDir)
+	if goPackage != "" {
+		importPath = filepath.Join(importPath, filepath.FromSlash(goPackage))
+	}
+	return filepath.ToSlash(importPath), nil
+}
+
+func (ja *PzeroApi) candidateTypesImportPaths(goPackage string) ([]string, error) {
+	paths := []string{
+		filepath.ToSlash(filepath.Join(ja.Module, defaultTypesDir)),
+	}
+
+	configuredPath, err := ja.typesImportPath("")
+	if err != nil {
+		return nil, err
+	}
+	paths = append(paths, configuredPath)
+
+	if goPackage != "" {
+		paths = append(paths, filepath.ToSlash(filepath.Join(ja.Module, defaultTypesDir, filepath.FromSlash(goPackage))))
+
+		configuredPackagePath, err := ja.typesImportPath(goPackage)
+		if err != nil {
+			return nil, err
+		}
+		paths = append(paths, configuredPackagePath)
+	}
+
+	return lo.Uniq(paths), nil
+}
+
+func (ja *PzeroApi) cleanupLegacyTypesDir() error {
+	typesDir, err := ja.typesDir()
+	if err != nil {
+		return err
+	}
+	if filepath.Clean(typesDir) == filepath.Clean(defaultTypesDir) {
+		return nil
+	}
+
+	if _, err := os.Stat(defaultTypesDir); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+
+	var dirs []string
+	if err := filepath.Walk(defaultTypesDir, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if info.IsDir() {
+			dirs = append(dirs, path)
+			return nil
+		}
+		if info.Name() != "types.go" {
+			return nil
+		}
+
+		generated, err := isGeneratedTypesFile(path)
+		if err != nil {
+			return err
+		}
+		if generated {
+			if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	sort.Slice(dirs, func(i, j int) bool {
+		return len(dirs[i]) > len(dirs[j])
+	})
+	for _, dir := range dirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+			return err
+		}
+		if len(entries) == 0 {
+			if err := os.Remove(dir); err != nil && !errors.Is(err, fs.ErrNotExist) {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func isGeneratedTypesFile(path string) (bool, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return bytes.HasPrefix(data, []byte("// Code generated by ")), nil
+}
+
+// changeLogicTypes just change logic file logic function params and resp, but not body and others code
+func (ja *PzeroApi) changeLogicTypes(f *ast.File, fset *token.FileSet, file LogicFile) error {
+	var (
+		methodFunc                string
+		requestType, responseType spec.Type
+	)
+
+	requestType = file.RequestType
+	responseType = file.ResponseType
+	methodFunc = util.Title(strings.TrimSuffix(file.Handler, "Handler"))
+
+	ast.Inspect(f, func(node ast.Node) bool {
+		if fn, ok := node.(*ast.FuncDecl); ok && fn.Recv != nil {
+			if fn.Name.Name == methodFunc {
+				if requestType != nil {
+					switch requestType.(type) {
+					case spec.DefineStruct:
+						fn.Type.Params.List = []*ast.Field{
+							{
+								Names: []*ast.Ident{ast.NewIdent("req")},
+								Type:  &ast.StarExpr{X: ast.NewIdent("types." + requestType.Name())},
+							},
+						}
+					}
+				} else {
+					fn.Type.Params.List = nil
+				}
+
+				if responseType != nil {
+					switch responseType.(type) {
+					case spec.PrimitiveType:
+						fn.Type.Results.List = []*ast.Field{
+							{
+								Names: []*ast.Ident{ast.NewIdent("resp")},
+								Type:  ast.NewIdent(responseType.Name()),
+							},
+							{
+								Names: []*ast.Ident{ast.NewIdent("err")},
+								Type:  ast.NewIdent("error"),
+							},
+						}
+					case spec.DefineStruct:
+						fn.Type.Results.List = []*ast.Field{
+							{
+								Names: []*ast.Ident{ast.NewIdent("resp")},
+								Type:  &ast.StarExpr{X: ast.NewIdent("types." + responseType.Name())},
+							},
+							{
+								Names: []*ast.Ident{ast.NewIdent("err")},
+								Type:  ast.NewIdent("error"),
+							},
+						}
+					}
+				} else {
+					fn.Type.Results.List = []*ast.Field{
+						{
+							Type: ast.NewIdent("error"),
+						},
+					}
+				}
+			}
+		}
+		return true
+	})
+
+	// change handler type struct
+	ast.Inspect(f, func(node ast.Node) bool {
+		if genDecl, ok := node.(*ast.GenDecl); ok && genDecl.Tok == token.TYPE {
+			for _, ss := range genDecl.Specs {
+				if typeSpec, ok := ss.(*ast.TypeSpec); ok {
+					// Only proceed if the struct name matches our methodFunc
+					if strings.ToUpper(typeSpec.Name.Name) != strings.ToUpper(methodFunc) {
+						continue
+					}
+					var (
+						structType *ast.StructType
+						ok         bool
+						names      []string
+					)
+					if structType, ok = typeSpec.Type.(*ast.StructType); ok {
+						for _, field := range structType.Fields.List {
+							for _, name := range field.Names {
+								names = append(names, name.Name)
+							}
+						}
+					}
+					if structType != nil && !lo.Contains(names, "r") {
+						newField := &ast.Field{
+							Names: []*ast.Ident{ast.NewIdent("r")},
+							Type:  &ast.StarExpr{X: ast.NewIdent("http.Request")},
+						}
+						structType.Fields.List = append(structType.Fields.List, newField)
+					}
+
+					if structType != nil && responseType == nil && !lo.Contains(names, "w") {
+						newField := &ast.Field{
+							Names: []*ast.Ident{ast.NewIdent("w")},
+							Type:  ast.NewIdent("http.ResponseWriter"),
+						}
+						structType.Fields.List = append(structType.Fields.List, newField)
+					} else if structType != nil && responseType != nil && lo.Contains(names, "w") {
+						for i, v := range structType.Fields.List {
+							if len(v.Names) > 0 {
+								if v.Names[0].Name == "w" {
+									// 删除这个元素
+									structType.Fields.List = append(structType.Fields.List[:i], structType.Fields.List[i+1:]...)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return true
+	})
+
+	// change New type struct params
+	ast.Inspect(f, func(n ast.Node) bool {
+		if fn, ok := n.(*ast.FuncDecl); ok && fn.Name.Name == fmt.Sprintf("New%s", methodFunc) {
+			var paramNames []string
+			for _, param := range fn.Type.Params.List {
+				for _, name := range param.Names {
+					paramNames = append(paramNames, name.Name)
+				}
+			}
+			if !lo.Contains(paramNames, "r") {
+				fn.Type.Params.List = append(fn.Type.Params.List, &ast.Field{
+					Names: []*ast.Ident{ast.NewIdent("r")},
+					Type:  &ast.StarExpr{X: ast.NewIdent("http.Request")},
+				})
+			}
+
+			if responseType == nil && !lo.Contains(paramNames, "w") {
+				fn.Type.Params.List = append(fn.Type.Params.List, &ast.Field{
+					Names: []*ast.Ident{ast.NewIdent("w")},
+					Type:  ast.NewIdent("http.ResponseWriter"),
+				})
+			} else if responseType != nil && lo.Contains(paramNames, "w") {
+				for i, v := range fn.Type.Params.List {
+					if len(v.Names) > 0 {
+						if v.Names[0].Name == "w" {
+							fn.Type.Params.List = append(fn.Type.Params.List[:i], fn.Type.Params.List[i+1:]...)
+						}
+					}
+				}
+			}
+
+			for _, body := range fn.Body.List {
+				if returnStmt, ok := body.(*ast.ReturnStmt); ok {
+					for _, result := range returnStmt.Results {
+						if unaryExpr, ok := result.(*ast.UnaryExpr); ok {
+							if compositeLit, ok := unaryExpr.X.(*ast.CompositeLit); ok {
+								if _, ok = compositeLit.Type.(*ast.Ident); ok {
+									hasR := false
+									hasW := false
+
+									for _, elt := range compositeLit.Elts {
+										if kv, ok := elt.(*ast.KeyValueExpr); ok {
+											if key, ok := kv.Key.(*ast.Ident); ok {
+												if key.Name == "r" {
+													hasR = true
+												}
+												if key.Name == "w" {
+													hasW = true
+												}
+											}
+										}
+									}
+
+									if !hasR {
+										// Add new field
+										newField := &ast.KeyValueExpr{
+											Key:   ast.NewIdent("r"),
+											Value: ast.NewIdent("r"), // or any default value you want
+										}
+										compositeLit.Elts = append(compositeLit.Elts, newField)
+									}
+
+									if responseType == nil && !hasW {
+										// Add new field
+										newField := &ast.KeyValueExpr{
+											Key:   ast.NewIdent("w"),
+											Value: ast.NewIdent("w"), // or any default value you want
+										}
+										compositeLit.Elts = append(compositeLit.Elts, newField)
+									} else if responseType != nil && hasW {
+										for i, v := range compositeLit.Elts {
+											if kv, ok := v.(*ast.KeyValueExpr); ok {
+												if key, ok := kv.Key.(*ast.Ident); ok {
+													if key.Name == "w" {
+														// 删除这个元素
+														compositeLit.Elts = append(compositeLit.Elts[:i], compositeLit.Elts[i+1:]...)
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return true
+	})
+
+	// check `net/http` import
+	astutil.AddImport(fset, f, "net/http")
+	return nil
+}

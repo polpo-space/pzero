@@ -10,13 +10,13 @@ title: Home
 
 ## Introduction
 
-**jzero** is a framework developed based on the [go-zero framework](https://github.com/zeromicro/go-zero) and [go-zero/goctl tools](https://github.com/zeromicro/go-zero/tree/master/tools/goctl). It enables one-click initialization of api/gateway/rpc projects.
+**pzero** is a framework developed based on the [go-zero framework](https://github.com/zeromicro/go-zero) and [go-zero/goctl tools](https://github.com/zeromicro/go-zero/tree/master/tools/goctl). It enables one-click initialization of api/gateway/rpc projects.
 
-Based on describable files (**api/proto/sql**), it automatically generates **server-side and client-side** framework code. Combined with built-in jzero-skills, it empowers AI to generate business logic code that follows best practices, reducing development cognitive load and freeing your hands!
+Based on describable files (**api/proto/sql**), it automatically generates **server-side and client-side** framework code. Combined with built-in pzero-skills, it empowers AI to generate business logic code that follows best practices, reducing development cognitive load and freeing your hands!
 
 Key features include:
 
-* Supports flexible control of jzero configurations through combinations of **configuration files/command-line parameters/environment variables**, with minimal commands to generate code, AI-friendly
+* Supports flexible control of pzero configurations through combinations of **configuration files/command-line parameters/environment variables**, with minimal commands to generate code, AI-friendly
 * Supports generating code based on **git-changed files** or specific descriptor files, or ignoring specific descriptor files, improving code generation efficiency for large projects
 * Built-in common development templates with enhanced template features, supports **custom templates** to build proprietary enterprise code templates, significantly reducing development costs
 * Supports **plugin architecture**, where functional modules can be dynamically loaded as independent plugins, supporting plugin creation, compilation, and uninstallation, perfectly adapted for team collaboration and module decoupling
@@ -34,15 +34,15 @@ For more details, please visit: [https://docs.jzero.io](https://docs.jzero.io)
 ## Quick Start
 
 ::: code-tabs#shell
-@tab jzero cli
+@tab pzero cli
 
 ```bash
-# Install jzero
-go install github.com/jzero-io/jzero/cmd/jzero@latest
+# Install pzero
+go install github.com/polpo-space/pzero/cmd/pzero@latest
 # One-click install required tools
-jzero check
+pzero check
 # One-click create project
-jzero new your_project
+pzero new your_project
 cd your_project
 # Download dependencies
 go mod tidy
@@ -52,11 +52,11 @@ go run main.go server
 http://localhost:8001/swagger
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 
 ```bash
 # One-click create project
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest new your_project
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project
 cd your_project
 # Download dependencies
 go mod tidy

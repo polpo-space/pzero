@@ -114,6 +114,6 @@ service User {
 * option (jzero.api.zrpc_group) 即将该 service 下的所有 method 都新增 zrpc 中间件
 * option (jzero.api.zrpc) 只针对某个 method 新增 zrpc 中间件
 
-执行 `jzero gen` 后将会生成一下文件, 以 auth 为例:
+执行 `pzero gen` 后将会生成一下文件, 以 auth 为例:
 * internal/middleware/authmiddleware.go
 * internal/middleware/middleware_gen.go

@@ -33,7 +33,7 @@ If applicable, add screenshots to help explain your problem.
 
 **Environments (please complete the following information):**
 - OS: [e.g. Linux]
-- jzero version [e.g. 1.2.1]
+- pzero version [e.g. 1.2.1]
 
 **More description**
 Add any other context about the problem here.

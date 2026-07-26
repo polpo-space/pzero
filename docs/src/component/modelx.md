@@ -19,9 +19,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/modelx"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/modelx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -30,15 +29,13 @@ type Config struct {
 }
 
 func main() {
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml"),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	sqlConn := modelx.MustNewConn(cc.MustGetConfig().Sqlx)
+	sqlConn := modelx.MustNewConn(c.Sqlx)
 
 	// connect database
-	sqlConn := modelx.MustNewConn(cc.MustGetConfig().Sqlx)
+	sqlConn := modelx.MustNewConn(c.Sqlx)
 
 	// execute sql
 	result, err := sqlConn.ExecCtx(context.Background(), "select 1")

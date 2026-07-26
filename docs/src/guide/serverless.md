@@ -5,7 +5,7 @@ star: true
 order: 5.4
 ---
 
-jzero supports plugin mechanism, making it easy to install and uninstall plugins.
+pzero supports plugin mechanism, making it easy to install and uninstall plugins.
 
 The key point is **multi-module collaborative development**, finally compiled into **monolithic service deployment**.
 
@@ -13,15 +13,15 @@ The key point is **multi-module collaborative development**, finally compiled in
 
 ```bash
 # Add new api project
-jzero new simpleapi
+pzero new simpleapi
 # Enter project directory
 cd simpleapi
 # Add api project plugin (independent go module)
-jzero new your_plugin --frame api --serverless
+pzero new your_plugin --frame api --serverless
 # Add api project plugin (share go module with main service simpleapi)
-jzero new your_mono_plugin --frame api --serverless --mono
+pzero new your_mono_plugin --frame api --serverless --mono
 # Execute serverless build, main service takes over plugin routes (plugins/plugins.go)
-jzero serverless build
+pzero serverless build
 # Download dependencies
 go mod tidy
 # Large monolithic build output
@@ -32,10 +32,10 @@ go build
 
 ```shell
 # Uninstall all, main service no longer takes over plugin routes
-jzero serverless delete
+pzero serverless delete
 
 # Uninstall specific plugin
-jzero serverless delete --plugin <plugin-name>
+pzero serverless delete --plugin <plugin-name>
 
 # Rebuild
 go build

@@ -9,7 +9,7 @@ order: 0.2
 
 api is go-zero's self-developed domain-specific language (hereinafter referred to as api language or api descriptor language), aimed at implementing a user-friendly basic descriptor language as the most basic descriptor language for generating HTTP services.
 
-jzero has extended api syntax, supporting the following features:
+pzero has extended api syntax, supporting the following features:
 * `go_package`: Generates go types in defined packages, allowing different api files to have same-named type definitions, consistent with proto's `go_package`
 * `compact_handler`: Generates handlers of the same route group in one file, reducing file count, consistent with proto's server module
 * `rewrite_handler`: Controls whether existing handler files and their matching logic files are rewritten during code generation. The default is `true`; set it to `false` to keep custom handler and logic code.
@@ -80,7 +80,7 @@ curl -X POST "http://localhost:8080/api/user/update/123" \
 
 ## api field validation
 
-> jzero integrates [https://github.com/go-playground/validator](https://github.com/go-playground/validator) by default for field validation
+> pzero integrates [https://github.com/go-playground/validator](https://github.com/go-playground/validator) by default for field validation
 
 ```shell {4}
 syntax = "v1"
@@ -129,7 +129,7 @@ service simpleapi {
 
 ## Keep custom handler code
 
-When a handler needs custom `http.ResponseWriter` or `*http.Request` handling, set `rewrite_handler: false` on the route group. Existing handler files and their matching logic files will be kept when running `jzero gen`, while missing files can still be generated.
+When a handler needs custom `http.ResponseWriter` or `*http.Request` handling, set `rewrite_handler: false` on the route group. Existing handler files and their matching logic files will be kept when running `pzero gen`, while missing files can still be generated.
 
 ```shell {4}
 @server (

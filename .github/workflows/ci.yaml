@@ -1,4 +1,4 @@
-name: jzero-ci
+name: pzero-ci
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  golangci:
+  ci:
     name: ci
     runs-on: ubuntu-latest
     steps:
@@ -22,24 +22,20 @@ jobs:
           go-version: '1.25.0'
 
       - name: Install Tool
-        run: |
-          cd cmd/jzero
-          go install
-          jzero check
+        run: go install ./cmd/pzero
 
       - name: format go
-        run: |
-         jzero format -d --git-change=false 
+        run: pzero format -d --git-change=false
 
-      - uses: actions/checkout@v7
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: latest
-          working-directory: ${{ matrix.workdir }}
-          skip-go-installation: true
-          skip-pkg-cache: true
-          
-      - name: run test case
-        run: |
-          go test ./...
+          skip-cache: true
+
+      - name: Test core
+        run: go test ./...
+
+      - name: Test CLI
+        working-directory: cmd/pzero
+        run: go test ./...

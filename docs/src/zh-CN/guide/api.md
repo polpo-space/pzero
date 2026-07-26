@@ -9,7 +9,7 @@ order: 0.2
 
 api 是 go-zero 自研的领域特性语言（下文称 api 语言 或 api 描述语言）, 旨在实现人性化的基础描述语言, 作为生成 HTTP 服务最基本的描述语言.
 
-jzero 扩展了 api 语法, 支持了一下特性: 
+pzero 扩展了 api 语法, 支持了一下特性:
 
 * `go_package`: 将 go types 生成在定义的 package 中, 所以能支持不同 api 文件的 type 定义可以同名, 保持和 proto 中的 `go_package` 一致
 * `compact_handler`: 能将同一组路由的 handler 生成在同一个文件中, 减少文件的数量, 保持和 proto 的 server 模块一致
@@ -81,7 +81,7 @@ curl -X POST "http://localhost:8080/api/user/update/123" \
 
 ## api 字段校验
 
-> jzero 默认集成 [https://github.com/go-playground/validator](https://github.com/go-playground/validator) 进行字段校验
+> pzero 默认集成 [https://github.com/go-playground/validator](https://github.com/go-playground/validator) 进行字段校验
 
 ```shell {4}
 syntax = "v1"
@@ -97,7 +97,7 @@ type CreateRequest {
 
 在 api 文件中同理, go_package 选项能将定义的 type 生成的结构体分组
 
-两大优点: 
+两大优点:
 1. 避免默认生成的 types/types.go 爆炸
 
 2. 提升开发体验, 不同 group 下的 type 命名不会冲突
@@ -130,7 +130,7 @@ service simpleapi {
 
 ## 保留自定义 handler 代码
 
-当 handler 需要自定义处理 `http.ResponseWriter` 或 `*http.Request` 时, 可以在路由组上设置 `rewrite_handler: false`. 再次执行 `jzero gen` 时, 已存在的 handler 文件及其对应 logic 文件会被保留, 缺失的文件仍可继续生成.
+当 handler 需要自定义处理 `http.ResponseWriter` 或 `*http.Request` 时, 可以在路由组上设置 `rewrite_handler: false`. 再次执行 `pzero gen` 时, 已存在的 handler 文件及其对应 logic 文件会被保留, 缺失的文件仍可继续生成.
 
 ```shell {4}
 @server (

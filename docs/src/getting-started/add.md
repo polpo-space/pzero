@@ -4,7 +4,7 @@ icon: /icons/proicons-tag-add.svg
 order: 3.1
 ---
 
-jzero generates code based on descriptor files (desc):
+pzero generates code based on descriptor files (desc):
 
 * desc/api: api descriptor language, generate http server/client code. [User guide](../guide/api.md)
 * desc/proto: proto descriptor language, generate grpc server/client code. [User guide](../guide/proto.md)
@@ -21,9 +21,9 @@ Will add api file under desc/api folder
 
 ```shell
 # group is test
-jzero add api test
+pzero add api test
 # group is test/test1
-jzero add api test/test1
+pzero add api test/test1
 ```
 
 ## Add proto file
@@ -32,9 +32,9 @@ Will add proto file under desc/proto folder
 
 ```shell
 # Service is Test
-jzero add proto test
+pzero add proto test
 # Service is TestTest1
-jzero add proto test/test1
+pzero add proto test/test1
 ```
 
 ## Add sql file
@@ -43,5 +43,5 @@ Will add sql file under desc/sql folder
 
 ```shell
 # table name is test
-jzero add sql test
+pzero add sql test
 ```

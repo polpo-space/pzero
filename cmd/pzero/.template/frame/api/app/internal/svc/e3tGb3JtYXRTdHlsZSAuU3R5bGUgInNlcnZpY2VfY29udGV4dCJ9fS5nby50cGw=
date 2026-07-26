@@ -1,0 +1,50 @@
+package svc
+
+import (
+	"errors"
+	"time"
+
+	{{ if has "model" .Features }}"github.com/polpo-space/pzero/core/stores/modelx"{{ end }}
+	{{ if has "redis" .Features }}"github.com/zeromicro/go-zero/core/stores/redis"{{ end }}
+	{{ if has "cache" .Features }}"github.com/zeromicro/go-zero/core/stores/cache"
+	"github.com/zeromicro/go-zero/core/syncx"{{ end }}
+
+	"{{ .Module }}/internal/config"
+	"{{ .Module }}/internal/middleware"
+	{{ if has "model" .Features }}"{{ .Module }}/internal/model"{{ end }}
+)
+
+type ServiceContext struct {
+	Config config.Config
+	Middleware
+	{{ if has "model" .Features }}SqlxConn sqlx.SqlConn
+	Model model.Model{{ end }}
+	{{ if has "redis" .Features }}RedisConn *redis.Redis{{ end }}
+	{{ if has "cache" .Features }}Cache cache.Cache{{ end }}
+}
+
+func NewServiceContext(c config.Config) *ServiceContext {
+    svcCtx := &ServiceContext{
+		Config: c,
+	}
+
+	{{ if has "model" .Features }}svcCtx.SqlxConn = modelx.MustNewConn(c.Sqlx.SqlConf){{ end }}
+	{{ if has "redis" .Features }}svcCtx.RedisConn = redis.MustNewRedis(c.Redis.RedisConf){{ end }}
+	{{ if has "cache" .Features }}svcCtx.Cache = cache.New(c.Cache.Redis,
+		syncx.NewSingleFlight(),
+		cache.NewStat("redis-cache"),
+		errors.New("cache not found"),
+		cache.WithExpiry(time.Duration(c.Cache.Expiry)*time.Millisecond),
+		cache.WithNotFoundExpiry(time.Duration(c.Cache.NotFoundExpiry)*time.Millisecond),
+	){{ end }}
+	{{ if and (has "model" .Features) (has "cache" .Features) }}svcCtx.Model = model.NewModel(
+		svcCtx.SqlxConn,
+		modelx.WithCacheConf(c.Cache.Redis),
+		modelx.WithCacheOpts(
+			cache.WithExpiry(time.Duration(c.Cache.Expiry)*time.Millisecond),
+			cache.WithNotFoundExpiry(time.Duration(c.Cache.NotFoundExpiry)*time.Millisecond),
+		),
+	){{else if has "model" .Features }}svcCtx.Model = model.NewModel(svcCtx.SqlxConn){{ end }}
+	svcCtx.Middleware = svcCtx.NewMiddleware()
+	return svcCtx
+}

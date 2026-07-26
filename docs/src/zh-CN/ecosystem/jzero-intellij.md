@@ -4,9 +4,9 @@ icon: /icons/catppuccin-folder-admin.svg
 order: 2
 ---
 
-goland + jzero 插件, 能极大提升开发体验感
+goland + pzero 插件, 能极大提升开发体验感
 
-## 安装 jzero 插件
+## 安装 pzero 插件
 
 [下载地址](https://github.com/jzero-io/jzero-intellij/releases)
 
@@ -19,7 +19,7 @@ goland + jzero 插件, 能极大提升开发体验感
 * api/proto 文件跳转至 logic 文件
 * logic 文件跳转至 api/proto 文件
 * api/proto/sql 文件行首增加执行按钮生成代码
-* .jzero.yaml 文件增加执行按钮生成代码
+* .pzero.yaml 文件增加执行按钮生成代码
 
 ## 效果展示
 
@@ -37,7 +37,7 @@ goland + jzero 插件, 能极大提升开发体验感
 
 ### v1.1.0
 
-:::important requires jzero >= v1.1.0
+:::important requires pzero >= v1.1.0
 :::
 
 * 支持从 logic 文件跳转到 api/proto 文件

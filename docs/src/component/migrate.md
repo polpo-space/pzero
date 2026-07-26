@@ -19,9 +19,8 @@ migrate component reads sql files under desc/sql_migration by default to manage 
 package main
 
 import (
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/migrate"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/migrate"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -30,12 +29,10 @@ type Config struct {
 }
 
 func main() {
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml", subscriber.WithUseEnv(true)),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	m, err := migrate.NewMigrate(cc.MustGetConfig().Sqlx)
+	m, err := migrate.NewMigrate(c.Sqlx)
 	if err != nil {
 		panic(err)
 	}
@@ -107,9 +104,8 @@ migrate adds optional parameter `WithSourceAppendDriver`:
 package main
 
 import (
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/migrate"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/migrate"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -118,12 +114,10 @@ type Config struct {
 }
 
 func main() {
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml", subscriber.WithUseEnv(true)),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	m, err := migrate.NewMigrate(cc.MustGetConfig().Sqlx, migrate.WithSourceAppendDriver(true))
+	m, err := migrate.NewMigrate(c.Sqlx, migrate.WithSourceAppendDriver(true))
 	if err != nil {
 		panic(err)
 	}

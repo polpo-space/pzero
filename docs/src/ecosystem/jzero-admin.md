@@ -4,7 +4,7 @@ icon: /icons/catppuccin-folder-admin.svg
 order: 1
 ---
 
-jzero-admin is jzero's best practice
+jzero-admin is pzero's best practice
 
 * Implements the simplest backend management template, user management/menu management/role management
 * Supports mysql/postgres/sqlite
@@ -14,7 +14,7 @@ jzero-admin is jzero's best practice
 ## Demo
 
 * [Aliyun Function Compute](https://jzero-admin.jaronnie.com)
-* [vercel](https://admin.jzero.io)
+* [vercel](https://admin.pzero.io)
 
 ![](https://oss.jaronnie.com/image-20251217134305041.png)
 

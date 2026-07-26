@@ -11,7 +11,7 @@ The core of condition is to construct statement and args parameters, then use go
 * Depends on [go-sqlbuilder](https://github.com/huandu/go-sqlbuilder) for one codebase compatible with multiple common database types
 * Supports chain calls for easy use
 
-:::tip Pair with jzero's automatic database code generation feature, only need to construct conditions
+:::tip Pair with pzero's automatic database code generation feature, only need to construct conditions
 :::
 
 ## Query scenarios
@@ -27,13 +27,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/modelx"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/modelx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 
 	"github.com/huandu/go-sqlbuilder"
-	"github.com/jzero-io/jzero/core/stores/condition"
+	"github.com/polpo-space/pzero/core/stores/condition"
 )
 
 type Config struct {
@@ -42,13 +41,11 @@ type Config struct {
 
 func main() {
 	// load config
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml"),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
 	// connect mysql and return flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(cc.MustGetConfig().Sqlx)
+	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
 
 	conditions := condition.New(condition.Condition{
 		// field to operate
@@ -56,10 +53,10 @@ func main() {
 		// operation
 		Operator: condition.Equal,
 		// field value
-		Value: "jzero",
+		Value: "pzero",
 		// ValueFunc has higher priority than Skip
 		ValueFunc: func() any {
-			return "jzero"
+			return "pzero"
 		},
 		// whether to skip this condition
 		Skip: false,
@@ -103,13 +100,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/modelx"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/modelx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 
 	"github.com/huandu/go-sqlbuilder"
-	"github.com/jzero-io/jzero/core/stores/condition"
+	"github.com/polpo-space/pzero/core/stores/condition"
 )
 
 type Config struct {
@@ -118,18 +114,16 @@ type Config struct {
 
 func main() {
 	// load config
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml"),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
 	// connect mysql and return flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(cc.MustGetConfig().Sqlx)
+	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
 
-	chain := condition.NewChain().Equal("name", "jzero",
+	chain := condition.NewChain().Equal("name", "pzero",
 		// WithValueFunc has higher priority than value
 		condition.WithValueFunc(func() any {
-			return "jzero"
+			return "pzero"
 		}),
 		// whether to skip this condition
 		condition.WithSkip(false),
@@ -188,10 +182,9 @@ import (
 	"fmt"
 
 	"github.com/huandu/go-sqlbuilder"
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/condition"
-	"github.com/jzero-io/jzero/core/stores/modelx"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/condition"
+	"github.com/polpo-space/pzero/core/stores/modelx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -201,13 +194,11 @@ type Config struct {
 
 func main() {
 	// load config
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml"),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
 	// connect mysql and return flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(cc.MustGetConfig().Sqlx)
+	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
 
 	conditions := condition.New(condition.Condition{
 		// field to operate
@@ -215,10 +206,10 @@ func main() {
 		// operation
 		Operator: condition.Equal,
 		// field value
-		Value: "jzero",
+		Value: "pzero",
 		// ValueFunc has higher priority than Skip
 		ValueFunc: func() any {
-			return "jzero"
+			return "pzero"
 		},
 		// whether to skip this condition
 		Skip: false,
@@ -234,7 +225,7 @@ func main() {
 		sqlbuilder.Update("user"),
 		// set update fields, directly use map
 		map[string]any{
-			"name": "jzero",
+			"name": "pzero",
 			"version": condition.UpdateField{
 				Operator: condition.Incr,
 			},
@@ -246,7 +237,7 @@ func main() {
 		sqlbuilder.Update("user"),
 		// set update fields, directly use map
 		map[string]any{
-			"name": "jzero",
+			"name": "pzero",
 			"version": condition.UpdateField{
 				Operator: condition.Incr,
 			},
@@ -270,13 +261,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/modelx"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/modelx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 
 	"github.com/huandu/go-sqlbuilder"
-	"github.com/jzero-io/jzero/core/stores/condition"
+	"github.com/polpo-space/pzero/core/stores/condition"
 )
 
 type Config struct {
@@ -285,18 +275,16 @@ type Config struct {
 
 func main() {
 	// load config
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml"),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
 	// connect mysql and return flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(cc.MustGetConfig().Sqlx)
+	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
 
-	chain := condition.NewChain().Equal("name", "jzero",
+	chain := condition.NewChain().Equal("name", "pzero",
 		// WithValueFunc has higher priority than value
 		condition.WithValueFunc(func() any {
-			return "jzero"
+			return "pzero"
 		}),
 		// whether to skip this condition
 		condition.WithSkip(false),
@@ -313,7 +301,7 @@ func main() {
 		sqlbuilder.Update("user"),
 		// set update fields, construct map
 		condition.NewUpdateFieldChain().
-			Assign("name", "jzero").
+			Assign("name", "pzero").
 			Incr("version").
 			Build(),
 		chain.Build()...)
@@ -324,7 +312,7 @@ func main() {
 		sqlbuilder.Update("user"),
 		// set update fields, construct map
 		condition.NewUpdateFieldChain().
-			Assign("name", "jzero").
+			Assign("name", "pzero").
 			Incr("version").
 			Build(),
 		chain.Build()...)
@@ -360,13 +348,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/modelx"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/modelx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 
 	"github.com/huandu/go-sqlbuilder"
-	"github.com/jzero-io/jzero/core/stores/condition"
+	"github.com/polpo-space/pzero/core/stores/condition"
 )
 
 type Config struct {
@@ -375,13 +362,11 @@ type Config struct {
 
 func main() {
 	// load config
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml"),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
 	// connect mysql and return flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(cc.MustGetConfig().Sqlx)
+	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
 
 	conditions := condition.New(condition.Condition{
 		// field to operate
@@ -389,10 +374,10 @@ func main() {
 		// operation
 		Operator: condition.Equal,
 		// field value
-		Value: "jzero",
+		Value: "pzero",
 		// ValueFunc has higher priority than Skip
 		ValueFunc: func() any {
-			return "jzero"
+			return "pzero"
 		},
 		// whether to skip this condition
 		Skip: false,
@@ -428,13 +413,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/modelx"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/modelx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 
 	"github.com/huandu/go-sqlbuilder"
-	"github.com/jzero-io/jzero/core/stores/condition"
+	"github.com/polpo-space/pzero/core/stores/condition"
 )
 
 type Config struct {
@@ -443,18 +427,16 @@ type Config struct {
 
 func main() {
 	// load config
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml"),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
 	// connect mysql and return flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(cc.MustGetConfig().Sqlx)
+	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
 
-	chain := condition.NewChain().Equal("name", "jzero",
+	chain := condition.NewChain().Equal("name", "pzero",
 		// WithValueFunc has higher priority than value
 		condition.WithValueFunc(func() any {
-			return "jzero"
+			return "pzero"
 		}),
 		// whether to skip this condition
 		condition.WithSkip(false),

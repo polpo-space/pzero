@@ -1,5 +1,5 @@
 ---
-title: "使用 jzero 一键搭建 AI 基座项目"
+title: "使用 pzero 一键搭建 AI 基座项目"
 icon: /icons/emojione-v1-rocket.svg
 description: "通过标准化框架 + AI 辅助业务逻辑的方式，快速搭建企业级 Go 项目"
 ---
@@ -19,12 +19,12 @@ description: "通过标准化框架 + AI 辅助业务逻辑的方式，快速搭
 
 ### 创建项目
 
-jzero 提供了多种项目模板，满足不同场景需求：
+pzero 提供了多种项目模板，满足不同场景需求：
 
 #### 1️⃣ API 项目（RESTful 服务）
 
 ```bash
-jzero new myproject --frame api
+pzero new myproject --frame api
 ```
 
 **适用场景**：
@@ -42,7 +42,7 @@ jzero new myproject --frame api
 #### 2️⃣ RPC 项目（gRPC 服务）
 
 ```bash
-jzero new myproject --frame rpc
+pzero new myproject --frame rpc
 ```
 
 **适用场景**：
@@ -59,7 +59,7 @@ jzero new myproject --frame rpc
 #### 3️⃣ Gateway 项目（API 网关）
 
 ```bash
-jzero new myproject --frame gateway
+pzero new myproject --frame gateway
 ```
 
 **适用场景**：
@@ -90,17 +90,17 @@ open http://localhost:8001/swagger
 
 ## 按需启用：可选功能模块
 
-你的项目可能需要数据库、缓存等功能，jzero 支持**按需启用**：
+你的项目可能需要数据库、缓存等功能，pzero 支持**按需启用**：
 
 ```bash
 # 需要数据库 + Redis 缓存
-jzero new myproject --features model,redis
+pzero new myproject --features model,redis
 
 # 需要数据库 + 数据库缓存
-jzero new myproject --features model,cache
+pzero new myproject --features model,cache
 
 # 需要数据库 + Redis + 数据库缓存
-jzero new myproject --features model,redis,cache
+pzero new myproject --features model,redis,cache
 ```
 
 **功能说明**：
@@ -113,19 +113,19 @@ jzero new myproject --features model,redis,cache
 
 ## 🏢 自定义企业级模板
 
-jzero 默认模板包含标准化的框架代码和最佳实践，但企业内部通常需要添加：
+pzero 默认模板包含标准化的框架代码和最佳实践，但企业内部通常需要添加：
 - 🔧 **CI/CD 流水线配置**（Jenkins）
 - 📊 **企业监控告警**（Prometheus、Grafana、日志规范）
 - 🛡️ **安全合规要求**（鉴权、审计、加密）
 - 🏗️ **中间件集成**（MQ、OSS、第三方服务）
 
-jzero 支持自定义企业模板，让所有项目都符合企业标准：
+pzero 支持自定义企业模板，让所有项目都符合企业标准：
 
 ### 使用自定义模板
 
 ```bash
 # 使用企业自定义模板创建项目
-jzero new myproject --template https://github.com/your-org/jzero-template --branch base
+pzero new myproject --template https://github.com/your-org/pzero-template --branch base
 ```
 
 ## 从基座到业务：AI 辅助开发实战
@@ -134,31 +134,31 @@ jzero new myproject --template https://github.com/your-org/jzero-template --bran
 
 ### 场景：开发用户注册功能
 
-**使用 jzero + AI Skills**：
+**使用 pzero + AI Skills**：
 
 ```bash
 # 只需要一句话
-"用 jzero-skills 创建用户注册功能，支持用户名、邮箱、密码，需要验证和去重"
+"用 pzero-skills 创建用户注册功能，支持用户名、邮箱、密码，需要验证和去重"
 ```
 
 **AI 自动完成**：
 ```
 ✅ 生成 desc/api/user.api
 ✅ 生成 desc/sql/user.sql
-✅ 执行 jzero gen 生成框架代码
+✅ 执行 pzero gen 生成框架代码
 ✅ 实现 Logic 层业务逻辑
 ✅ 包含完整的验证和错误处理
 ```
 
 ## 总结
 
-jzero 通过**标准化框架 + AI 辅助**的方式，让 Go 项目开发变得前所未有的简单：
+pzero 通过**标准化框架 + AI 辅助**的方式，让 Go 项目开发变得前所未有的简单：
 
 1. **快速启动**：一行命令创建包含最佳实践的项目基座
 2. **灵活定制**：支持自定义企业模板，确保团队规范统一
 3. **AI 增强**：AI 理解框架规范，专注业务逻辑实现
 
-**觉得有用？请给 jzero 一个 ⭐ Star 支持我们持续改进！**
+**觉得有用？请给 pzero 一个 ⭐ Star 支持我们持续改进！**
 
-GitHub: [https://github.com/jzero-io/jzero](https://github.com/jzero-io/jzero)
-Jzero 官网: [https://jzero.io](https://jzero.io)
+GitHub: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
+Pzero 官网: [https://pzero.io](https://pzero.io)

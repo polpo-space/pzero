@@ -1,4 +1,4 @@
-name: goreleaser-jzero
+name: goreleaser-pzero
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   goreleaser:
@@ -25,17 +26,13 @@ jobs:
         with:
           go-version: '1.25.0'
 
-      - name: Get version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -44,47 +41,58 @@ jobs:
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
-          username: jzero-io
-          password: ${{ secrets.ACCESS_TOKEN }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: docker_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/polpo-space/pzero
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
 
       - name: Docker build and push
         uses: docker/build-push-action@v7
         with:
-          registry: ghcr.io
           context: .
           platforms: linux/amd64, linux/arm64
           push: true
-          tags: ghcr.io/jzero-io/jzero:latest,ghcr.io/jzero-io/jzero:${{ steps.get_version.outputs.VERSION }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
 
-  tag_cmd_jzero:
+  tag_cmd_pzero:
+    needs: goreleaser
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: main
+          ref: ${{ github.ref }}
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
           go-version: '1.25.0'
-      - name: Get version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-      - name: release jzero cmd
+      - name: release pzero cmd
+        env:
+          VERSION: ${{ github.ref_name }}
         run: |
-          go install github.com/jaronnie/grum@latest
-          GITHUB_TOKEN=${{ secrets.ACCESS_TOKEN }} grum
-  
-          git config user.name "dependabot[bot]"
-          git config user.email "49699333+dependabot[bot]@users.noreply.github.com"
-  
-          cd cmd/jzero
-          go get github.com/jzero-io/jzero@${{ steps.get_version.outputs.VERSION }}
-          go mod tidy
-          sed -i 's/version = ".*"/version = "${{ steps.get_version.outputs.VERSION }}"/g' main.go
+          if git ls-remote --exit-code --tags origin "refs/tags/cmd/pzero/${VERSION}"; then
+            echo "cmd/pzero/${VERSION} already exists"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          cd cmd/pzero
+          GOWORK=off go mod edit -dropreplace github.com/polpo-space/pzero
+          GOWORK=off GOPROXY=direct go get "github.com/polpo-space/pzero@${VERSION}"
+          GOWORK=off GOPROXY=direct go mod tidy
+          sed -i "s/version = \".*\"/version = \"${VERSION}\"/g" main.go
           git add go.mod go.sum main.go
-          git diff-index --quiet HEAD || git commit -m "chore(jzero): update jzero version"
-          git push origin main
-          git tag cmd/jzero/${{ steps.get_version.outputs.VERSION }}
-          git push origin cmd/jzero/${{ steps.get_version.outputs.VERSION }}
+          git commit -m "chore(pzero): release ${VERSION}"
+          git tag "cmd/pzero/${VERSION}"
+          git push origin "cmd/pzero/${VERSION}"

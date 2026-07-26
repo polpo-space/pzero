@@ -20,7 +20,7 @@ export const zhNavbar = navbar([
   },
   {
     link: "https://github.com/jzero-io/jzero-admin",
-    text: "jzero 后台管理系统",
+    text: "pzero 后台管理系统",
     icon: "icon-park-outline:system"
   },
 ]);

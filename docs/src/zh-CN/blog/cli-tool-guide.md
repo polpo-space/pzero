@@ -16,9 +16,9 @@ icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 
 ---
 
-💡 **在此之前，先介绍一下 jzero 模板市场**
+💡 **在此之前，先介绍一下 pzero 模板市场**
 
-jzero 提供了丰富的**官方模板**和**第三方模板**，帮助你快速构建各种类型的项目：
+pzero 提供了丰富的**官方模板**和**第三方模板**，帮助你快速构建各种类型的项目：
 
 **🚀 内置模板**：
 
@@ -34,21 +34,21 @@ jzero 提供了丰富的**官方模板**和**第三方模板**，帮助你快速
 **🌍 第三方模板**：
 - 欢迎贡献你自己的模板，帮助更多开发者快速启动项目！
 
-访问 **[jzero 模板市场](https://templates.jzero.io/)** 了解更多模板信息和使用指南。
+访问 **[pzero 模板市场](https://templates.jzero.io/)** 了解更多模板信息和使用指南。
 
 ![](https://oss.jaronnie.com/image-20260409190255415.png)
 
 ---
 
-今天，我们将介绍如何使用 **jzero CLI 模板**快速构建专业的命令行工具！
+今天，我们将介绍如何使用 **pzero CLI 模板**快速构建专业的命令行工具！
 
 ![](https://oss.jaronnie.com/image-20260409190335125.png)
 
 ---
 
-## 为什么选择 jzero CLI 模板？
+## 为什么选择 pzero CLI 模板？
 
-jzero CLI 模板基于业界成熟的 **Cobra 框架**，提供了开箱即用的项目结构和最佳实践配置。相比从零开始搭建，使用 jzero CLI 模板能够：
+pzero CLI 模板基于业界成熟的 **Cobra 框架**，提供了开箱即用的项目结构和最佳实践配置。相比从零开始搭建，使用 pzero CLI 模板能够：
 
 ✅ **快速启动**：一键生成完整项目结构，无需繁琐配置  
 ✅ **规范统一**：遵循行业标准，命令结构清晰易懂  
@@ -61,11 +61,11 @@ jzero CLI 模板基于业界成熟的 **Cobra 框架**，提供了开箱即用�
 ## 快速开始：1 分钟创建你的第一个 CLI 工具
 
 ```bash
-# 1. 安装 jzero（如果尚未安装）
-go install github.com/jzero-io/jzero/cmd/jzero@latest
+# 1. 安装 pzero（如果尚未安装）
+go install github.com/polpo-space/pzero/cmd/pzero@latest
 
 # 2. 创建新的 CLI 项目
-jzero new mycli --branch cli
+pzero new mycli --branch cli
 
 cd mycli
 
@@ -106,7 +106,7 @@ mycli/
 
 ## 核心概念：命令系统的三层结构
 
-jzero CLI 模板基于 Cobra 框架，采用清晰的**三层命令结构**：
+pzero CLI 模板基于 Cobra 框架，采用清晰的**三层命令结构**：
 
 ```
 Root Command（根命令）
@@ -215,7 +215,7 @@ mycli --config file.yaml  # 指定配置文件
 
 ## 配置管理：灵活的多层次配置方案
 
-jzero CLI 模板提供了强大的配置管理系统，支持三种配置方式的灵活组合：
+pzero CLI 模板提供了强大的配置管理系统，支持三种配置方式的灵活组合：
 
 ### 配置优先级
 ```
@@ -241,7 +241,7 @@ greet:
 ### 2. 环境变量配置
 
 
-jzero CLI 模板会自动将环境变量映射到配置字段，无需手动设置：
+pzero CLI 模板会自动将环境变量映射到配置字段，无需手动设置：
 
 ```bash
 # 直接设置环境变量，自动映射到配置
@@ -254,7 +254,7 @@ export MYCLI_GREET_NAME="张三"
 
 格式：`{APP_PREFIX}_{CONFIG_PATH}`
 
-- `{APP_PREFIX}`：应用名前缀（大写），如 `MYCLI`、`JZERO`
+- `{APP_PREFIX}`：应用名前缀（大写），如 `MYCLI`、`PZERO`
 - `{CONFIG_PATH}`：配置路径，`.` 和 `-` 替换为 `_`
 
 映射示例：
@@ -276,7 +276,7 @@ export MYCLI_GREET_NAME="张三"
 
 ## 统一配置管理
 
-jzero CLI 模板提供统一的配置管理系统，所有配置通过 `internal/config/config.go` 管理，支持配置文件、环境变量和命令行标志三种方式，自动按优先级加载。
+pzero CLI 模板提供统一的配置管理系统，所有配置通过 `internal/config/config.go` 管理，支持配置文件、环境变量和命令行标志三种方式，自动按优先级加载。
 
 配置优先级：**命令行标志 > 环境变量 > 配置文件**
 
@@ -405,7 +405,7 @@ export MYCLI_GREET_NAME="王五"
 
 ## 调试模式
 
-jzero CLI 模板内置了完善的调试支持：
+pzero CLI 模板内置了完善的调试支持：
 
 ### 启用调试的三种方式
 
@@ -436,7 +436,7 @@ export MYCLI_DEBUG=true
 
 ## 插件系统
 
-jzero CLI 模板支持强大的插件系统，让你的工具能够动态扩展功能。
+pzero CLI 模板支持强大的插件系统，让你的工具能够动态扩展功能。
 
 ### 插件命名规则
 
@@ -700,7 +700,7 @@ sudo mv mycli-docker.sh /usr/local/bin/mycli
 
 ## 完整实例
 
-为了帮助你更好地理解如何使用 jzero CLI 模板构建命令行工具，我们创建了一个完整的演示项目。
+为了帮助你更好地理解如何使用 pzero CLI 模板构建命令行工具，我们创建了一个完整的演示项目。
 
 **项目地址**：[https://github.com/jaronnie/mycli](https://github.com/jaronnie/mycli)
 
@@ -770,7 +770,7 @@ cd your-cli
 # 开始开发！
 ```
 
-这个项目展示了 jzero CLI 模板的最佳实践，是学习 CLI 工具开发的绝佳起点。
+这个项目展示了 pzero CLI 模板的最佳实践，是学习 CLI 工具开发的绝佳起点。
 
 ![](https://oss.jaronnie.com/image-20260410115131704.png)
 
@@ -780,14 +780,14 @@ cd your-cli
 
 ## 相关资源
 
-- **jzero GitHub**: [https://github.com/jzero-io/jzero](https://github.com/jzero-io/jzero)
-- **jzero 文档**: [https://docs.jzero.io](https://docs.jzero.io)
+- **pzero GitHub**: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
+- **pzero 文档**: [https://docs.jzero.io](https://docs.jzero.io)
 - **CLI 模板**: [https://templates.jzero.io/external/cli/](https://templates.jzero.io/external/cli/)
 - **Cobra 文档**: [https://github.com/spf13/cobra](https://github.com/spf13/cobra)
 - **Viper 文档**: [https://github.com/spf13/viper](https://github.com/spf13/viper)
 
 ---
 
-**让 jzero CLI 模板成为你 AI 时代的得力助手！** 🚀
+**让 pzero CLI 模板成为你 AI 时代的得力助手！** 🚀
 
-**觉得有用？请给 jzero 一个 ⭐ Star，支持我们继续改进！**
+**觉得有用？请给 pzero 一个 ⭐ Star，支持我们继续改进！**

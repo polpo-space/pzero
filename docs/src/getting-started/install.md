@@ -1,5 +1,5 @@
 ---
-title: Install jzero
+title: Install pzero
 icon: /icons/marketeq-download-alt-4.svg
 order: 2
 ---
@@ -8,56 +8,56 @@ order: 2
 
 Recommend using [gvm](https://github.com/jaronnie/gvm) to install golang environment
 
-## Install jzero
+## Install pzero
 
-Provides the following three ways to use jzero, choose one based on your actual situation
+Provides the following three ways to use pzero, choose one based on your actual situation
 
 * Source installation(**go version >= go1.25.0**)
-* Directly [download jzero binary](https://github.com/jzero-io/jzero/releases)
-* Install jzero based on Docker, [image address](https://github.com/jzero-io/jzero/pkgs/container/jzero)
+* Directly [download pzero binary](https://github.com/polpo-space/pzero/releases)
+* Install pzero based on Docker, [image address](https://github.com/polpo-space/pzero/pkgs/container/pzero)
 
-### Install jzero from source
+### Install pzero from source
 
 ```bash
 # Set domestic proxy (optional)
 # go env -w GOPROXY=https://goproxy.cn,direct
-go install github.com/jzero-io/jzero/cmd/jzero@latest
+go install github.com/polpo-space/pzero/cmd/pzero@latest
 
-# Get jzero version
-jzero version
+# Get pzero version
+pzero version
 
 # Auto download required tools
-jzero check
+pzero check
 ```
 
-### Download jzero binary
+### Download pzero binary
 
-[Download address](https://github.com/jzero-io/jzero/releases)
+[Download address](https://github.com/polpo-space/pzero/releases)
 
 Select the corresponding package based on your operating system, extract and place in `$GOPATH/bin` directory
 
-Execute the following to complete jzero environment setup
+Execute the following to complete pzero environment setup
 
 ```shell
-# Get jzero version
-jzero version
+# Get pzero version
+pzero version
 
 # Auto download required tools
-jzero check
+pzero check
 ```
 
-### Install jzero based on Docker
+### Install pzero based on Docker
 
 ```shell
-# Get jzero version
-docker run --rm ghcr.io/jzero-io/jzero:latest version
+# Get pzero version
+docker run --rm ghcr.io/polpo-space/pzero:latest version
 ```
 
-## Upgrade jzero
+## Upgrade pzero
 
 ```shell
 # Upgrade to latest version
-jzero upgrade
+pzero upgrade
 # Upgrade to specific version
-jzero upgrade --channel <commit_hash> or <tag>
+pzero upgrade --channel <commit_hash> or <tag>
 ```
