@@ -31,9 +31,8 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: latest
-          skip-go-installation: true
-          skip-pkg-cache: true
-          
+          skip-cache: true
+
       - name: Test core
         run: go test ./...
 

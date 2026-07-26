@@ -68,6 +68,55 @@ func TestCleanHandlersDirKeepsHandlersWhenRewriteHandlerFalse(t *testing.T) {
 	}
 }
 
+func TestCleanHandlersDirPreservesTestsWhenRewriteHandlerTrue(t *testing.T) {
+	withTempWorkDir(t)
+
+	handlerDir := filepath.Join("internal", "handler", "user")
+	if err := os.MkdirAll(handlerDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+
+	handlerPath := filepath.Join(handlerDir, "user.go")
+	testPath := filepath.Join(handlerDir, "user_test.go")
+	for path, content := range map[string][]byte{
+		handlerPath: []byte("package user\n"),
+		testPath:    []byte("package user\n"),
+	} {
+		if err := os.WriteFile(path, content, 0o644); err != nil {
+			t.Fatalf("WriteFile(%q) error = %v", path, err)
+		}
+	}
+
+	apiFile := filepath.Join("desc", "api", "user.api")
+	apiSpecMap := map[string]*spec.ApiSpec{
+		apiFile: {
+			Service: spec.Service{
+				Groups: []spec.Group{
+					{
+						Annotation: spec.Annotation{
+							Properties: map[string]string{
+								"group": "user",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	ja := &PzeroApi{}
+	if err := ja.cleanHandlersDir([]string{apiFile}, apiSpecMap); err != nil {
+		t.Fatalf("cleanHandlersDir() error = %v", err)
+	}
+
+	if _, err := os.Stat(handlerPath); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("cleanHandlersDir() should remove generated handler, stat err = %v", err)
+	}
+	if _, err := os.Stat(testPath); err != nil {
+		t.Fatalf("cleanHandlersDir() should preserve test file, stat err = %v", err)
+	}
+}
+
 func TestPatchHandlerKeepsExistingHandlerWhenRewriteHandlerFalse(t *testing.T) {
 	tmpDir := withTempWorkDir(t)
 

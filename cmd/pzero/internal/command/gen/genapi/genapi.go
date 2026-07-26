@@ -243,9 +243,10 @@ func (ja *PzeroApi) cleanHandlersDir(genCodeApiFiles []string, genCodeApiSpecMap
 					return nil // 目录不存在或无法读取，忽略错误
 				}
 				for _, entry := range dirEntries {
-					if !entry.IsDir() {
-						_ = os.Remove(filepath.Join(handlerDir, entry.Name()))
+					if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
+						continue
 					}
+					_ = os.Remove(filepath.Join(handlerDir, entry.Name()))
 				}
 				return nil
 			})

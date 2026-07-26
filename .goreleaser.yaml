@@ -19,6 +19,11 @@ builds:
     binary: pzero
     tags:
       - no_k8s
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Tag }}
+      - -X main.commit={{ .Commit }}
+      - -X main.date={{ .Date }}
 
 archives:
   - formats: [tar.gz]
