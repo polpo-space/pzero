@@ -1,25 +1,25 @@
 ---
-title: "jzero × Vercel 生态打通：Go 语言无缝接入 Vercel 无服务器平台"
+title: "pzero × Vercel 生态打通：Go 语言无缝接入 Vercel 无服务器平台"
 icon: /icons/emojione-v1-rocket.svg
 ---
 
-## jzero × Vercel：生态打通的强大组合
+## pzero × Vercel：生态打通的强大组合
 
-**什么是 jzero？**
+**什么是 pzero？**
 
-基于 [go-zero框架](https://github.com/zeromicro/go-zero) 以及 [go-zero/goctl工具](https://github.com/zeromicro/go-zero/tree/master/tools/goctl) 开发的 [jzero](https://github.com/jzero-io/jzero) 框架
+基于 [go-zero框架](https://github.com/zeromicro/go-zero) 以及 [go-zero/goctl工具](https://github.com/zeromicro/go-zero/tree/master/tools/goctl) 开发的 [pzero](https://github.com/polpo-space/pzero) 框架
 
 🏗️ **通过模板生成基础框架代码**：基于描述文件自动生成框架代码（api → api 框架代码、proto → proto 框架代码、sql/远程数据库地址 → model 代码）
 
-🤖 **通过 Agent Skills 生成业务代码**：内置 jzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
+🤖 **通过 Agent Skills 生成业务代码**：内置 pzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
 
 **核心价值与设计理念**：
 
 - ✅ **开发体验优先**：提供简单好用的一站式生产可用解决方案，一键初始化 api/rpc/gateway 项目，极简指令生成基础框架代码
-- ✅ **AI 赋能**：内置 jzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
+- ✅ **AI 赋能**：内置 pzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
 - ✅ **模板驱动**：默认生成即最佳实践，支持自定义模板，可基于远程模板仓库打造企业专属底座
 - ✅ **插件化架构**：模块分层、插件设计，团队协作更顺畅
-- ✅ **内置开发组件**：包含缓存(cache)、数据库迁移(migrate)、配置中心(configcenter)、数据库查询(condition)等常用工具
+- ✅ **内置开发组件**：包含缓存(cache)、数据库迁移(migrate)、数据库查询(condition)等常用工具
 - ✅ **生态兼容**：不修改 go-zero，保持生态兼容，解决已有痛点问题并扩展新功能
 - ✅ **接口灵活**：不依赖特定数据库/缓存/配置中心，可根据实际需求自由选择
 
@@ -32,32 +32,32 @@ icon: /icons/emojione-v1-rocket.svg
 - ✅ **免费域名与 HTTPS**：自动获得 `.vercel.app` 生产级域名，内置 CDN 加速和 SSL 证书
 - ✅ **预览环境**：每次提交 PR 自动生成独立预览 URL
 
-> 💡 **核心价值**：jzero 深度打通 Vercel 生态，让 Go 开发者享受前端级别的部署体验！通过 `.api` 定义自动生成符合 Vercel 规范的无服务器函数，无需再部署到自己的服务器上。
+> 💡 **核心价值**：pzero 深度打通 Vercel 生态，让 Go 开发者享受前端级别的部署体验！通过 `.api` 定义自动生成符合 Vercel 规范的无服务器函数，无需再部署到自己的服务器上。
 
 ## 快速开始：一键接入 Vercel 生态
 
 ### 创建 Vercel 项目
 
-jzero 提供了专为 Vercel 生态优化的项目模板，生成的代码结构完全符合 Vercel 平台规范：
+pzero 提供了专为 Vercel 生态优化的项目模板，生成的代码结构完全符合 Vercel 平台规范：
 
 ```bash
-# 安装 jzero
-go install github.com/jzero-io/jzero@latest
+# 安装 pzero
+go install github.com/polpo-space/pzero@latest
 # 安装相关工具
-jzero check
+pzero check
 go install github.com/jzero-io/gorename@latest
 # 从远程模板创建新的 Vercel 无服务器项目
-jzero new jzero-api-vercel-example --remote https://github.com/jzero-io/templates --branch api-vercel
+pzero new pzero-api-vercel-example --remote https://github.com/jzero-io/templates --branch api-vercel
 # 添加新的 api
-jzero add api test
+pzero add api test
 # 生成代码
-jzero gen
+pzero gen
 ```
 
 **项目结构**：
 
 ```
-jzero-api-vercel-example/
+pzero-api-vercel-example/
 ├── vercel/
 │   └── client.go        # vercel go 运行时入口
 ├── desc/                # API 定义
@@ -75,10 +75,10 @@ jzero-api-vercel-example/
 
 ### Git 推送即部署
 
-jzero 生成的项目完全兼容 Vercel 的 Git 工作流，实现代码推送自动部署：
+pzero 生成的项目完全兼容 Vercel 的 Git 工作流，实现代码推送自动部署：
 
 ```bash
-cd jzero-api-vercel-example
+cd pzero-api-vercel-example
 
 # 初始化 git
 git init
@@ -86,11 +86,11 @@ git add .
 git commit -m "Initial commit"
 
 # 在 GitHub 上创建仓库并推送
-git remote add origin https://github.com/your-username/jzero-api-vercel-example.git
+git remote add origin https://github.com/your-username/pzero-api-vercel-example.git
 git push -u origin main
 ```
 
-示例代码仓库地址: https://github.com/jaronnie/jzero-api-vercel-example
+示例代码仓库地址: https://github.com/jaronnie/pzero-api-vercel-example
 
 ### Vercel 平台自动识别
 
@@ -113,8 +113,8 @@ git push -u origin main
 
 > ![image-20260404112631987](https://oss.jaronnie.com/image-20260404112631987.png)
 
-**觉得有用？请给 jzero 一个 ⭐ Star 支持我们持续改进！**
+**觉得有用？请给 pzero 一个 ⭐ Star 支持我们持续改进！**
 
-GitHub: [https://github.com/jzero-io/jzero](https://github.com/jzero-io/jzero)
-Jzero 官网: [https://jzero.io](https://jzero.io)
+GitHub: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
+Pzero 官网: [https://pzero.io](https://pzero.io)
 Vercel 模板: [https://github.com/jzero-io/templates/tree/api-vercel](https://github.com/jzero-io/templates/tree/api-vercel)

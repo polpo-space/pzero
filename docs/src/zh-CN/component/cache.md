@@ -22,9 +22,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/jzero-io/jzero/core/configcenter"
-	"github.com/jzero-io/jzero/core/configcenter/subscriber"
-	"github.com/jzero-io/jzero/core/stores/cache"
+	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/polpo-space/pzero/core/stores/cache"
 	"github.com/pkg/errors"
 	"github.com/zeromicro/go-zero/core/stores/redis"
 )
@@ -34,13 +33,11 @@ type Config struct {
 }
 
 func main() {
-	cc := configcenter.MustNewConfigCenter[Config](
-		configcenter.Config{Type: "yaml"},
-		subscriber.MustNewFsnotifySubscriber("etc/etc.yaml"),
-	)
+	var c Config
+	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
 	// 连接 redis
-	rds, err := redis.NewRedis(cc.MustGetConfig().Redis)
+	rds, err := redis.NewRedis(c.Redis)
 	if err != nil {
 		panic(err)
 	}
@@ -49,7 +46,7 @@ func main() {
 	redisCache := cache.NewRedisNode(rds, errors.New("cache not found"), cache.WithExpiry(time.Duration(5)*time.Second))
 	
 	// 带 cachePrefix
-	redisCache = cache.NewRedisNodeWithCachePrefix(rds, errors.New("cache not found"), "jzero:",cache.WithExpiry(time.Duration(5)*time.Second))
+	redisCache = cache.NewRedisNodeWithCachePrefix(rds, errors.New("cache not found"), "pzero:",cache.WithExpiry(time.Duration(5)*time.Second))
 
 	// 获取 key 为 name 的数据
 

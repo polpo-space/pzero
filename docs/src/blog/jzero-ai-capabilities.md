@@ -1,5 +1,5 @@
 ---
-title: "AI-Driven Go Development: How jzero Makes Development More Efficient and Reliable"
+title: "AI-Driven Go Development: How pzero Makes Development More Efficient and Reliable"
 icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 ---
 
@@ -43,12 +43,12 @@ You: Finally works (but spent 30 minutes, experienced n rounds of dialogue)
 - ❌ Unclear about framework performance optimization suggestions
 - ❌ Generated code looks "foreign", difficult to integrate into existing projects
 
-### How jzero Solves These Problems
+### How pzero Solves These Problems
 
 **By defining workflows and best practices in agent skills, reduce the "tug of war" between users and AI**:
 
-1. **Standardized workflow**: `api/proto/sql` → `jzero gen` → framework code → AI fills business logic
-2. **Complete framework knowledge**: jzero-skills contains framework best practices, AI follows automatically
+1. **Standardized workflow**: `api/proto/sql` → `pzero gen` → framework code → AI fills business logic
+2. **Complete framework knowledge**: pzero-skills contains framework best practices, AI follows automatically
 3. **Work within constraints**: AI intelligently fills business logic under framework constraints, both efficient and standardized
 4. **One-time generation is usable**: Reduce repeated modifications, guaranteed code quality
 
@@ -56,19 +56,19 @@ You: Finally works (but spent 30 minutes, experienced n rounds of dialogue)
 - 🤖 **Engine Two** (AI Skills generate business code): Intelligently fill business logic under framework constraints
 - 💥 **Combined**: Enjoy AI efficiency while ensuring code quality and maintainability
 
-## jzero's Dual-Engine Development Mode
+## pzero's Dual-Engine Development Mode
 
-jzero's dual-engine mode divides code generation into two stages, where AI first generates descriptor files, then generates framework code and business logic based on descriptor files:
+pzero's dual-engine mode divides code generation into two stages, where AI first generates descriptor files, then generates framework code and business logic based on descriptor files:
 
-**🏗️ jzero Dual-Engine Architecture**
+**🏗️ pzero Dual-Engine Architecture**
 
 ---
 
 **🔧 Engine One: Basic Framework Code Generation**
 
-*   AI generates api file → jzero framework generates Handler/Logic/Types
-*   AI generates proto file → jzero framework generates Server/Logic/Pb
-*   AI generates sql file → jzero generates Model layer general method code
+*   AI generates api file → pzero framework generates Handler/Logic/Types
+*   AI generates proto file → pzero framework generates Server/Logic/Pb
+*   AI generates sql file → pzero generates Model layer general method code
 *   **Features**: Standardized, predictable, follows best practices
 *   **Speed**: Second-level generation
 
@@ -94,15 +94,15 @@ Requirement → Hand-write .api → Hand-write Handler → Hand-write Logic → 
 Total: 2.5 hours
 ```
 
-**jzero Dual-Engine** (you only describe requirements):
+**pzero Dual-Engine** (you only describe requirements):
 ```
-Requirement → AI creates .api → jzero framework generates basic framework → AI generates business logic
+Requirement → AI creates .api → pzero framework generates basic framework → AI generates business logic
        1min         10sec            3-5min
 Total: 7 minutes ⚡
 ```
 
 **Key Difference**:
-- 🔧 **Engine One** (jzero gen): Generate standardized framework code, ensure architectural consistency
+- 🔧 **Engine One** (pzero gen): Generate standardized framework code, ensure architectural consistency
 - 🤖 **Engine Two** (AI Skills): Understand requirements, intelligently fill business logic
 - 💡 **Your role**: From "code porter" to "architect and business expert"
 
@@ -115,7 +115,7 @@ Total: 7 minutes ⚡
 - ❌ **AI doesn't understand frameworks**: Ordinary AI-generated code needs lots of adjustments to integrate into projects
 - ❌ **Efficiency bottleneck**: Framework code takes a lot of time, little time left for business logic
 
-**Advantages of jzero dual-engine mode**:
+**Advantages of pzero dual-engine mode**:
 
 | Dimension | Engine One: Framework Generation | Engine Two: AI Skills | Combined Advantage    |
 |------|----------------|------------------|---------|
@@ -133,7 +133,7 @@ Let's see how two engines work together perfectly through a specific example.
 
 Your requirement:
 ```
-jzero-skills create user management api, supporting:
+pzero-skills create user management api, supporting:
 1. User registration (username 3-20 characters, email validation, password at least 8 characters)
 2. Get user info
 ```
@@ -225,10 +225,10 @@ AI intelligently designs:
 
 ```bash
 # 1. Generate Handler/Logic/Types (from api file)
-jzero gen --desc desc/api/user.api
+pzero gen --desc desc/api/user.api
 
 # 2. Generate Model layer (from sql file)
-jzero gen --desc desc/sql/user.sql
+pzero gen --desc desc/sql/user.sql
 ```
 
 → Generated files:
@@ -292,7 +292,7 @@ import (
     "net/http"
 
     "github.com/pkg/errors"
-    "github.com/jzero-io/jzero/core/stores/condition"
+    "github.com/polpo-space/pzero/core/stores/condition"
     usermodel "github.com/yourproject/internal/model/user"
     "github.com/zeromicro/go-zero/core/logx"
     "golang.org/x/crypto/bcrypt"
@@ -444,19 +444,19 @@ func (l *Get) Get(req *types.GetRequest) (resp *types.GetResponse, err error) {
 
 ### 📊 Summary: Core Value of Dual-Engine Collaboration
 
-Through this complete example, we can clearly see the workflow and value of jzero dual-engine mode collaboration:
+Through this complete example, we can clearly see the workflow and value of pzero dual-engine mode collaboration:
 
 
 | Stage | Responsible Engine | Core Task | Output |
 |------|---------|---------|---------|
 | **Descriptor File Generation** | 🤖 AI Skills | Understand requirements, generate api/sql definitions | Standardized descriptor files |
-| **Framework Code Generation** | 🔧 jzero gen | Generate standard framework based on descriptor files | Handler/Logic/Model empty implementations |
+| **Framework Code Generation** | 🔧 pzero gen | Generate standard framework based on descriptor files | Handler/Logic/Model empty implementations |
 | **Business Logic Filling** | 🤖 AI Skills | Implement specific business logic | Complete usable functional code |
 
 **Key Advantages**
 
 ✅ **Each specializes in their field**
-   - Engine One (jzero gen): Ensures architectural consistency, code standardization, fast generation
+   - Engine One (pzero gen): Ensures architectural consistency, code standardization, fast generation
    - Engine Two (AI Skills): Understands business, intelligently fills logic, handles complex logic
 
 ✅ **Quality and efficiency both considered**
@@ -480,27 +480,27 @@ Through this complete example, we can clearly see the workflow and value of jzer
 |---------|------|---------|---------|---------|
 | **Pure Manual Development** | 2.5 hours | ⭐⭐⭐ | ❌ Uncertain | ⭐⭐ |
 | **Traditional AI Assistance** | 30 minutes+ | ⭐⭐ | ❌ Uncertain | ⭐⭐ |
-| **jzero Dual-Engine** | 7 minutes | ⭐⭐⭐⭐⭐ | ✅ Completely consistent | ⭐⭐⭐⭐⭐ |
+| **pzero Dual-Engine** | 7 minutes | ⭐⭐⭐⭐⭐ | ✅ Completely consistent | ⭐⭐⭐⭐⭐ |
 
 **Core Philosophy**
 
-jzero dual-engine mode embodies our core view on AI-assisted development:
+pzero dual-engine mode embodies our core view on AI-assisted development:
 
 > **AI should not replace developers in making architectural decisions, but should intelligently fill business logic under framework constraints.**
 
 
-### Reflection: Why jzero Only Uses Skills and Abandons MCP
+### Reflection: Why pzero Only Uses Skills and Abandons MCP
 
-In exploring AI-assisted development, jzero attempted to integrate MCP (Model Context Protocol). This is a protocol that allows AI models to access external tools and data through standardized protocols. However, after in-depth practice and validation, we finally decided to abandon MCP.
+In exploring AI-assisted development, pzero attempted to integrate MCP (Model Context Protocol). This is a protocol that allows AI models to access external tools and data through standardized protocols. However, after in-depth practice and validation, we finally decided to abandon MCP.
 
-**The reason is simple: jzero's code generation process is inherently simple and direct.**
+**The reason is simple: pzero's code generation process is inherently simple and direct.**
 
-**jzero's Core Design Philosophy**
+**pzero's Core Design Philosophy**
 
-jzero has adopted an extremely simple code generation approach from the start:
+pzero has adopted an extremely simple code generation approach from the start:
 
 ```
-Descriptor files (api/sql/proto) → jzero gen → Complete framework code
+Descriptor files (api/sql/proto) → pzero gen → Complete framework code
 ```
 
 The core advantages of this process:
@@ -511,29 +511,29 @@ The core advantages of this process:
 - proto descriptor files uniformly placed in `desc/proto/` directory
 
 ✅ **One command handles code generation**
-- `jzero gen` // Automatically scan api/proto/sql to generate code
-- `jzero gen --desc desc/api/user.api` // Only generate user.api
-- `jzero gen --desc desc/proto/user.proto` // Only generate user.proto
-- `jzero gen --desc desc/sql/user.sql` // Only generate user.sql
+- `pzero gen` // Automatically scan api/proto/sql to generate code
+- `pzero gen --desc desc/api/user.api` // Only generate user.api
+- `pzero gen --desc desc/proto/user.proto` // Only generate user.proto
+- `pzero gen --desc desc/sql/user.sql` // Only generate user.sql
 
-For a framework like jzero with clear conventions and simple commands, **skills is more direct, simple, efficient, and easy to use than mcp**.
+For a framework like pzero with clear conventions and simple commands, **skills is more direct, simple, efficient, and easy to use than mcp**.
 
 ## Quick Start
 
 ```bash
-# 1. Install jzero
-go install github.com/jzero-io/jzero/cmd/jzero@latest
+# 1. Install pzero
+go install github.com/polpo-space/pzero/cmd/pzero@latest
 
-# 2. Initialize jzero-skills
-jzero skills init
+# 2. Initialize pzero-skills
+pzero skills init
 
 # 3. Create project
-jzero new simpleapi --frame api
+pzero new simpleapi --frame api
 
 # 4. Describe requirements in Claude Code
-# "Use jzero-skills to create a user management api..."
+# "Use pzero-skills to create a user management api..."
 ```
 
-**Find it useful? Please give jzero a ⭐ Star to support our continued improvement!**
+**Find it useful? Please give pzero a ⭐ Star to support our continued improvement!**
 
-GitHub: [https://github.com/jzero-io/jzero](https://github.com/jzero-io/jzero)
+GitHub: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)

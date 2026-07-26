@@ -4,7 +4,7 @@ icon: /icons/catppuccin-folder-admin.svg
 order: 1
 ---
 
-jzero-admin 是 jzero 的最佳实践
+jzero-admin 是 pzero 的最佳实践
 
 * 实现了最简单的后台管理模板, 用户管理/菜单管理/角色管理
 * 支持 mysql/postgres/sqlite
@@ -14,7 +14,7 @@ jzero-admin 是 jzero 的最佳实践
 ## 演示地址
 
 * [阿里云云函数](https://jzero-admin.jaronnie.com)
-* [vercel](https://admin.jzero.io)
+* [vercel](https://admin.pzero.io)
 
 ![](https://oss.jaronnie.com/image-20251217134305041.png)
 

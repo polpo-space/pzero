@@ -8,7 +8,7 @@ import (
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	_ "modernc.org/sqlite"
 
-	"github.com/jzero-io/jzero/core/stores/cache"
+	"github.com/polpo-space/pzero/core/stores/cache"
 )
 
 func MustNewConn(c sqlx.SqlConf) sqlx.SqlConn {

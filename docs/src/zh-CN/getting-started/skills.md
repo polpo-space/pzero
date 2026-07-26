@@ -15,20 +15,20 @@ order: 6
 - **面向未来的工作流**：随着 AI Agent 的发展而演进，保持与项目约定的一致性
 - **加速 AI 驱动开发**：获得有上下文感知的、框架感知的响应，无需重复解释
 
-`jzero-skills` 包提供了 jzero 框架的全面知识，包括 REST API 模式、RPC 服务、数据库操作等——使 AI Agent 成为 jzero 项目中的高效协作伙伴。
+`pzero-skills` 包提供了 pzero 框架的全面知识，包括 REST API 模式、RPC 服务、数据库操作等——使 AI Agent 成为 pzero 项目中的高效协作伙伴。
 
 ## 安装
 
 ```shell
 # 默认输出到 ~/.claude/skills 文件夹中
-jzero skills init
+pzero skills init
 # 输入到当前项目
-jzero skills init --output .claude/skills
+pzero skills init --output .claude/skills
 ```
 
 ## 使用技巧
 
-* `jzero-skills` 开头, 然后描述你的需求提示词即可
+* `pzero-skills` 开头, 然后描述你的需求提示词即可
 
 ## 实战演示
 

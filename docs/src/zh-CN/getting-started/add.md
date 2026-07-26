@@ -4,7 +4,7 @@ icon: /icons/proicons-tag-add.svg
 order: 3.1
 ---
 
-jzero 根据可描述文件(desc)生成代码:
+pzero 根据可描述文件(desc)生成代码:
 
 * desc/api: api 可描述语言, 生成 http 服务端/客户端代码. [使用指南](../guide/api.md)
 * desc/proto: proto 可描述语言, 生成 grpc 服务端/客户端代码. [使用指南](../guide/proto.md)
@@ -21,9 +21,9 @@ jzero 根据可描述文件(desc)生成代码:
 
 ```shell
 # group 为 test
-jzero add api test
+pzero add api test
 # group 为 test/test1
-jzero add api test/test1
+pzero add api test/test1
 ```
 
 ## 新增 proto 文件
@@ -32,9 +32,9 @@ jzero add api test/test1
 
 ```shell
 # Service 为 Test
-jzero add proto test
+pzero add proto test
 # Service 为 TestTest1
-jzero add proto test/test1
+pzero add proto test/test1
 ```
 
 ## 新增 sql 文件
@@ -43,5 +43,5 @@ jzero add proto test/test1
 
 ```shell
 # table 名为 test
-jzero add sql test
+pzero add sql test
 ```

@@ -1,5 +1,5 @@
 ---
-title: "Free Your Hands! jzero Boosts Go Development Efficiency 10x"
+title: "Free Your Hands! pzero Boosts Go Development Efficiency 10x"
 icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 ---
 
@@ -15,27 +15,27 @@ If you have these concerns, today's article is a must-read!
 
 ---
 
-## What is jzero?
+## What is pzero?
 
-**jzero** is an enhanced development tool based on the go-zero framework:
+**pzero** is an enhanced development tool based on the go-zero framework:
 
 🏗️ **Generate basic framework code through templates**: Automatically generate framework code (api → api framework code, proto → proto framework code, sql/remote database address → model code) based on descriptor files
 
-🤖 **Generate business code through Agent Skills**: Built-in jzero-skills enables AI to generate business logic code that follows best practices
+🤖 **Generate business code through Agent Skills**: Built-in pzero-skills enables AI to generate business logic code that follows best practices
 
 **Core Value and Design Philosophy**:
 
 - ✅ **Developer Experience First**: Provides a simple, easy-to-use, one-stop production-ready solution, one-click initialize api/rpc/gateway projects, minimal commands to generate basic framework code
-- ✅ **AI Empowered**: Built-in jzero-skills enables AI to generate business logic code that follows best practices
+- ✅ **AI Empowered**: Built-in pzero-skills enables AI to generate business logic code that follows best practices
 - ✅ **Template-Driven**: Default generation follows best practices, supports custom templates, can build enterprise-specific foundation based on remote template repositories
 - ✅ **Plugin Architecture**: Module layering, plugin design, smoother team collaboration
-- ✅ **Built-in Components**: Includes common tools like cache, migrate, configcenter, condition
+- ✅ **Built-in Components**: Includes common tools like cache, migrate, and condition
 - ✅ **Ecosystem Compatible**: Doesn't modify go-zero, maintains ecosystem compatibility while addressing existing pain points and extending new features
 - ✅ **Flexible Interface**: Doesn't depend on specific database/cache/config center, free choice based on actual needs
 
 ---
 
-GitHub: [https://github.com/jzero-io/jzero](https://github.com/jzero-io/jzero)
+GitHub: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
 
 Docs: [https://docs.jzero.io](https://docs.jzero.io)
 
@@ -93,7 +93,7 @@ syntax = "proto3";
 package user;
 option go_package = "./types/user";
 
-// Import jzero extensions
+// Import pzero extensions
 import "jzero/api/http.proto";
 import "jzero/api/zrpc.proto";
 
@@ -200,25 +200,25 @@ CREATE TABLE `user` (
 
 ```bash
 # Only generate code for files changed in git
-jzero gen --git-change
+pzero gen --git-change
 
 # Generate for specific file
-jzero gen --desc desc/api/user.api
+pzero gen --desc desc/api/user.api
 ```
 
 **Flexible configuration**, goodbye to complex commands:
 
 Support multiple configuration methods in combination:
-- ✅ Configuration file (.jzero.yaml)
+- ✅ Configuration file (.pzero.yaml)
 - ✅ Command-line parameters
 - ✅ Environment variables
 
 ```bash
-# Default configuration .jzero.yaml
-jzero gen
+# Default configuration .pzero.yaml
+pzero gen
 
 # Specify configuration file
-jzero gen --config .jzero.dev.yaml
+pzero gen --config .pzero.dev.yaml
 ```
 
 One-click switch between local development, testing, and production environments!
@@ -226,14 +226,14 @@ One-click switch between local development, testing, and production environments
 **Hooks Configuration**: Support executing custom scripts before and after code generation
 
 ```yaml
-# .jzero.yaml
+# .pzero.yaml
 
 # Global hooks
 hooks:
   before:
-    - echo "Execute before jzero command"
+    - echo "Execute before pzero command"
   after:
-    - echo "Execute after jzero command"
+    - echo "Execute after pzero command"
 
 # gen command configuration
 gen:
@@ -248,29 +248,29 @@ gen:
 
 ## Generate Business Code Through Agent Skills
 
-Based on jzero-skills, let AI automatically generate business code that follows best practices:
+Based on pzero-skills, let AI automatically generate business code that follows best practices:
 
 ```bash
 # Output AI Skills configuration to Claude (default ~/.claude/skills)
-jzero skills init
+pzero skills init
 
 # Output to current project
-jzero skills init --output .claude/skills
+pzero skills init --output .claude/skills
 
-# In Claude, describe requirements in natural language, recommend starting with jzero-skills
+# In Claude, describe requirements in natural language, recommend starting with pzero-skills
 ```
 
 **What can AI do for you**:
 
 **REST API Development**:
 - ✅ Automatically write standard-compliant `.api` files (set `go_package`, `group`, `compact_handler`)
-- ✅ Automatically execute `jzero gen --desc desc/api/xxx.api` to generate framework code
+- ✅ Automatically execute `pzero gen --desc desc/api/xxx.api` to generate framework code
 - ✅ Automatically implement Logic layer business logic, following Handler → Logic → Model three-layer architecture
 
 **Database Operations**:
 - ✅ Automatically create SQL migration files (xx.up.sql & xx.down.sql)
-- ✅ Automatically execute database migration (`jzero migrate up`)
-- ✅ Automatically generate Model code (`jzero gen --desc desc/sql/xxx.sql`)
+- ✅ Automatically execute database migration (`pzero migrate up`)
+- ✅ Automatically generate Model code (`pzero gen --desc desc/sql/xxx.sql`)
 
 **RPC Service Development**:
 - ✅ Automatically write `.proto` files to define service interfaces
@@ -290,24 +290,24 @@ Support **plugin development**, loading functional modules as independent plugin
 
 ```bash
 # Create helloworld api service
-jzero new helloword --frame api
+pzero new helloword --frame api
 
 cd helloworld
 
 # Add api plugin
-jzero new plugin_name --frame api --serverless
+pzero new plugin_name --frame api --serverless
 
 # Add api plugin (mono type, use helloworld's go module)
-jzero new plugin_name_mono --frame api --serverless --mono
+pzero new plugin_name_mono --frame api --serverless --mono
 
 # Build and load all plugins
-jzero serverless build
+pzero serverless build
 
 # Unload all plugins
-jzero serverless delete
+pzero serverless delete
 
 # Unload specific plugin
-jzero serverless delete --plugin plugin_name
+pzero serverless delete --plugin plugin_name
 ```
 
 **Perfectly supports**:
@@ -321,19 +321,19 @@ jzero serverless delete --plugin plugin_name
 ## Quick Experience, Get Started in 5 Minutes
 
 ```bash
-# 1. Install jzero
-go install github.com/jzero-io/jzero/cmd/jzero@latest
+# 1. Install pzero
+go install github.com/polpo-space/pzero/cmd/pzero@latest
 
 # 2. One-click environment check
-jzero check
+pzero check
 
 # 3. Create project
 # api project
-jzero new helloworld --frame api
+pzero new helloworld --frame api
 # rpc project
-jzero new helloworld --frame rpc
+pzero new helloworld --frame rpc
 # gateway project
-jzero new helloworld --frame gateway
+pzero new helloworld --frame gateway
 
 cd helloworld
 
@@ -360,7 +360,7 @@ If you are a **GoLand / IntelliJ IDEA** user, **jzero-intellij plugin** will gre
 - ✅ API file intelligent highlighting
 - ✅ File navigation, jump between api/proto and logic files
 - ✅ Descriptor file line header execution button to generate code
-- ✅ Configuration file .jzero.yaml execution button to generate code
+- ✅ Configuration file .pzero.yaml execution button to generate code
 
 <video width="720" height="450" controls>
   <source src="https://oss.jaronnie.com/jzero-intellij.mp4" type="video/mp4">
@@ -370,7 +370,7 @@ If you are a **GoLand / IntelliJ IDEA** user, **jzero-intellij plugin** will gre
 
 ### jzero-admin Backend Management System
 
-Backend management system based on jzero, built-in RBAC permission management, ready to use
+Backend management system based on pzero, built-in RBAC permission management, ready to use
 
 **Core Features**:
 - ✅ Complete permission system (user/menu/role)
@@ -387,12 +387,12 @@ Backend management system based on jzero, built-in RBAC permission management, r
 **Online Demo**:
 
 - Aliyun Function Compute: [https://jzero-admin.jaronnie.com](https://jzero-admin.jaronnie.com)
-- Vercel: [https://admin.jzero.io](https://admin.jzero.io)
+- Vercel: [https://admin.pzero.io](https://admin.pzero.io)
 
 **GitHub**: [https://github.com/jzero-io/jzero-admin](https://github.com/jzero-io/jzero-admin)
 
 # In Conclusion
 
-**jzero's mission is to make Go development simpler and more efficient. If interested, join us to explore new possibilities in Go development!** 🎉
+**pzero's mission is to make Go development simpler and more efficient. If interested, join us to explore new possibilities in Go development!** 🎉
 
-**Find it useful? Please give jzero a ⭐ Star to support our continued improvement!**
+**Find it useful? Please give pzero a ⭐ Star to support our continued improvement!**

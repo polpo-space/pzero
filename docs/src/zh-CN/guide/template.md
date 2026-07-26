@@ -7,15 +7,15 @@ order: 5.3
 
 ## 模版初始化
 
-将jzero内嵌模版或者远程仓库的模版初始化到本地磁盘。
+将pzero内嵌模版或者远程仓库的模版初始化到本地磁盘。
 
 ```shell
-# 初始化jzero内嵌模板到 $HOME/.jzero/templates/$Version 下, 可以修改模板后再进行新建项目
-jzero template init
-# 或者初始化模板到当前项目的 .template, jzero gen 默认会优先读取当前项目的 .template 作为模板 home
-jzero template init --output .template
-# 初始化远程仓库模板到 $HOME/.jzero/templates/remote 下, 如 gateway, 
-jzero template init --branch gateway
+# 初始化pzero内嵌模板到 $HOME/.pzero/templates/$Version 下, 可以修改模板后再进行新建项目
+pzero template init
+# 或者初始化模板到当前项目的 .template, pzero gen 默认会优先读取当前项目的 .template 作为模板 home
+pzero template init --output .template
+# 初始化远程仓库模板到 $HOME/.pzero/templates/remote 下, 如 gateway,
+pzero template init --branch gateway
 
 # 如果仍需要扩展 go-zero 的 template
 goctl template init --home .template/go-zero
@@ -26,26 +26,26 @@ goctl template init --home .template/go-zero
 * 指定远程仓库模板
 
 ```shell
-jzero new project_name --remote repo_to_your_templates --branch template_branch
+pzero new project_name --remote repo_to_your_templates --branch template_branch
 # 从缓存获取远程模板
-jzero new project_name --remote repo_to_your_templates --branch template_branch --cache
+pzero new project_name --remote repo_to_your_templates --branch template_branch --cache
 ```
 
 * 使用本地模版
 
 ```shell
-jzero new project_name --local template_name
+pzero new project_name --local template_name
 ```
 
 * 使用路径模版
 
 ```shell
-jzero new project_name --home path_to_template
+pzero new project_name --home path_to_template
 ```
 
 ## 模版渲染与变量
 
-`jzero new` 在生成项目时，会同时渲染模板内容和模板路径：
+`pzero new` 在生成项目时，会同时渲染模板内容和模板路径：
 
 * `.tpl` 文件内容会作为 Go `text/template` 渲染
 * 文件名和目录名也会作为模板渲染，因此路径里同样可以使用 `{{ .APP }}`、`{{ .Module }}` 这类变量
@@ -61,17 +61,17 @@ internal/{{ .APP | lower }}/{{ FormatStyle .Style "service_context.go.tpl" }}
 
 ### 内置变量
 
-执行 `jzero new` 时，jzero 会向模板注入以下内置变量：
+执行 `pzero new` 时，pzero 会向模板注入以下内置变量：
 
 | 变量 | 类型 | 说明 |
 | --- | --- | --- |
-| `APP` | `string` | 项目名，来自 `jzero new <name>` 或 `--name` |
+| `APP` | `string` | 项目名，来自 `pzero new <name>` 或 `--name` |
 | `Module` | `string` | Go module 名称，来自 `--module`，未指定时默认与项目名一致 |
 | `GoVersion` | `string` | 当前 Go 版本 |
 | `GoArch` | `string` | 当前架构，如 `amd64`、`arm64` |
 | `DirName` | `string` | 输出目录名 |
 | `Style` | `string` | 文件命名风格，默认 `gozero` |
-| `Features` | `[]string` | `jzero new --features` 传入的特性列表 |
+| `Features` | `[]string` | `pzero new --features` 传入的特性列表 |
 | `Serverless` | `bool` | 是否以 serverless 模式创建项目 |
 
 例如：
@@ -89,12 +89,12 @@ module {{ .Module }}
 ```
 
 :::tip
-`jzero template build` 会自动把项目中的 `go.mod` module，以及 Go 代码里引用当前项目的 import 路径，改写成 `{{ .Module }}`。因此通过 `jzero template build` 构建出来的模板，至少可以直接复用 `Module` 变量。
+`pzero template build` 会自动把项目中的 `go.mod` module，以及 Go 代码里引用当前项目的 import 路径，改写成 `{{ .Module }}`。因此通过 `pzero template build` 构建出来的模板，至少可以直接复用 `Module` 变量。
 :::
 
 ### 内置函数
 
-模板底层使用 Go `text/template`，除了 `and`、`or`、`not`、`index` 这类内置函数，还可以直接使用 [sprig](https://masterminds.github.io/sprig/) 提供的很多常用函数，例如 `lower`、`upper`、`default`、`has`、`dict` 等。除此之外，jzero 还额外注册了以下函数：
+模板底层使用 Go `text/template`，除了 `and`、`or`、`not`、`index` 这类内置函数，还可以直接使用 [sprig](https://masterminds.github.io/sprig/) 提供的很多常用函数，例如 `lower`、`upper`、`default`、`has`、`dict` 等。除此之外，pzero 还额外注册了以下函数：
 
 | 函数 | 说明 |
 | --- | --- |
@@ -117,7 +117,7 @@ module {{ .Module }}
 可以通过全局参数 `--register-tpl-val key=value` 注入额外模板变量。注入后的值会合并到当前模板数据中，因此既可以在模板内容中使用，也可以在模板路径中使用。
 
 ```shell
-jzero new myapi --local myapi \
+pzero new myapi --local myapi \
   --register-tpl-val company=acme \
   --register-tpl-val owner=platform
 ```
@@ -136,7 +136,7 @@ Owner: {{ .owner }}
 internal/{{ .company }}/banner.txt.tpl
 ```
 
-如果你希望长期复用这些变量，也可以写到 `.jzero.yaml`：
+如果你希望长期复用这些变量，也可以写到 `.pzero.yaml`：
 
 ```yaml
 register-tpl-val:
@@ -148,39 +148,39 @@ register-tpl-val:
 
 * 自定义注入变量与内置变量同名时，会覆盖原来的值
 * 当前参数按 `key=value` 解析，建议 value 中不要再包含 `=`
-* `--register-tpl-val` 是全局参数，不只 `jzero new` 可用；其他使用 jzero 模板渲染的命令也会额外合并这些变量，但不同命令自带的内置变量并不完全相同
+* `--register-tpl-val` 是全局参数，不只 `pzero new` 可用；其他使用 pzero 模板渲染的命令也会额外合并这些变量，但不同命令自带的内置变量并不完全相同
 
 ## 实战: 构建属于自己的模版
 
-:::tip 可以将当前任意项目转换成 jzero 模板, 这非常 cool!
+:::tip 可以将当前任意项目转换成 pzero 模板, 这非常 cool!
 :::
 
 ```bash
 # 新增一个 api 项目
-jzero new simpleapi
+pzero new simpleapi
 # 进入项目
 cd simpleapi
 # 新增一个 api
-jzero add api helloworld
+pzero add api helloworld
 # 生成代码
-jzero gen
+pzero gen
 
-# 将当前项目构建为模版, 并保存到 $HOME/.jzero/templates/local/myapi 下
-jzero template build --name myapi
+# 将当前项目构建为模版, 并保存到 $HOME/.pzero/templates/local/myapi 下
+pzero template build --name myapi
 
 # 此时就可以使用你自己构建的模板了, 你会发现生成的项目自动拥有了 helloworld api 了.
-jzero new mysimpleapi --local myapi
+pzero new mysimpleapi --local myapi
 
 # 但是你发现该模板仅允许本地使用, 为了达到通用的效果
 # 你可以在远程仓库如 github 创建一个 templates 仓库(假设为 https://github.com/jzero-io/templates)
-# 然后将 $HOME/.jzero/templates/local/myapi 下的内容放到仓库中, 并上传到 myapi 分支
-jzero new project_name --remote https://github.com/jzero-io/templates --branch myapi
+# 然后将 $HOME/.pzero/templates/local/myapi 下的内容放到仓库中, 并上传到 myapi 分支
+pzero new project_name --remote https://github.com/jzero-io/templates --branch myapi
 ```
 
 模板结构如下:
 
 ```bash
-$ tree ~/.jzero/templates/local/myapi
+$ tree ~/.pzero/templates/local/myapi
 └── app
     ├── Dockerfile.tpl
     ├── README.md.tpl

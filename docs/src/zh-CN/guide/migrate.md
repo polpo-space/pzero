@@ -5,8 +5,8 @@ star: true
 order: 5.5
 ---
 
-* jzero 基于 [migrate](https://github.com/golang-migrate/migrate) 实现数据库迁移能力
-* jzero 默认检测 desc/sql_migration 目录下的文件, 执行迁移
+* pzero 基于 [migrate](https://github.com/golang-migrate/migrate) 实现数据库迁移能力
+* pzero 默认检测 desc/sql_migration 目录下的文件, 执行迁移
 * 参考 [最佳实践](https://github.com/golang-migrate/migrate/blob/master/MIGRATIONS.md) 如何编写数据库迁移文件
 
 ## 配置
@@ -21,28 +21,28 @@ migrate:
 
 ```shell
 # 默认升级到最新
-jzero migrate up
+pzero migrate up
 # 升级 n 个 migrations
-jzero migrate up 3
+pzero migrate up 3
 ```
 
 ## 回滚
 
 ```shell
 # 默认回滚所有
-jzero migrate down
+pzero migrate down
 # 回滚 n 个 migrations
-jzero migrate down 3
+pzero migrate down 3
 ```
 
 ## 获取版本
 
 ```shell
-jzero migrate version
+pzero migrate version
 ```
 
 ## 强制回滚到某个版本
 
 ```shell
-jzero migrate goto <your_version>
+pzero migrate goto <your_version>
 ```

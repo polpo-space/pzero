@@ -10,21 +10,21 @@ order: 5
 
 ::: code-tabs#shell
 
-@tab jzero cli
+@tab pzero cli
 
 ```bash
 cd your_project
-jzero gen swagger
+pzero gen swagger
 # merge into single swagger.json file
-jzero gen swagger --merge
+pzero gen swagger --merge
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 ```bash
 cd your_project
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen swagger
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen swagger
 # merge into single swagger.json file
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen swagger --merge
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen swagger --merge
 ```
 :::
 
@@ -37,26 +37,26 @@ docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen swagger --merge
 There are several scenarios for generating zrpc client:
 
 * Directly generate client code from server's proto file, share same go module with main service, other services need to reference entire source code to use (not recommended)
-* Copy server's proto file to referencing service, use `jzero gen zrpcclient` to generate to current project (recommended for simple scenarios)
+* Copy server's proto file to referencing service, use `pzero gen zrpcclient` to generate to current project (recommended for simple scenarios)
 * Directly generate client code from server's proto file, has independent go module, push to separate remote repository through CI process, other services directly go get to reference (recommended for large projects)
 
 ::: code-tabs#shell
 
-@tab jzero
+@tab pzero
 
 ```bash
 cd your_project
-jzero gen zrpcclient --output simplerpcclient
+pzero gen zrpcclient --output simplerpcclient
 # set zrpcclient as independent go module
-jzero gen zrpcclient --output simplerpcclient --goModule gitlab.xx.com/xx/simplerpcclient
+pzero gen zrpcclient --output simplerpcclient --goModule gitlab.xx.com/xx/simplerpcclient
 ```
 
 @tab Docker
 ```bash
 cd your_project
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen zrpcclient --output simplerpcclient
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen zrpcclient --output simplerpcclient
 # set zrpcclient as independent go module
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen zrpcclient --output simplerpcclient --goModule gitlab.xx.com/xx/simplerpcclient
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen zrpcclient --output simplerpcclient --goModule gitlab.xx.com/xx/simplerpcclient
 ```
 :::
 
@@ -93,11 +93,11 @@ func main() {
 
 ### Server calling other zrpcclient scenarios
 
-Recommend placing generated zrpcclient under third_party, and to distinguish server and client, recommend using separate .jzero.yaml to generate zrpcclient
+Recommend placing generated zrpcclient under third_party, and to distinguish server and client, recommend using separate .pzero.yaml to generate zrpcclient
 
 For example:
 
-`third_party/matchingclient/.jzero.yaml`
+`third_party/matchingclient/.pzero.yaml`
 
 ```yaml
 gen:
@@ -105,12 +105,12 @@ gen:
     output: .
 ```
 
-Execute `jzero gen zrpcclient` under `third_party/matchingclient`
+Execute `pzero gen zrpcclient` under `third_party/matchingclient`
 
 ```shell
 $ tree third_party/matchingclient -a
 third_party/matchingclient
-├── .jzero.yaml
+├── .pzero.yaml
 ├── clientset.go
 ├── desc
 │   └── proto

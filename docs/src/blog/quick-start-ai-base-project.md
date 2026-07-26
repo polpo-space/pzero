@@ -1,5 +1,5 @@
 ---
-title: "Build AI Base Project with jzero in One Click"
+title: "Build AI Base Project with pzero in One Click"
 icon: /icons/emojione-v1-rocket.svg
 description: "Quickly build enterprise-grade Go projects through standardized framework + AI-assisted business logic"
 ---
@@ -19,12 +19,12 @@ description: "Quickly build enterprise-grade Go projects through standardized fr
 
 ### Create Project
 
-jzero provides various project templates to meet different scenario requirements:
+pzero provides various project templates to meet different scenario requirements:
 
 #### 1️⃣ API Project (RESTful Service)
 
 ```bash
-jzero new myproject --frame api
+pzero new myproject --frame api
 ```
 
 **Use Cases**:
@@ -42,7 +42,7 @@ jzero new myproject --frame api
 #### 2️⃣ RPC Project (gRPC Service)
 
 ```bash
-jzero new myproject --frame rpc
+pzero new myproject --frame rpc
 ```
 
 **Use Cases**:
@@ -59,7 +59,7 @@ jzero new myproject --frame rpc
 #### 3️⃣ Gateway Project (API Gateway)
 
 ```bash
-jzero new myproject --frame gateway
+pzero new myproject --frame gateway
 ```
 
 **Use Cases**:
@@ -90,17 +90,17 @@ open http://localhost:8001/swagger
 
 ## On-Demand Enablement: Optional Feature Modules
 
-Your project might need databases, caching, and other features. jzero supports **on-demand enablement**:
+Your project might need databases, caching, and other features. pzero supports **on-demand enablement**:
 
 ```bash
 # Need database + Redis cache
-jzero new myproject --features model,redis
+pzero new myproject --features model,redis
 
 # Need database + database cache
-jzero new myproject --features model,cache
+pzero new myproject --features model,cache
 
 # Need database + Redis + database cache
-jzero new myproject --features model,redis,cache
+pzero new myproject --features model,redis,cache
 ```
 
 **Feature Description**:
@@ -113,13 +113,13 @@ jzero new myproject --features model,redis,cache
 
 ## 🏢 Custom Enterprise Templates
 
-jzero default templates only contain basic framework code, but enterprises typically need to include content like CI/CD pipeline integration. jzero supports custom templates to add enterprise-specific content.
+pzero default templates only contain basic framework code, but enterprises typically need to include content like CI/CD pipeline integration. pzero supports custom templates to add enterprise-specific content.
 
 ### Using Custom Templates
 
 ```bash
 # Create project using enterprise custom template
-jzero new myproject --template https://github.com/your-org/jzero-template --branch base
+pzero new myproject --template https://github.com/your-org/pzero-template --branch base
 ```
 
 ## From Base to Business: AI-Assisted Development in Action
@@ -128,11 +128,11 @@ With the AI base project, you only need to focus on business logic development. 
 
 ### Scenario: Develop User Registration Feature
 
-**Using jzero + AI Skills**:
+**Using pzero + AI Skills**:
 
 ```bash
 # Just one sentence
-"Use jzero-skills to create user registration feature, supporting username, email, password with validation and deduplication"
+"Use pzero-skills to create user registration feature, supporting username, email, password with validation and deduplication"
 ```
 
 **AI Automatically Completes**:
@@ -140,20 +140,20 @@ With the AI base project, you only need to focus on business logic development. 
 ```
 ✅ Generate desc/api/user.api
 ✅ Generate desc/sql/user.sql
-✅ Execute jzero gen to generate framework code
+✅ Execute pzero gen to generate framework code
 ✅ Implement Logic layer business logic
 ✅ Include complete validation and error handling
 ```
 
 ## Summary
 
-jzero makes Go project development easier than ever through **standardized framework + AI assistance**:
+pzero makes Go project development easier than ever through **standardized framework + AI assistance**:
 
 1. **Quick Start**: One command to create a project base with best practices
 2. **Flexible Customization**: Support custom enterprise templates to ensure unified team standards
 3. **AI Enhanced**: AI understands framework specifications and focuses on business logic implementation
 
-**Find it useful? Please give jzero a ⭐ Star to support our continued improvement!**
+**Find it useful? Please give pzero a ⭐ Star to support our continued improvement!**
 
-GitHub: [https://github.com/jzero-io/jzero](https://github.com/jzero-io/jzero)
-Jzero Website: [https://jzero.io](https://jzero.io)
+GitHub: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
+Pzero Website: [https://pzero.io](https://pzero.io)

@@ -18,7 +18,7 @@ export default hopeTheme({
   // favicon.ico made by https://www.bitbug.net
   logo: "https://oss.jaronnie.com/jzero.svg",
 
-  repo: "jzero-io/jzero",
+  repo: "polpo-space/pzero",
 
   docsDir: "docs/src",
 
@@ -130,7 +130,7 @@ export default hopeTheme({
     },
     comment: {
       provider: "Giscus",
-      repo: "jzero-io/jzero",
+      repo: "polpo-space/pzero",
       repoId: "R_kgDOLq1_9Q",
       category: "Announcements",
       categoryId: "DIC_kwDOLq1_9c4Cf5lp",

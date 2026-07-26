@@ -10,13 +10,13 @@ title: 首页
 
 ## 简介
 
-基于 [go-zero框架](https://github.com/zeromicro/go-zero) 以及 [go-zero/goctl工具](https://github.com/zeromicro/go-zero/tree/master/tools/goctl) 开发的 [jzero](https://github.com/jzero-io/jzero) 框架, 可一键初始化 api/gateway/rpc 项目。
+基于 [go-zero框架](https://github.com/zeromicro/go-zero) 以及 [go-zero/goctl工具](https://github.com/zeromicro/go-zero/tree/master/tools/goctl) 开发的 [pzero](https://github.com/polpo-space/pzero) 框架, 可一键初始化 api/gateway/rpc 项目。
 
-基于可描述文件(**api/proto/sql**)自动生成**服务端和客户端**框架代码, 基于内置的 jzero-skills 让 AI 生成符合最佳实践的业务逻辑代码，降低开发心智, 解放双手!
+基于可描述文件(**api/proto/sql**)自动生成**服务端和客户端**框架代码, 基于内置的 pzero-skills 让 AI 生成符合最佳实践的业务逻辑代码，降低开发心智, 解放双手!
 
 具备以下特点:
 
-* 支持通过**配置文件/命令行参数/环境变量**组合的方式灵活控制 jzero 的各项配置, 极简指令生成代码, ai 友好
+* 支持通过**配置文件/命令行参数/环境变量**组合的方式灵活控制 pzero 的各项配置, 极简指令生成代码, ai 友好
 * 支持基于 **git 对改动文件**生成代码, 支持对**指定描述文件**生成代码或**忽略指定描述文件**生成代码, 提升大型项目代码生成效率
 * 内置常用开发模板并增强模板特性, 支持**自定义模板**, 构建专属企业内部代码模板, 极大降低开发成本
 * 支持**插件化架构**, 功能模块可作为独立插件动态加载, 支持插件创建、编译和卸载, 完美适配团队协作和模块解耦
@@ -34,15 +34,15 @@ title: 首页
 ## 快速开始
 
 ::: code-tabs#shell
-@tab jzero cli
+@tab pzero cli
 
 ```bash
-# 安装 jzero
-go install github.com/jzero-io/jzero/cmd/jzero@latest
+# 安装 pzero
+go install github.com/polpo-space/pzero/cmd/pzero@latest
 # 一键安装所需的工具
-jzero check
+pzero check
 # 一键创建项目
-jzero new your_project
+pzero new your_project
 cd your_project
 # 下载依赖
 go mod tidy
@@ -52,11 +52,11 @@ go run main.go server
 http://localhost:8001/swagger
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 
 ```bash
 # 一键创建项目
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest new your_project
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project
 cd your_project
 # 下载依赖
 go mod tidy

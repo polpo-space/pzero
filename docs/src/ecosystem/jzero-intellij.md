@@ -4,9 +4,9 @@ icon: /icons/catppuccin-folder-admin.svg
 order: 2
 ---
 
-goland + jzero plugin greatly enhances development experience
+goland + pzero plugin greatly enhances development experience
 
-## Install jzero plugin
+## Install pzero plugin
 
 [Download](https://github.com/jzero-io/jzero-intellij/releases)
 
@@ -19,7 +19,7 @@ goland + jzero plugin greatly enhances development experience
 * api/proto file navigation to logic file
 * logic file navigation to api/proto file
 * Add execution button at line start of api/proto/sql files to generate code
-* Add execution button in .jzero.yaml file to generate code
+* Add execution button in .pzero.yaml file to generate code
 
 ## Demo
 
@@ -37,7 +37,7 @@ goland + jzero plugin greatly enhances development experience
 
 ### v1.1.0
 
-:::important requires jzero >= v1.1.0
+:::important requires pzero >= v1.1.0
 :::
 
 * Support navigation from logic file to api/proto file

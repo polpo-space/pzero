@@ -5,7 +5,7 @@ star: true
 order: 5.4
 ---
 
-jzero 支持插件化机制, 可以方便的进行插件的安装和卸载操作. 
+pzero 支持插件化机制, 可以方便的进行插件的安装和卸载操作.
 
 核心点在于**多模块协同开发**, 最终编译成**单体服务部署**.
 
@@ -13,15 +13,15 @@ jzero 支持插件化机制, 可以方便的进行插件的安装和卸载操作
 
 ```bash
 # 新增 api 项目
-jzero new simpleapi
+pzero new simpleapi
 # 进入项目目录
 cd simpleapi
 # 新增 api 项目插件(独立 go module)
-jzero new your_plugin --frame api --serverless
+pzero new your_plugin --frame api --serverless
 # 新增 api 项目插件(与主服务 simpleapi 共用 go module )
-jzero new your_mono_plugin --frame api --serverless --mono
+pzero new your_mono_plugin --frame api --serverless --mono
 # 执行 serverless build, 主服务接管插件路由(plugins/plugins.go)
-jzero serverless build
+pzero serverless build
 # 下载依赖
 go mod tidy
 # 大单体编译产物
@@ -32,10 +32,10 @@ go build
 
 ```shell
 # 卸载所有, 主服务不再接管插件路由
-jzero serverless delete
+pzero serverless delete
 
 # 卸载指定插件
-jzero serverless delete --plugin <plugin-name>
+pzero serverless delete --plugin <plugin-name>
 
 # 重新编译
 go build

@@ -4,26 +4,26 @@ icon: /icons/vscode-icons-folder-type-api-opened.svg
 order: 4
 ---
 
-jzero code generation command is extremely simple, only need `jzero gen` to automatically recognize all descriptor files/configurations and complete code generation.
+pzero code generation command is extremely simple, only need `pzero gen` to automatically recognize all descriptor files/configurations and complete code generation.
 
-After adding descriptor files with the `jzero add` command from the previous document, execute `jzero gen` to see the generated files.
+After adding descriptor files with the `pzero add` command from the previous document, execute `pzero gen` to see the generated files.
 
 ## Generate code
 
 ::: code-tabs#shell
 
-@tab jzero
+@tab pzero
 
 ```bash
 cd your_project
-jzero gen
+pzero gen
 ```
 
 @tab Docker
 
 ```bash
 cd your_project
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen
 ```
 :::
 
@@ -33,23 +33,23 @@ docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen
 :::
 
 ```shell
-jzero gen --git-change
+pzero gen --git-change
 ```
 
 ## Generate code for specific desc
 
 ```shell
-jzero gen --desc desc/api/xx.api
-jzero gen --desc desc/proto/xx.proto
-jzero gen --desc desc/sql/xx.sql
+pzero gen --desc desc/api/xx.api
+pzero gen --desc desc/proto/xx.proto
+pzero gen --desc desc/sql/xx.sql
 ```
 
 ## Ignore specific desc when generating code
 
 ```shell
-jzero gen --desc-ignore desc/api/xx.api
-jzero gen --desc-ignore desc/proto/xx.proto
-jzero gen --desc-ignore desc/sql/xx.sql
+pzero gen --desc-ignore desc/api/xx.api
+pzero gen --desc-ignore desc/proto/xx.proto
+pzero gen --desc-ignore desc/sql/xx.sql
 ```
 
-For more usage, see: [jzero guide](../guide/jzero.md)
+For more usage, see: [pzero guide](../guide/pzero.md)

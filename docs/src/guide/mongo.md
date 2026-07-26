@@ -7,9 +7,9 @@ order: 5
 
 ## Introduction
 
-jzero supports generating code to `internal/mongo` by specifying mongo type.
+pzero supports generating code to `internal/mongo` by specifying mongo type.
 
-For easier usage, jzero automatically generates `internal/mongo/model.go` file to register all generated mongo models.
+For easier usage, pzero automatically generates `internal/mongo/model.go` file to register all generated mongo models.
 
 ## Features
 
@@ -29,5 +29,5 @@ gen:
 ```
 
 ```shell
-jzero gen
+pzero gen
 ```

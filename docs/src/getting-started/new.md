@@ -12,22 +12,22 @@ Templates help you quickly start initializing a project without writing code fro
 
 ## Template Types
 
-jzero provides the following types of templates to meet various scenarios:
+pzero provides the following types of templates to meet various scenarios:
 
 * Built-in template(frame): Built-in template providing core framework capabilities, supports optional features (database/cache)
 * Path template(home): Specify a path as a template, usually placed inside a specific project to meet specific project needs
-* Local template(local): Local global template located in ~/.jzero/templates/local folder
+* Local template(local): Local global template located in ~/.pzero/templates/local folder
 * Remote repository template(remote+branch): Can be used to build enterprise-specific remote template repositories
 
 For detailed usage, see: [Template Guide](../guide/template.md)
 
 ## Template market
 
-If built-in frames such as `api`, `rpc`, and `gateway` are not enough, visit the [jzero Template Market](https://templates.jzero.io).
+If built-in frames such as `api`, `rpc`, and `gateway` are not enough, visit the [pzero Template Market](https://templates.jzero.io).
 
 The template market is the entry for discovering built-in templates, official external templates, and third-party templates. You can use it to quickly find the source repository, usage guide, and recommended initialization command for a template.
 
-For official external templates, `jzero new` usually only needs the `--branch` parameter because the default remote repository already points to `https://github.com/jzero-io/templates`.
+For official external templates, `pzero new` usually only needs the `--branch` parameter because the default remote repository already points to `https://github.com/jzero-io/templates`.
 
 Quick links:
 
@@ -37,25 +37,25 @@ Quick links:
 
 ```shell
 # Official CLI template
-jzero new mycli --branch cli
+pzero new mycli --branch cli
 
 # Official Vercel API template
-jzero new myvercel --branch api-vercel
+pzero new myvercel --branch api-vercel
 
 # Third-party or private template
-jzero new your_project --remote <template-repo> --branch <template-branch>
+pzero new your_project --remote <template-repo> --branch <template-branch>
 ```
 
-For more template details and examples, see the [jzero Template Market](https://templates.jzero.io) and [Template Guide](../guide/template.md).
+For more template details and examples, see the [pzero Template Market](https://templates.jzero.io) and [Template Guide](../guide/template.md).
 
 ## Initialize api project
 
 ::: code-tabs#shell
 
-@tab jzero cli
+@tab pzero cli
 
 ```bash
-jzero new your_project --frame api
+pzero new your_project --frame api
 cd your_project
 # download dependencies
 go mod tidy
@@ -65,10 +65,10 @@ go run main.go server
 http://localhost:8001/swagger
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 
 ```bash
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest new your_project --frame api
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project --frame api
 cd your_project
 # download dependencies
 go mod tidy
@@ -83,10 +83,10 @@ http://localhost:8001/swagger
 
 ::: code-tabs#shell
 
-@tab jzero cli
+@tab pzero cli
 
 ```bash
-jzero new your_project --frame rpc
+pzero new your_project --frame rpc
 cd your_project
 # download dependencies
 go mod tidy
@@ -94,10 +94,10 @@ go mod tidy
 go run main.go server
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 
 ```bash
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest new your_project --frame rpc
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project --frame rpc
 cd your_project
 # download dependencies
 go mod tidy
@@ -113,10 +113,10 @@ go run main.go server
 
 ::: code-tabs#shell
 
-@tab jzero cli
+@tab pzero cli
 
 ```bash
-jzero new your_project --frame gateway
+pzero new your_project --frame gateway
 cd your_project
 # download dependencies
 go mod tidy
@@ -126,10 +126,10 @@ go run main.go server
 http://localhost:8001/swagger
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 
 ```bash
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest new your_project --frame gateway
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project --frame gateway
 cd your_project
 # download dependencies
 go mod tidy
@@ -146,14 +146,14 @@ Based on optional features, provides a complete solution for using model/redis/m
 
 ```shell
 # Use case: need to connect to relational database(model) with database cache(cache), redis
-jzero new your_project --features model,cache,redis
+pzero new your_project --features model,cache,redis
 
 # Use case: need to connect to relational database(model), redis
-jzero new your_project --features model,redis
+pzero new your_project --features model,redis
 
 # Use case: need to connect to relational database(model) with database cache(cache)
-jzero new your_project --features model,cache
+pzero new your_project --features model,cache
 
 # Use case: need to connect to relational database(model)
-jzero new your_project --features model
+pzero new your_project --features model
 ```

@@ -1,5 +1,5 @@
 ---
-title: 解放双手！jzero 让 Go 开发效率提升 10 倍
+title: 解放双手！pzero 让 Go 开发效率提升 10 倍
 icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 ---
 
@@ -15,27 +15,27 @@ icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 
 ---
 
-## 什么是 jzero？
+## 什么是 pzero？
 
-**jzero** 是基于 go-zero 框架开发的增强型开发工具：
+**pzero** 是基于 go-zero 框架开发的增强型开发工具：
 
 🏗️ **通过模板生成基础框架代码**：基于描述文件自动生成框架代码（api → api 框架代码、proto → proto 框架代码、sql/远程数据库地址 → model 代码）
 
-🤖 **通过 Agent Skills 生成业务代码**：内置 jzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
+🤖 **通过 Agent Skills 生成业务代码**：内置 pzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
 
 **核心价值与设计理念**：
 
 - ✅ **开发体验优先**：提供简单好用的一站式生产可用解决方案，一键初始化 api/rpc/gateway 项目，极简指令生成基础框架代码
-- ✅ **AI 赋能**：内置 jzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
+- ✅ **AI 赋能**：内置 pzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
 - ✅ **模板驱动**：默认生成即最佳实践，支持自定义模板，可基于远程模板仓库打造企业专属底座
 - ✅ **插件化架构**：模块分层、插件设计，团队协作更顺畅
-- ✅ **内置开发组件**：包含缓存(cache)、数据库迁移(migrate)、配置中心(configcenter)、数据库查询(condition)等常用工具
+- ✅ **内置开发组件**：包含缓存(cache)、数据库迁移(migrate)、数据库查询(condition)等常用工具
 - ✅ **生态兼容**：不修改 go-zero，保持生态兼容，解决已有痛点问题并扩展新功能
 - ✅ **接口灵活**：不依赖特定数据库/缓存/配置中心，可根据实际需求自由选择
 
 ---
 
-github 地址: [https://github.com/jzero-io/jzero](https://github.com/jzero-io/jzero)
+github 地址: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
 
 文档地址: [https://docs.jzero.io](https://docs.jzero.io)
 
@@ -93,7 +93,7 @@ syntax = "proto3";
 package user;
 option go_package = "./types/user";
 
-// 引入 jzero 扩展
+// 引入 pzero 扩展
 import "jzero/api/http.proto";
 import "jzero/api/zrpc.proto";
 
@@ -200,25 +200,25 @@ CREATE TABLE `user` (
 
 ```bash
 # 只生成 git 改动的文件对应的代码
-jzero gen --git-change
+pzero gen --git-change
 
 # 指定文件生成
-jzero gen --desc desc/api/user.api
+pzero gen --desc desc/api/user.api
 ```
 
 **灵活配置**，告别复杂指令：
 
 支持多种配置方式自由组合：
-- ✅ 配置文件（.jzero.yaml）
+- ✅ 配置文件（.pzero.yaml）
 - ✅ 命令行参数
 - ✅ 环境变量
 
 ```bash
-# 默认配置 .jzero.yaml
-jzero gen
+# 默认配置 .pzero.yaml
+pzero gen
 
 # 指定配置文件
-jzero gen --config .jzero.dev.yaml
+pzero gen --config .pzero.dev.yaml
 ```
 
 本地开发、测试、生产环境一键切换！
@@ -226,14 +226,14 @@ jzero gen --config .jzero.dev.yaml
 **Hooks 配置**：支持在代码生成前后执行自定义脚本
 
 ```yaml
-# .jzero.yaml
+# .pzero.yaml
 
 # 全局 hooks
 hooks:
   before:
-    - echo "执行 jzero 指令前执行"
+    - echo "执行 pzero 指令前执行"
   after:
-    - echo "执行 jzero 指令后执行"
+    - echo "执行 pzero 指令后执行"
 
 # gen 指令配置
 gen:
@@ -248,29 +248,29 @@ gen:
 
 ## 通过 Agent Skills 生成业务代码
 
-基于 jzero-skills，让 AI 自动生成符合最佳实践的业务代码：
+基于 pzero-skills，让 AI 自动生成符合最佳实践的业务代码：
 
 ```bash
 # 输出 AI Skills 配置到 Claude（默认 ~/.claude/skills）
-jzero skills init
+pzero skills init
 
 # 输出到当前项目
-jzero skills init --output .claude/skills
+pzero skills init --output .claude/skills
 
-# 在 Claude 中用自然语言描述需求, 推荐使用 jzero-skills 开头
+# 在 Claude 中用自然语言描述需求, 推荐使用 pzero-skills 开头
 ```
 
 **AI 能帮你做什么**：
 
 **REST API 开发**：
 - ✅ 自动编写符合规范的 `.api` 文件（设置 `go_package`、`group`、`compact_handler`）
-- ✅ 自动执行 `jzero gen --desc desc/api/xxx.api` 生成框架代码
+- ✅ 自动执行 `pzero gen --desc desc/api/xxx.api` 生成框架代码
 - ✅ 自动实现 Logic 层业务逻辑，遵循 Handler → Logic → Model 三层架构
 
 **数据库操作**：
 - ✅ 自动创建 SQL 迁移文件（xx.up.sql & xx.down.sql）
-- ✅ 自动执行数据库迁移（`jzero migrate up`）
-- ✅ 自动生成 Model 代码（`jzero gen --desc desc/sql/xxx.sql`）
+- ✅ 自动执行数据库迁移（`pzero migrate up`）
+- ✅ 自动生成 Model 代码（`pzero gen --desc desc/sql/xxx.sql`）
 
 **RPC 服务开发**：
 - ✅ 自动编写 `.proto` 文件定义服务接口
@@ -290,24 +290,24 @@ jzero skills init --output .claude/skills
 
 ```bash
 # 创建 helloworld api 服务
-jzero new helloword --frame api
+pzero new helloword --frame api
 
 cd helloworld
 
 # 增加 api 插件
-jzero new plugin_name --frame api --serverless
+pzero new plugin_name --frame api --serverless
 
 # 增加 api 插件(mono类型，即使用 helloworld 的 go module)
-jzero new plugin_name_mono --frame api --serverless --mono
+pzero new plugin_name_mono --frame api --serverless --mono
 
 # 编译并加载所有插件
-jzero serverless build
+pzero serverless build
 
 # 卸载所有插件
-jzero serverless delete
+pzero serverless delete
 
 # 卸载指定插件
-jzero serverless delete --plugin plugin_name
+pzero serverless delete --plugin plugin_name
 ```
 
 **完美支持**：
@@ -321,19 +321,19 @@ jzero serverless delete --plugin plugin_name
 ## 快速体验，5 分钟上手
 
 ```bash
-# 1. 安装 jzero
-go install github.com/jzero-io/jzero/cmd/jzero@latest
+# 1. 安装 pzero
+go install github.com/polpo-space/pzero/cmd/pzero@latest
 
 # 2. 一键检查环境
-jzero check
+pzero check
 
 # 3. 创建项目
 # api 项目
-jzero new helloworld --frame api
+pzero new helloworld --frame api
 # rpc 项目
-jzero new helloworld --frame rpc
+pzero new helloworld --frame rpc
 # gateway 项目
-jzero new helloworld --frame gateway
+pzero new helloworld --frame gateway
 
 cd helloworld
 
@@ -360,7 +360,7 @@ go run main.go server
 - ✅ api 文件智能高亮
 - ✅ 文件跳转，api/proto 与 logic 文件互相跳转
 - ✅ 可描述文件行首执行按钮生成代码
-- ✅ 配置文件 .jzero.yaml 增加执行按钮生成代码
+- ✅ 配置文件 .pzero.yaml 增加执行按钮生成代码
 
 <video width="720" height="450" controls>
   <source src="https://oss.jaronnie.com/jzero-intellij.mp4" type="video/mp4">
@@ -370,7 +370,7 @@ go run main.go server
 
 ### jzero-admin 后台管理系统
 
-基于 jzero 的后台管理系统，内置 RBAC 权限管理，开箱即用
+基于 pzero 的后台管理系统，内置 RBAC 权限管理，开箱即用
 
 **核心特性**：
 - ✅ 完整权限系统(用户/菜单/角色)
@@ -387,12 +387,12 @@ go run main.go server
 **在线演示**：
 
 - 阿里云云函数：[https://jzero-admin.jaronnie.com](https://jzero-admin.jaronnie.com)
-- Vercel：[https://admin.jzero.io](https://admin.jzero.io)
+- Vercel：[https://admin.pzero.io](https://admin.pzero.io)
 
 **GitHub**：[https://github.com/jzero-io/jzero-admin](https://github.com/jzero-io/jzero-admin)
 
 # 写在最后
 
-**jzero 的使命是让 Go 开发更简单、更高效。如果有兴趣，可以加入我们，一起探索 Go 开发的新可能！** 🎉
+**pzero 的使命是让 Go 开发更简单、更高效。如果有兴趣，可以加入我们，一起探索 Go 开发的新可能！** 🎉
 
-**觉得有用？也请给 jzero 一个 ⭐ Star，支持我们继续改进！**
+**觉得有用？也请给 pzero 一个 ⭐ Star，支持我们继续改进！**

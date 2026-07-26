@@ -1,5 +1,5 @@
 ---
-title: AI 驱动的 Go 开发：jzero 如何让开发更高效更可靠
+title: AI 驱动的 Go 开发：pzero 如何让开发更高效更可靠
 icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 ---
 
@@ -43,12 +43,12 @@ AI：继续修改...
 - ❌ 不清楚框架的性能优化建议
 - ❌ 生成的代码像"外来的"，难以融入现有项目
 
-### jzero 如何解决这些问题
+### pzero 如何解决这些问题
 
 **通过 agent skills 中定义的工作流程以及最佳实践，减少用户与 AI 之间的"拉扯"**：
 
-1. **标准化工作流**：`api/proto/sql` → `jzero gen` → 框架代码 → AI 填充业务逻辑
-2. **完整的框架知识**：jzero-skills 包含框架最佳实践，AI 自动遵循
+1. **标准化工作流**：`api/proto/sql` → `pzero gen` → 框架代码 → AI 填充业务逻辑
+2. **完整的框架知识**：pzero-skills 包含框架最佳实践，AI 自动遵循
 3. **约束条件下发挥**：AI 在框架约束下智能填充，既高效又规范
 4. **一次生成即可用**：减少反复修改，代码质量有保障
 
@@ -56,19 +56,19 @@ AI：继续修改...
 - 🤖 **引擎二**（AI Skills 生成业务代码）：在框架约束下智能填充业务逻辑
 - 💥 **双剑合璧**：既享受 AI 的效率，又保证代码质量和可维护性
 
-## jzero 的双引擎开发模式
+## pzero 的双引擎开发模式
 
-jzero 双引擎模式将代码生成分为两个阶段，AI 先生成描述文件，再基于描述文件生成框架代码和业务逻辑：
+pzero 双引擎模式将代码生成分为两个阶段，AI 先生成描述文件，再基于描述文件生成框架代码和业务逻辑：
 
-**🏗️ jzero 双引擎架构**
+**🏗️ pzero 双引擎架构**
 
 ---
 
 **🔧 引擎一：基础框架代码生成**
 
-*   AI 生成 api 文件 → jzero 框架生成 Handler/Logic/Types
-*   AI 生成 proto 文件 → jzero 框架生成 Server/Logic/Pb
-*   AI 生成 sql 文件 → jzero 生成 Model 层通用方法代码
+*   AI 生成 api 文件 → pzero 框架生成 Handler/Logic/Types
+*   AI 生成 proto 文件 → pzero 框架生成 Server/Logic/Pb
+*   AI 生成 sql 文件 → pzero 生成 Model 层通用方法代码
 *   **特点**：标准化、可预测、符合最佳实践
 *   **速度**：秒级生成
 
@@ -94,15 +94,15 @@ jzero 双引擎模式将代码生成分为两个阶段，AI 先生成描述文�
 总计：2.5 小时
 ```
 
-**jzero 双引擎**（你只描述需求）：
+**pzero 双引擎**（你只描述需求）：
 ```
-需求 → AI 创建 .api → jzero 框架生成基础框架 → AI 生成业务逻辑
+需求 → AI 创建 .api → pzero 框架生成基础框架 → AI 生成业务逻辑
        1分钟         10秒            3-5分钟
 总计：7 分钟 ⚡
 ```
 
 **关键区别**：
-- 🔧 **引擎一**（jzero gen）：生成标准化框架代码，保证架构统一
+- 🔧 **引擎一**（pzero gen）：生成标准化框架代码，保证架构统一
 - 🤖 **引擎二**（AI Skills）：理解需求，智能填充业务逻辑
 - 💡 **你的角色**：从"代码搬运工"变成"架构师和业务专家"
 
@@ -115,7 +115,7 @@ jzero 双引擎模式将代码生成分为两个阶段，AI 先生成描述文�
 - ❌ **AI 不懂框架**：普通 AI 生成的代码需要大量调整才能融入项目
 - ❌ **效率瓶颈**：框架代码占用大量时间，真正用于业务逻辑的时间少
 
-**jzero 双引擎模式的优势**：
+**pzero 双引擎模式的优势**：
 
 | 维度 | 引擎一：框架生成 | 引擎二：AI Skills | 结合优势    |
 |------|----------------|------------------|---------|
@@ -133,7 +133,7 @@ jzero 双引擎模式将代码生成分为两个阶段，AI 先生成描述文�
 
 你的需求：
 ```
-jzero-skills 创建用户管理 api，支持：
+pzero-skills 创建用户管理 api，支持：
 1. 用户注册（用户名 3-20 位、邮箱验证、密码至少 8 位）
 2. 获取用户信息
 ```
@@ -225,10 +225,10 @@ AI 智能设计：
 
 ```bash
 # 1. 生成 Handler/Logic/Types（从 api 文件）
-jzero gen --desc desc/api/user.api
+pzero gen --desc desc/api/user.api
 
 # 2. 生成 Model 层（从 sql 文件）
-jzero gen --desc desc/sql/user.sql
+pzero gen --desc desc/sql/user.sql
 ```
 
 → 生成文件：
@@ -292,7 +292,7 @@ import (
     "net/http"
 
     "github.com/pkg/errors"
-    "github.com/jzero-io/jzero/core/stores/condition"
+    "github.com/polpo-space/pzero/core/stores/condition"
     usermodel "github.com/yourproject/internal/model/user"
     "github.com/zeromicro/go-zero/core/logx"
     "golang.org/x/crypto/bcrypt"
@@ -444,19 +444,19 @@ func (l *Get) Get(req *types.GetRequest) (resp *types.GetResponse, err error) {
 
 ### 📊 总结：双引擎协作的核心价值
 
-通过这个完整的例子，我们可以清楚地看到 jzero 双引擎模式的协作流程和价值：
+通过这个完整的例子，我们可以清楚地看到 pzero 双引擎模式的协作流程和价值：
 
 
 | 阶段 | 负责引擎 | 核心任务 | 输出成果 |
 |------|---------|---------|---------|
 | **描述文件生成** | 🤖 AI Skills | 理解需求，生成 api/sql 定义 | 规范的描述文件 |
-| **框架代码生成** | 🔧 jzero gen | 基于描述文件生成标准框架 | Handler/Logic/Model 空实现 |
+| **框架代码生成** | 🔧 pzero gen | 基于描述文件生成标准框架 | Handler/Logic/Model 空实现 |
 | **业务逻辑填充** | 🤖 AI Skills | 实现具体的业务逻辑 | 完整可用的功能代码 |
 
 **关键优势**
 
 ✅ **各司其职，发挥所长**
-   - 引擎一（jzero gen）：确保架构统一、代码规范、生成快速
+   - 引擎一（pzero gen）：确保架构统一、代码规范、生成快速
    - 引擎二（AI Skills）：理解业务、智能填充、处理复杂逻辑
 
 ✅ **质量与效率兼顾**
@@ -480,27 +480,27 @@ func (l *Get) Get(req *types.GetRequest) (resp *types.GetResponse, err error) {
 |---------|------|---------|---------|---------|
 | **纯手工开发** | 2.5 小时 | ⭐⭐⭐ | ❌ 不确定 | ⭐⭐ |
 | **传统 AI 辅助** | 30 分钟+ | ⭐⭐ | ❌ 不确定 | ⭐⭐ |
-| **jzero 双引擎** | 7 分钟 | ⭐⭐⭐⭐⭐ | ✅ 完全统一 | ⭐⭐⭐⭐⭐ |
+| **pzero 双引擎** | 7 分钟 | ⭐⭐⭐⭐⭐ | ✅ 完全统一 | ⭐⭐⭐⭐⭐ |
 
 **核心理念**
 
-jzero 双引擎模式体现了我们对 AI 辅助开发的核心观点：
+pzero 双引擎模式体现了我们对 AI 辅助开发的核心观点：
 
 > **AI 不应该替代开发者做架构决策，而应该在框架约束下智能填充业务逻辑。**
 
 
-### 思考: jzero 为何仅使用 skills 放弃 MCP
+### 思考: pzero 为何仅使用 skills 放弃 MCP
 
-在探索 AI 辅助开发的过程中，jzero 曾经尝试过集成 MCP (Model Context Protocol)。这是一个允许 AI 模型通过标准化协议访问外部工具和数据的协议。然而，经过深入实践和验证，我们最终决定放弃 MCP。
+在探索 AI 辅助开发的过程中，pzero 曾经尝试过集成 MCP (Model Context Protocol)。这是一个允许 AI 模型通过标准化协议访问外部工具和数据的协议。然而，经过深入实践和验证，我们最终决定放弃 MCP。
 
-**原因很简单：jzero 的代码生成流程本身就足够简单直接。**
+**原因很简单：pzero 的代码生成流程本身就足够简单直接。**
 
-**jzero 的核心设计理念**
+**pzero 的核心设计理念**
 
-jzero 从一开始就采用了一种极其简单的代码生成方式：
+pzero 从一开始就采用了一种极其简单的代码生成方式：
 
 ```
-描述文件 (api/sql/proto) → jzero gen → 完整的框架代码
+描述文件 (api/sql/proto) → pzero gen → 完整的框架代码
 ```
 
 这个流程的核心优势在于：
@@ -511,29 +511,29 @@ jzero 从一开始就采用了一种极其简单的代码生成方式：
 - proto 描述文件统一放在 `desc/proto/` 目录
 
 ✅ **一条命令搞定代码生成**
-- `jzero gen` // 自动扫描 api/proto/sql 生成代码
-- `jzero gen --desc desc/api/user.api` // 仅生成 user.api
-- `jzero gen --desc desc/proto/user.proto` // 仅生成 user.proto
-- `jzero gen --desc desc/sql/user.sql` // 仅生成 user.sql
+- `pzero gen` // 自动扫描 api/proto/sql 生成代码
+- `pzero gen --desc desc/api/user.api` // 仅生成 user.api
+- `pzero gen --desc desc/proto/user.proto` // 仅生成 user.proto
+- `pzero gen --desc desc/sql/user.sql` // 仅生成 user.sql
 
-对于 jzero 这样约定明确、命令简单的框架，**skills 比 mcp 更直接、更简单高效、更易用**。
+对于 pzero 这样约定明确、命令简单的框架，**skills 比 mcp 更直接、更简单高效、更易用**。
 
 ## 快速开始
 
 ```bash
-# 1. 安装 jzero
-go install github.com/jzero-io/jzero/cmd/jzero@latest
+# 1. 安装 pzero
+go install github.com/polpo-space/pzero/cmd/pzero@latest
 
-# 2. 初始化 jzero-skills
-jzero skills init
+# 2. 初始化 pzero-skills
+pzero skills init
 
 # 3. 创建项目
-jzero new simpleapi --frame api
+pzero new simpleapi --frame api
 
 # 4. 在 Claude Code 中描述需求
-# "使用 jzero-skills 创建一个用户管理 api..."
+# "使用 pzero-skills 创建一个用户管理 api..."
 ```
 
-**觉得有用？请给 jzero 一个 ⭐ Star，支持我们继续改进！**
+**觉得有用？请给 pzero 一个 ⭐ Star，支持我们继续改进！**
 
-GitHub: [https://github.com/jzero-io/jzero](https://github.com/jzero-io/jzero)
+GitHub: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)

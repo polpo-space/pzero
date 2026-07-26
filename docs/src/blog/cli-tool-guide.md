@@ -16,9 +16,9 @@ But have you ever struggled with creating a fully-functional CLI tool:
 
 ---
 
-💡 **First, let's introduce the jzero template market**
+💡 **First, let's introduce the pzero template market**
 
-jzero provides a rich collection of **official templates** and **third-party templates** to help you quickly build various types of projects:
+pzero provides a rich collection of **official templates** and **third-party templates** to help you quickly build various types of projects:
 
 **🚀 Built-in Templates**:
 - **RPC Template**: High-performance gRPC microservice framework based on Protocol Buffers
@@ -33,21 +33,21 @@ jzero provides a rich collection of **official templates** and **third-party tem
 **🌍 Third-party Templates**:
 - Contributions welcome! Share your own template to help more developers start projects quickly!
 
-Visit **[jzero Template Market](https://templates.jzero.io/)** for more template information and usage guides.
+Visit **[pzero Template Market](https://templates.jzero.io/)** for more template information and usage guides.
 
 ![](https://oss.jaronnie.com/image-20260409190255415.png)
 
 ---
 
-Today, we'll introduce how to use the **jzero CLI template** to rapidly build professional command-line tools!
+Today, we'll introduce how to use the **pzero CLI template** to rapidly build professional command-line tools!
 
 ![](https://oss.jaronnie.com/image-20260409190335125.png)
 
 ---
 
-## Why Choose jzero CLI Template?
+## Why Choose pzero CLI Template?
 
-The jzero CLI template is built on the industry-standard **Cobra framework**, providing an out-of-the-box project structure and best-practice configurations. Compared to building from scratch, using the jzero CLI template enables you to:
+The pzero CLI template is built on the industry-standard **Cobra framework**, providing an out-of-the-box project structure and best-practice configurations. Compared to building from scratch, using the pzero CLI template enables you to:
 
 ✅ **Quick Start**: Generate a complete project structure with one click, no tedious configuration needed  
 ✅ **Unified Standards**: Follow industry standards with clear, understandable command structure  
@@ -60,11 +60,11 @@ The jzero CLI template is built on the industry-standard **Cobra framework**, pr
 ## Quick Start: Create Your First CLI Tool in 3 Minutes
 
 ```bash
-# 1. Install jzero (if not already installed)
-go install github.com/jzero-io/jzero/cmd/jzero@latest
+# 1. Install pzero (if not already installed)
+go install github.com/polpo-space/pzero/cmd/pzero@latest
 
 # 2. Create a new CLI project
-jzero new mycli --branch cli
+pzero new mycli --branch cli
 
 cd mycli
 
@@ -105,7 +105,7 @@ mycli/
 
 ## Core Concepts: Three-Layer Command Structure
 
-The jzero CLI template is based on the Cobra framework, using a clear **three-layer command structure**:
+The pzero CLI template is based on the Cobra framework, using a clear **three-layer command structure**:
 
 ```
 Root Command
@@ -214,7 +214,7 @@ mycli --config file.yaml  # Specify configuration file
 
 ## Configuration Management: Flexible Multi-Layer Configuration
 
-The jzero CLI template provides a powerful configuration management system supporting three configuration methods:
+The pzero CLI template provides a powerful configuration management system supporting three configuration methods:
 
 ### Configuration Priority
 ```
@@ -240,7 +240,7 @@ greet:
 ### 2. Environment Variable Configuration
 
 
-The jzero CLI template automatically maps environment variables to configuration fields:
+The pzero CLI template automatically maps environment variables to configuration fields:
 
 ```bash
 # Set environment variables directly, auto-mapped to config
@@ -253,7 +253,7 @@ export MYCLI_GREET_NAME="Alice"
 
 Format: `{APP_PREFIX}_{CONFIG_PATH}`
 
-- `{APP_PREFIX}`: App name prefix (uppercase), e.g., `MYCLI`, `JZERO`
+- `{APP_PREFIX}`: App name prefix (uppercase), e.g., `MYCLI`, `PZERO`
 - `{CONFIG_PATH}`: Configuration path with `.` and `-` replaced by `_`
 
 Mapping examples:
@@ -274,7 +274,7 @@ Mapping examples:
 ---
 
 ## Unified Configuration Management
-The jzero CLI template provides a unified configuration management system where all configuration is managed through `internal/config/config.go`. It supports three methods: configuration files, environment variables, and command-line flags, with automatic priority-based loading.
+The pzero CLI template provides a unified configuration management system where all configuration is managed through `internal/config/config.go`. It supports three methods: configuration files, environment variables, and command-line flags, with automatic priority-based loading.
 
 Configuration priority: **Command-line flags > Environment variables > Configuration file**
 
@@ -402,7 +402,7 @@ export MYCLI_GREET_NAME="Charlie"
 
 ## Debug Mode: Developer's Best Friend
 
-The jzero CLI template includes comprehensive debug support:
+The pzero CLI template includes comprehensive debug support:
 
 ### Three Ways to Enable Debugging
 
@@ -435,7 +435,7 @@ export MYCLI_DEBUG=true
 
 ## Plugin System: Infinite Extension Possibilities
 
-The jzero CLI template supports a powerful plugin system, allowing your tool to dynamically extend functionality.
+The pzero CLI template supports a powerful plugin system, allowing your tool to dynamically extend functionality.
 
 ### Plugin Naming Rules
 
@@ -708,7 +708,7 @@ sudo mv mycli-docker.sh /usr/local/bin/mycli
 
 ## Complete Example
 
-To help you better understand how to build command-line tools using the jzero CLI template, we've created a complete demonstration project.
+To help you better understand how to build command-line tools using the pzero CLI template, we've created a complete demonstration project.
 
 **Project URL**: [https://github.com/jaronnie/mycli](https://github.com/jaronnie/mycli)
 
@@ -778,7 +778,7 @@ cd your-cli
 # Start developing!
 ```
 
-This project demonstrates best practices for the jzero CLI template and serves as an excellent starting point for learning CLI tool development.
+This project demonstrates best practices for the pzero CLI template and serves as an excellent starting point for learning CLI tool development.
 
 ![](https://oss.jaronnie.com/image-20260410115131704.png)
 
@@ -788,14 +788,14 @@ This project demonstrates best practices for the jzero CLI template and serves a
 
 ## Related Resources
 
-- **jzero GitHub**: [https://github.com/jzero-io/jzero](https://github.com/jzero-io/jzero)
-- **jzero Documentation**: [https://docs.jzero.io](https://docs.jzero.io)
+- **pzero GitHub**: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
+- **pzero Documentation**: [https://docs.jzero.io](https://docs.jzero.io)
 - **CLI Template**: [https://templates.jzero.io/external/cli/](https://templates.jzero.io/external/cli/)
 - **Cobra Documentation**: [https://github.com/spf13/cobra](https://github.com/spf13/cobra)
 - **Viper Documentation**: [https://github.com/spf13/viper](https://github.com/spf13/viper)
 
 ---
 
-**Let jzero CLI template be your capable assistant in the AI era!** 🚀
+**Let pzero CLI template be your capable assistant in the AI era!** 🚀
 
-**Find it useful? Please give jzero a ⭐ Star to support our continued improvement!**
+**Find it useful? Please give pzero a ⭐ Star to support our continued improvement!**

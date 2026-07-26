@@ -1,7 +1,7 @@
 {
-  "name": "jzero-docs",
+  "name": "pzero-docs",
   "version": "1.0.0",
-  "description": "jzero framework",
+  "description": "pzero framework",
   "license": "UnLicense",
   "type": "module",
   "scripts": {

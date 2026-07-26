@@ -10,21 +10,21 @@ order: 5
 
 ::: code-tabs#shell
 
-@tab jzero cli
+@tab pzero cli
 
 ```bash
 cd your_project
-jzero gen swagger
+pzero gen swagger
 # 合并成一个 swagger.json 文件
-jzero gen swagger --merge
+pzero gen swagger --merge
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 ```bash
 cd your_project
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen swagger
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen swagger
 # 合并成一个 swagger.json 文件
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen swagger --merge
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen swagger --merge
 ```
 :::
 
@@ -37,26 +37,26 @@ docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen swagger --merge
 生成 zrpc 客户端存在以下场景:
 
 * 直接对服务端的 proto 文件生成客户端代码, 与主服务共用一个 go module, 其他服务要引用时, 需要引用整个源码才能使用(不推荐)
-* 将服务端的 proto 文件复制到要引用的服务, 使用 `jzero gen zrpcclient` 生成到当前项目中(简单场景下推荐使用)
+* 将服务端的 proto 文件复制到要引用的服务, 使用 `pzero gen zrpcclient` 生成到当前项目中(简单场景下推荐使用)
 * 直接对服务端的 proto 文件生成客户端代码, 有独立的 go module, 通过 ci 流程推送到单独的远程仓库, 其他服务引用时直接 go get 引入(大型项目推荐)
 
 ::: code-tabs#shell
 
-@tab jzero
+@tab pzero
 
 ```bash
 cd your_project
-jzero gen zrpcclient --output simplerpcclient
+pzero gen zrpcclient --output simplerpcclient
 # 设置 zrpcclient 为独立 go module
-jzero gen zrpcclient --output simplerpcclient --goModule gitlab.xx.com/xx/simplerpcclient
+pzero gen zrpcclient --output simplerpcclient --goModule gitlab.xx.com/xx/simplerpcclient
 ```
 
 @tab Docker
 ```bash
 cd your_project
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen zrpcclient --output simplerpcclient
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen zrpcclient --output simplerpcclient
 # 设置 zrpcclient 为独立 go module
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest gen zrpcclient --output simplerpcclient --goModule gitlab.xx.com/xx/simplerpcclient
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen zrpcclient --output simplerpcclient --goModule gitlab.xx.com/xx/simplerpcclient
 ```
 :::
 
@@ -93,11 +93,11 @@ func main() {
 
 ### 服务端调用其他 zrpcclient 场景
 
-推荐将生成的 zrpcclient 放在 third_party 下, 并且为了区分服务端和客户端, 建议使用单独的 .jzero.yaml 生成 zrpcclient
+推荐将生成的 zrpcclient 放在 third_party 下, 并且为了区分服务端和客户端, 建议使用单独的 .pzero.yaml 生成 zrpcclient
 
 如:
 
-`third_party/matchingclient/.jzero.yaml`
+`third_party/matchingclient/.pzero.yaml`
 
 ```yaml
 gen:
@@ -105,12 +105,12 @@ gen:
     output: .
 ```
 
-在 `third_party/matchingclient` 下执行 `jzero gen zrpcclient`
+在 `third_party/matchingclient` 下执行 `pzero gen zrpcclient`
 
 ```shell
 $ tree third_party/matchingclient -a
 third_party/matchingclient
-├── .jzero.yaml
+├── .pzero.yaml
 ├── clientset.go
 ├── desc
 │   └── proto

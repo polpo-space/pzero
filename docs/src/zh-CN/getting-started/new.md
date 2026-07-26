@@ -12,22 +12,22 @@ order: 3
 
 ## 模板类型
 
-jzero 提供了以下几种类型模板, 满足各种场景:
+pzero 提供了以下几种类型模板, 满足各种场景:
 
 * 内置模板(frame): 内置模板, 提供框架核心能力, 支持可选特性(数据库/缓存)
 * 路径模板(home): 指定路径作为模板, 一般放入特定项目内部, 满足特定项目需要
-* 本地模板(local): 本地全局模板, 位于 ~/.jzero/templates/local 文件夹中
+* 本地模板(local): 本地全局模板, 位于 ~/.pzero/templates/local 文件夹中
 * 远程仓库模板(remote+branch): 可用来构建企业专属的远程模板仓库
 
 具体使用请参阅: [模板指南](../guide/template.md)
 
 ## 模板市场
 
-如果内置的 `api`、`rpc`、`gateway` 等框架模板无法满足需求，可以访问 [jzero 模板市场](https://templates.jzero.io)。
+如果内置的 `api`、`rpc`、`gateway` 等框架模板无法满足需求，可以访问 [pzero 模板市场](https://templates.jzero.io)。
 
 模板市场是发现内置模板、官方外置模板以及第三方模板的统一入口。你可以在这里快速找到模板对应的源码仓库、使用说明以及推荐的初始化命令。
 
-对于官方外置模板，`jzero new` 通常只需要传入 `--branch`，因为默认远程仓库已经指向 `https://github.com/jzero-io/templates`。
+对于官方外置模板，`pzero new` 通常只需要传入 `--branch`，因为默认远程仓库已经指向 `https://github.com/jzero-io/templates`。
 
 快捷跳转：
 
@@ -37,25 +37,25 @@ jzero 提供了以下几种类型模板, 满足各种场景:
 
 ```shell
 # 官方 CLI 模板
-jzero new mycli --branch cli
+pzero new mycli --branch cli
 
 # 官方 Vercel API 模板
-jzero new myvercel --branch api-vercel
+pzero new myvercel --branch api-vercel
 
 # 第三方或企业私有模板
-jzero new your_project --remote <template-repo> --branch <template-branch>
+pzero new your_project --remote <template-repo> --branch <template-branch>
 ```
 
-更多模板说明和示例请参阅 [jzero 模板市场](https://templates.jzero.io) 与 [模板指南](../guide/template.md)。
+更多模板说明和示例请参阅 [pzero 模板市场](https://templates.jzero.io) 与 [模板指南](../guide/template.md)。
 
 ## 初始化 api 项目
 
 ::: code-tabs#shell
 
-@tab jzero cli
+@tab pzero cli
 
 ```bash
-jzero new your_project --frame api
+pzero new your_project --frame api
 cd your_project
 # 下载依赖
 go mod tidy
@@ -65,10 +65,10 @@ go run main.go server
 http://localhost:8001/swagger
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 
 ```bash
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest new your_project --frame api
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project --frame api
 cd your_project
 # 下载依赖
 go mod tidy
@@ -83,10 +83,10 @@ http://localhost:8001/swagger
 
 ::: code-tabs#shell
 
-@tab jzero cli
+@tab pzero cli
 
 ```bash
-jzero new your_project --frame rpc
+pzero new your_project --frame rpc
 cd your_project
 # 下载依赖
 go mod tidy
@@ -94,10 +94,10 @@ go mod tidy
 go run main.go server
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 
 ```bash
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest new your_project --frame rpc
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project --frame rpc
 cd your_project
 # 下载依赖
 go mod tidy
@@ -113,10 +113,10 @@ go run main.go server
 
 ::: code-tabs#shell
 
-@tab jzero cli
+@tab pzero cli
 
 ```bash
-jzero new your_project --frame gateway
+pzero new your_project --frame gateway
 cd your_project
 # 下载依赖
 go mod tidy
@@ -126,10 +126,10 @@ go run main.go server
 http://localhost:8001/swagger
 ```
 
-@tab jzero Docker
+@tab pzero Docker
 
 ```bash
-docker run --rm -v ${PWD}:/app ghcr.io/jzero-io/jzero:latest new your_project --frame gateway
+docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project --frame gateway
 cd your_project
 # 下载依赖
 go mod tidy
@@ -146,14 +146,14 @@ http://localhost:8001/swagger
 
 ```shell
 # 使用场景: 需要连接关系型数据库(model)且包含数据库缓存(cache), redis
-jzero new your_project --features model,cache,redis
+pzero new your_project --features model,cache,redis
 
 # 使用场景: 需要连接关系型数据库(model), redis
-jzero new your_project --features model,redis
+pzero new your_project --features model,redis
 
 # 使用场景: 需要连接关系型数据库(model)且包含数据库缓存(cache)
-jzero new your_project --features model,cache
+pzero new your_project --features model,cache
 
 # 使用场景: 需要连接关系型数据库(model)
-jzero new your_project --features model
+pzero new your_project --features model
 ```

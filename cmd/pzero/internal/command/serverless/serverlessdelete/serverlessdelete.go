@@ -1,0 +1,124 @@
+package serverlessdelete
+
+import (
+	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/rinchsan/gosimports"
+	"github.com/samber/lo"
+	"golang.org/x/mod/modfile"
+
+	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/desc"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/mod"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/serverless"
+)
+
+func Run() ([]string, error) {
+	wd, _ := os.Getwd()
+	var items []string
+
+	plugins, err := serverless.GetPlugins()
+	if err != nil {
+		return nil, err
+	}
+
+	deletePlugins := plugins
+	var remainingPlugins []serverless.Plugin
+
+	for _, p := range config.C.Serverless.Delete.Plugin {
+		deletePlugins = lo.Reject(plugins, func(item serverless.Plugin, index int) bool {
+			return item.Path != filepath.ToSlash(filepath.Join("plugins", p))
+		})
+		remainingPlugins = lo.Filter(plugins, func(item serverless.Plugin, index int) bool {
+			return item.Path != filepath.ToSlash(filepath.Join("plugins", p))
+		})
+	}
+	for _, p := range deletePlugins {
+		items = appendUnique(items, p.Path)
+	}
+
+	if _, err := os.Stat("go.work"); err == nil {
+		goWork, _ := os.ReadFile("go.work")
+		work, err := modfile.ParseWork("", goWork, nil)
+		if err != nil {
+			return items, err
+		}
+		for _, p := range deletePlugins {
+			if !p.Mono {
+				if !strings.HasPrefix(p.Path, "./") {
+					p.Path = "./" + p.Path
+				}
+				if err = work.DropUse(p.Path); err != nil {
+					return items, err
+				}
+			}
+		}
+		if err = os.WriteFile("go.work", modfile.Format(work.Syntax), 0o644); err != nil {
+			return items, err
+		}
+		items = appendUnique(items, "go.work")
+		// reread
+		goWork, _ = os.ReadFile("go.work")
+		work, err = modfile.ParseWork("", goWork, nil)
+		if err != nil {
+			return items, err
+		}
+		if (len(work.Use) == 0) || (len(work.Use) == 1 && work.Use[0].Path == ".") {
+			_ = os.Remove("go.work")
+			_ = os.Remove("go.work.sum")
+		}
+	}
+
+	// write plugins/plugins.go
+	goMod, err := mod.GetGoMod(wd)
+	if err != nil {
+		return items, err
+	}
+
+	for i := 0; i < len(remainingPlugins); i++ {
+		if !plugins[i].Mono {
+			pluginGoMod, err := mod.GetGoMod(filepath.Join(wd, remainingPlugins[i].Path))
+			if err != nil {
+				return items, err
+			}
+			remainingPlugins[i].Module = pluginGoMod.Path
+		} else {
+			remainingPlugins[i].Module = filepath.ToSlash(filepath.Join(goMod.Path, "plugins", remainingPlugins[i].Name))
+		}
+	}
+
+	frameType, err := desc.GetFrameType()
+	if err != nil {
+		return items, err
+	}
+
+	pluginsGoBytes, err := templatex.ParseTemplate(filepath.ToSlash(filepath.Join("api", "serverless_plugins.go.tpl")), map[string]any{
+		"Plugins": remainingPlugins,
+		"Module":  goMod.Path,
+	}, embeded.ReadTemplateFile(filepath.ToSlash(filepath.Join(frameType, "serverless_plugins.go.tpl"))))
+	if err != nil {
+		return items, err
+	}
+	gosimports.LocalPrefix = goMod.Path
+	formatBytes, err := gosimports.Process("", pluginsGoBytes, nil)
+	if err != nil {
+		return items, err
+	}
+	if err := os.WriteFile(filepath.Join("plugins", "plugins.go"), formatBytes, 0o644); err != nil {
+		return items, err
+	}
+	return items, nil
+}
+
+func appendUnique(items []string, item string) []string {
+	for _, existing := range items {
+		if existing == item {
+			return items
+		}
+	}
+	return append(items, item)
+}

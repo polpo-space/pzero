@@ -18,4 +18,4 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/jzero-io/jzero
+        - github.com/polpo-space/pzero
