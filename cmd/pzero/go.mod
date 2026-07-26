@@ -2,8 +2,6 @@ module github.com/polpo-space/pzero/cmd/pzero
 
 go 1.25.0
 
-replace github.com/polpo-space/pzero => ../..
-
 require (
 	github.com/a8m/envsubst v1.4.3
 	github.com/dave/dst v0.27.3
