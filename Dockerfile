@@ -14,13 +14,8 @@ LABEL \
 WORKDIR /app
 
 COPY dist/pzero_linux_amd64_v1/pzero /dist/pzero_linux_amd64/pzero
-COPY dist/pzero_linux_arm64_v8.0/pzero /dist/pzero_linux_arm64/pzero
 
-RUN if [ `go env GOARCH` = "amd64" ]; then \
-      cp /dist/pzero_linux_amd64/pzero /usr/local/bin/pzero; \
-    elif [ `go env GOARCH` = "arm64" ]; then \
-      cp /dist/pzero_linux_arm64/pzero /usr/local/bin/pzero; \
-    fi
+RUN cp /dist/pzero_linux_amd64/pzero /usr/local/bin/pzero
 
 RUN apk update --no-cache \
   && apk add --no-cache tzdata ca-certificates protoc \

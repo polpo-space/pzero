@@ -19,9 +19,6 @@ jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-
       - name: Checkout
         uses: actions/checkout@v7
         with:
@@ -65,7 +62,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          platforms: linux/amd64, linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
