@@ -4,11 +4,6 @@
 [![GitHub release](https://img.shields.io/github/release/polpo-space/pzero.svg?style=flat-square)](https://github.com/polpo-space/pzero/releases/latest)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/polpo-space/pzero)
 
-<p align="center">
-<img align="center" width="300px" src="https://github.com/user-attachments/assets/44184df0-20ce-403d-ab38-74088915bc33">
-
-</p>
-
 ## 简介
 
 基于 [go-zero框架](https://github.com/zeromicro/go-zero) 以及 [go-zero/goctl工具](https://github.com/zeromicro/go-zero/tree/master/tools/goctl) 开发的 [pzero](https://github.com/polpo-space/pzero) 框架, 可一键初始化 api/gateway/rpc 项目。
@@ -60,23 +55,3 @@ go run main.go server
 # 访问 swagger ui
 http://localhost:8001/swagger
 ```
-
-## 贡献者
-
-[贡献](CONTRIBUTING.md)
-
-<a href="https://openomy.app/github/polpo-space/pzero" target="_blank" style="display: block; width: 100%;" align="center">
-  <img src="https://openomy.app/svg?repo=polpo-space/pzero&chart=bubble&latestMonth=3" target="_blank" alt="Contribution Leaderboard" style="display: block; width: 100%;" />
-</a>
-
-## Stargazers over time
-
-[![Star History Chart](https://api.star-history.com/svg?repos=polpo-space/pzero&type=Date)](https://star-history.com/#polpo-space/pzero&Date)
-
-## 免责声明
-
-pzero 基于 MIT License 发布，完全免费提供。作者及贡献者不对使用本软件所产生的任何直接或间接后果承担责任，包括但不限于性能下降、数据丢失、服务中断、或任何其他类型的损害。
-
-无任何保证：本软件不提供任何明示或暗示的保证，包括但不限于对特定用途的适用性、无侵权性、商用性及可靠性的保证。
-
-用户责任：使用本软件即表示您理解并同意承担由此产生的一切风险及责任。
