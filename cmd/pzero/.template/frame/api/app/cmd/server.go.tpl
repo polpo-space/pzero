@@ -31,7 +31,7 @@ var serverCmd = &cobra.Command{
 		logx.Must(logx.SetUp(c.Log.LogConf))
 
 		// print banner
-		printBanner(c.Banner)
+		printBanner(c.Rest.Name)
 		// print version
 		printVersion()
 
@@ -67,8 +67,8 @@ var serverCmd = &cobra.Command{
 	},
 }
 
-func printBanner(c config.BannerConf) {
-	figure.NewColorFigure(c.Text, c.FontName, c.Color, true).Print()
+func printBanner(serviceName string) {
+	figure.NewColorFigure(serviceName, "starwars", "green", false).Print()
 }
 
 func init() {

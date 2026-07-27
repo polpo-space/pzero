@@ -32,7 +32,7 @@ var serverCmd = &cobra.Command{
         // set up logger
         logx.Must(logx.SetUp(c.Log.LogConf))
 
-	    printBanner(c.Banner)
+	    printBanner(c.Zrpc.Name)
 	    printVersion()
 
 		{{ if has "model" .Features }}m, err := migrate.NewMigrate(c.Sqlx.SqlConf)
@@ -65,8 +65,8 @@ var serverCmd = &cobra.Command{
 	},
 }
 
-func printBanner(c config.BannerConf) {
-	figure.NewColorFigure(c.Text, c.FontName, c.Color, true).Print()
+func printBanner(serviceName string) {
+	figure.NewColorFigure(serviceName, "starwars", "green", false).Print()
 }
 
 func init() {
