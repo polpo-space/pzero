@@ -15,7 +15,6 @@ import (
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/gen/genapi"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/gen/genmodel"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/command/gen/genmongo"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/gen/genrpc"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/desc"
@@ -170,31 +169,6 @@ func Run() error {
 
 	if rpcErr != nil {
 		return rpcErr
-	}
-
-	pzeroMongo := genmongo.PzeroMongo{
-		Module: module,
-	}
-
-	// Only show mongo box if there are mongo types to generate
-	var mongoShown bool
-	if len(config.C.Gen.MongoType) > 0 {
-		if !config.C.Quiet {
-			title := console.Green("Gen") + " " + console.Yellow("mongo")
-			fmt.Printf("%s\n", console.BoxHeader("", title))
-			mongoShown = true
-		}
-		err = pzeroMongo.Gen()
-		if !config.C.Quiet && mongoShown {
-			if err != nil {
-				fmt.Printf("%s\n\n", console.BoxErrorFooter())
-			} else {
-				fmt.Printf("%s\n\n", console.BoxSuccessFooter())
-			}
-		}
-		if err != nil {
-			return err
-		}
 	}
 
 	// 收集并保存元数据（复用已解析的数据）

@@ -13,7 +13,6 @@ pzero 根据可描述文件(desc)生成代码:
 亦可基于配置生成 model 代码:
 
 * model datasource: 通过远程数据源生成数据库代码. [使用指南](../guide/model.md)
-* mongo type: 通过指定 mongo type 生成 mongodb 代码. [使用指南](../guide/mongo.md)
 
 ## 新增 api 文件
 

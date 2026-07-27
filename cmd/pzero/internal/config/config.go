@@ -132,10 +132,6 @@ type GenConfig struct {
 		Expiry         int64  `mapstructure:"expiry"`
 		NotFoundExpiry int64  `mapstructure:"not-found-expiry"`
 	} `mapstructure:"model-cache-expiry-table"`
-	MongoType        []string `mapstructure:"mongo-type"`
-	MongoCache       bool     `mapstructure:"mongo-cache"`
-	MongoCachePrefix string   `mapstructure:"mongo-cache-prefix"`
-	MongoCacheType   []string `mapstructure:"mongo-cache-type"`
 
 	// Gen Sub Command
 	Swagger GenSwaggerConfig `mapstructure:"swagger"`

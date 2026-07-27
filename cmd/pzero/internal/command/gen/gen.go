@@ -115,10 +115,6 @@ func GetCommand() *cobra.Command {
 		genCmd.Flags().BoolP("model-cache", "", false, "goctl model cache")
 		genCmd.Flags().StringSliceP("model-cache-table", "", []string{"*"}, "goctl model cache tables")
 		genCmd.Flags().StringP("model-cache-prefix", "", "cache", "goctl model cache prefix")
-		genCmd.Flags().StringSliceP("mongo-type", "", []string{}, "mongo type name")
-		genCmd.Flags().BoolP("mongo-cache", "", false, " Generate code with cache prefix [optional]")
-		genCmd.Flags().StringP("mongo-cache-prefix", "", "cache", "mongo cache prefix")
-		genCmd.Flags().StringSliceP("mongo-cache-type", "", []string{"*"}, "mongo cache type names to enable caching")
 		genCmd.Flags().BoolP("rpc-client", "", false, "generate rpc client code")
 	}
 
