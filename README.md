@@ -4,11 +4,6 @@
 [![GitHub release](https://img.shields.io/github/release/polpo-space/pzero.svg?style=flat-square)](https://github.com/polpo-space/pzero/releases/latest)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/polpo-space/pzero)
 
-<p align="center">
-<img align="center" width="300px" src="https://github.com/user-attachments/assets/44184df0-20ce-403d-ab38-74088915bc33">
-
-</p>
-
 ## 简介
 
 基于 [go-zero框架](https://github.com/zeromicro/go-zero) 以及 [go-zero/goctl工具](https://github.com/zeromicro/go-zero/tree/master/tools/goctl) 开发的 [pzero](https://github.com/polpo-space/pzero) 框架, 可一键初始化 api/gateway/rpc 项目。
