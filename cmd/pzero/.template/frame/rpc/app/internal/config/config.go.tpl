@@ -15,7 +15,6 @@ type Config struct {
 	{{ if has "model" .Features }}Sqlx SqlxConf{{ end }}
     {{ if has "redis" .Features }}Redis RedisConf{{ end }}
     {{ if has "cache" .Features }}Cache CacheConf{{ end }}
-	Banner BannerConf
 }
 
 type ZrpcConf struct {
@@ -37,9 +36,3 @@ type LogConf struct {
 	NotFoundExpiry int64 `json:",default=60000"` // 默认 60s
 	Redis         cache.CacheConf
 }{{ end }}
-
-type BannerConf struct {
-	Text     string `json:",default=PZERO"`
-	Color    string `json:",default=green"`
-	FontName string `json:",default=starwars,options=big|larry3d|starwars|standard"`
-}
