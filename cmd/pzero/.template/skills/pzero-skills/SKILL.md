@@ -1,6 +1,6 @@
 ---
 name: pzero-skills
-description: Comprehensive knowledge base for pzero framework (enhanced go-zero). Use this skill when working with pzero to understand correct patterns for REST APIs (Handler/Logic/Context architecture), RPC services (service discovery, load balancing), Gateway services, database operations (sqlx, MongoDB, caching), resilience patterns (circuit breaker, rate limiting), and pzero-specific features (git-change-based generation, flexible configuration, custom templates). Essential for generating production-ready pzero code that follows framework conventions.
+description: Comprehensive knowledge base for pzero framework (enhanced go-zero). Use this skill when working with pzero to understand correct patterns for REST APIs (Handler/Logic/Context architecture), RPC services (service discovery, load balancing), Gateway services, database operations (sqlx and caching), resilience patterns (circuit breaker, rate limiting), and pzero-specific features (git-change-based generation, flexible configuration, custom templates). Essential for generating production-ready pzero code that follows framework conventions.
 license: Apache-2.0
 ---
 

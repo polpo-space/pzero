@@ -13,7 +13,6 @@ pzero generates code based on descriptor files (desc):
 Can also generate model code based on configuration:
 
 * model datasource: Generate database code through remote datasource. [User guide](../guide/model.md)
-* mongo type: Generate mongodb code by specifying mongo type. [User guide](../guide/mongo.md)
 
 ## Add api file
 
