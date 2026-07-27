@@ -5,84 +5,65 @@
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/polpo-space/pzero)
 
 <p align="center">
-<img align="center" width="150px" src="https://oss.jaronnie.com/jzero.svg">
 <img align="center" width="300px" src="https://github.com/user-attachments/assets/44184df0-20ce-403d-ab38-74088915bc33">
 
 </p>
 
-**English** | **[简体中文](README.zh-CN.md)**
+## 简介
 
-## Introduction
+基于 [go-zero框架](https://github.com/zeromicro/go-zero) 以及 [go-zero/goctl工具](https://github.com/zeromicro/go-zero/tree/master/tools/goctl) 开发的 [pzero](https://github.com/polpo-space/pzero) 框架, 可一键初始化 api/gateway/rpc 项目。
 
-[pzero](https://github.com/polpo-space/pzero) is a framework developed based on the [go-zero framework](https://github.com/zeromicro/go-zero) and [go-zero/goctl tool](https://github.com/zeromicro/go-zero/tree/master/tools/goctl). It can initialize api/gateway/rpc projects with a single command.
+基于可描述文件(**api/proto/sql**)自动生成**服务端和客户端**框架代码, 基于内置的 pzero-skills 让 AI 生成符合最佳实践的业务逻辑代码，降低开发心智, 解放双手!
 
-Automatically generate **server and client** framework code based on descriptive files (**api/proto/sql**). With built-in pzero-skills, AI can generate business logic code that follows best practices, reducing development cognitive load and freeing your hands!
+具备以下特点:
 
-Key features:
+* 支持通过**配置文件/命令行参数/环境变量**组合的方式灵活控制 pzero 的各项配置, 极简指令生成代码, ai 友好
+* 支持基于 **git 对改动文件**生成代码, 支持对**指定描述文件**生成代码或**忽略指定描述文件**生成代码, 提升大型项目代码生成效率
+* 内置常用开发模板并增强模板特性, 支持**自定义模板**, 构建专属企业内部代码模板, 极大降低开发成本
 
-* Flexible control of pzero configurations through **configuration files/command-line arguments/environment variables**, simple commands to generate code, AI-friendly
-* Support generating code based on **git changed files**, support generating code for **specified descriptive files** or **ignoring specified descriptive files**, improving code generation efficiency for large projects
-* Built-in common development templates with enhanced template features, support for **custom templates**, building exclusive enterprise internal code templates, greatly reducing development costs
+## 设计理念
 
-For inherited framework documentation, see the [upstream jzero documentation](https://docs.jzero.io).
+* **开发体验**: 提供简单好用的一站式生产可用的解决方案, 提升开发体验感
+* **模板驱动**: 所有代码生成均基于模板渲染, 默认生成即最佳实践, 且支持自定义模板内容
+* **生态兼容**: 不修改 go-zero 和 go-zero/goctl, 保持生态兼容, 同时解决已有的痛点问题并扩展新的功能
+* **团队开发**: 通过模块**分层**, **插件**设计, 团队开发友好
+* **接口设计**: 不依赖特定数据库/缓存/配置中心等基础设施, 根据实际需求自由选择
 
-## Design Philosophy
-
-* **Developer Experience**: Provide a simple, easy-to-use, production-ready solution to enhance developer experience
-* **Template Driven**: All code generation is based on template rendering, default generation follows best practices, and supports custom template content
-* **Ecosystem Compatibility**: Does not modify go-zero and go-zero/goctl, maintains ecosystem compatibility, while solving existing pain points and extending new features
-* **Team Development**: Team development friendly through module **layering** and **plugin** design
-* **Interface Design**: No dependency on specific databases/caches/configuration centers and other infrastructure, choose freely according to actual needs
-
-For inherited framework documentation, see the [upstream jzero documentation](https://docs.jzero.io).
-
-## Quick Start
+## 快速开始
 
 ```shell
-# Install pzero
+# 安装 pzero
 go install github.com/polpo-space/pzero/cmd/pzero@latest
-# One-click install required tools
+# 一键安装所需的工具
 pzero check
-# One-click create project
+# 一键创建项目
 pzero new your_project
 cd your_project
-# Download dependencies
+# 下载依赖
 go mod tidy
-# Start server
+# 启动服务端程序
 go run main.go server
-# Access swagger ui
+# 访问 swagger ui
 http://localhost:8001/swagger
 ```
 
 ### docker
 
 ```shell
-# One-click create project
+# 一键创建项目
 docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project
 cd your_project
-# Download dependencies
+# 下载依赖
 go mod tidy
-# Start server
+# 启动服务端程序
 go run main.go server
-# Access swagger ui
+# 访问 swagger ui
 http://localhost:8001/swagger
 ```
 
-For more example code, please visit: https://github.com/jzero-io/examples
+## 贡献者
 
-## Ecosystem
-
-The inherited upstream ecosystem remains compatible:
-
-* jzero-intellij: https://github.com/jzero-io/jzero-intellij
-* jzero-admin: https://github.com/jzero-io/jzero-admin
-* templates: https://templates.jzero.io
-
-For more ecosystem, please visit: [https://docs.jzero.io/ecosystem/](https://docs.jzero.io/ecosystem/)
-
-## Contributors
-
-[Contribute](CONTRIBUTING.md)
+[贡献](CONTRIBUTING.md)
 
 <a href="https://openomy.app/github/polpo-space/pzero" target="_blank" style="display: block; width: 100%;" align="center">
   <img src="https://openomy.app/svg?repo=polpo-space/pzero&chart=bubble&latestMonth=3" target="_blank" alt="Contribution Leaderboard" style="display: block; width: 100%;" />
@@ -92,10 +73,10 @@ For more ecosystem, please visit: [https://docs.jzero.io/ecosystem/](https://doc
 
 [![Star History Chart](https://api.star-history.com/svg?repos=polpo-space/pzero&type=Date)](https://star-history.com/#polpo-space/pzero&Date)
 
-## Disclaimer
+## 免责声明
 
-pzero is released under the MIT License and is provided completely free of charge. The authors and contributors assume no liability for any direct or indirect consequences arising from the use of this software, including but not limited to performance degradation, data loss, service interruptions, or any other type of damage.
+pzero 基于 MIT License 发布，完全免费提供。作者及贡献者不对使用本软件所产生的任何直接或间接后果承担责任，包括但不限于性能下降、数据丢失、服务中断、或任何其他类型的损害。
 
-No Warranty: This software comes with no express or implied warranties, including but not limited to fitness for a particular purpose, non-infringement, merchantability, and reliability.
+无任何保证：本软件不提供任何明示或暗示的保证，包括但不限于对特定用途的适用性、无侵权性、商用性及可靠性的保证。
 
-User Responsibility: By using this software, you understand and agree to assume all risks and responsibilities associated with its use.
+用户责任：使用本软件即表示您理解并同意承担由此产生的一切风险及责任。
