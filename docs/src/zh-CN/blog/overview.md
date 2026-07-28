@@ -25,7 +25,7 @@ icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 
 **核心价值与设计理念**：
 
-- ✅ **开发体验优先**：提供简单好用的一站式生产可用解决方案，一键初始化 api/rpc/gateway 项目，极简指令生成基础框架代码
+- ✅ **开发体验优先**：提供简单好用的一站式生产可用解决方案，一键初始化 api/rpc 项目，极简指令生成基础框架代码
 - ✅ **AI 赋能**：项目自维护的 Agent Skills 让 AI 生成更贴合工程规范的业务逻辑代码
 - ✅ **模板驱动**：默认生成即最佳实践，支持自定义模板，可基于远程模板仓库打造企业专属底座
 - ✅ **清晰分层**：模块结构明确，团队协作边界更清楚
@@ -296,9 +296,6 @@ pzero check
 pzero new helloworld --frame api
 # rpc 项目
 pzero new helloworld --frame rpc
-# gateway 项目
-pzero new helloworld --frame gateway
-
 cd helloworld
 
 # 下载依赖

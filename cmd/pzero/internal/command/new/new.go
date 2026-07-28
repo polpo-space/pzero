@@ -66,6 +66,10 @@ var newCmd = &cobra.Command{
 }
 
 func runNewCommand(cmd *cobra.Command, args []string) error {
+	if config.C.New.Frame == "gateway" {
+		return errors.New("gateway project initialization has been removed; keep using pzero for existing gateway projects")
+	}
+
 	var app string
 	if len(args) > 0 {
 		app = args[0]
@@ -338,7 +342,7 @@ func GetCommand() *cobra.Command {
 	newCmd.Flags().StringP("name", "", "", "set project name")
 	newCmd.Flags().StringP("module", "m", "", "set go module")
 	newCmd.Flags().StringP("output", "o", "", "set output dir with project name")
-	newCmd.Flags().StringP("frame", "", "", "set frame such as api/rpc/gateway")
+	newCmd.Flags().StringP("frame", "", "", "set frame such as api/rpc")
 	newCmd.Flags().StringP("remote", "r", "https://github.com/jzero-io/templates", "remote templates repo")
 	newCmd.Flags().IntP("remote-timeout", "", 30, "remote templates repo timeout")
 	newCmd.Flags().StringP("remote-auth-username", "", "", "remote templates repo auth username")
