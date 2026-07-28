@@ -24,7 +24,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console/progress"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/osx"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/stringx"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/serverless"
 )
 
 func Gen() (err error) {
@@ -41,28 +40,10 @@ func Gen() (err error) {
 	}
 
 	if err = executeStage(
-		console.Green("Gen")+" "+console.Yellow("swagger plugin api"),
-		false,
-		showProgress,
-		runPluginAPISwagger,
-	); err != nil {
-		return err
-	}
-
-	if err = executeStage(
 		console.Green("Gen")+" "+console.Yellow("swagger proto"),
 		false,
 		showProgress,
 		runRegularProtoSwagger,
-	); err != nil {
-		return err
-	}
-
-	if err = executeStage(
-		console.Green("Gen")+" "+console.Yellow("swagger plugin proto"),
-		false,
-		showProgress,
-		runPluginProtoSwagger,
 	); err != nil {
 		return err
 	}
@@ -86,17 +67,7 @@ func runRegularAPISwagger(progressChan chan<- progress.Message) error {
 	if err != nil {
 		return err
 	}
-	regularFiles, _ := splitPluginPaths(files)
-	return runAPISwagger(regularFiles, progressChan)
-}
-
-func runPluginAPISwagger(progressChan chan<- progress.Message) error {
-	files, err := listSwaggerAPIFiles()
-	if err != nil {
-		return err
-	}
-	_, pluginFiles := splitPluginPaths(files)
-	return runAPISwagger(pluginFiles, progressChan)
+	return runAPISwagger(files, progressChan)
 }
 
 func runRegularProtoSwagger(progressChan chan<- progress.Message) error {
@@ -104,17 +75,7 @@ func runRegularProtoSwagger(progressChan chan<- progress.Message) error {
 	if err != nil {
 		return err
 	}
-	regularFiles, _ := splitPluginPaths(files)
-	return runProtoSwagger(regularFiles, progressChan)
-}
-
-func runPluginProtoSwagger(progressChan chan<- progress.Message) error {
-	files, err := listSwaggerProtoFiles()
-	if err != nil {
-		return err
-	}
-	_, pluginFiles := splitPluginPaths(files)
-	return runProtoSwagger(pluginFiles, progressChan)
+	return runProtoSwagger(files, progressChan)
 }
 
 func executeStage(title string, headerShown, showProgress bool, fn func(chan<- progress.Message) error) error {
@@ -198,19 +159,6 @@ func listSwaggerAPIFiles() ([]string, error) {
 				return nil, err
 			}
 		}
-
-		plugins, err := serverless.GetPlugins()
-		if err == nil {
-			for _, p := range plugins {
-				if pathx.FileExists(filepath.Join(p.Path, "desc", "api")) {
-					pluginFiles, err := desc.FindRouteApiFiles(filepath.Join(p.Path, "desc", "api"))
-					if err != nil {
-						return nil, err
-					}
-					files = append(files, pluginFiles...)
-				}
-			}
-		}
 	}
 
 	for _, v := range config.C.Gen.Swagger.DescIgnore {
@@ -243,33 +191,9 @@ func processSwaggerAPIFile(apiPath string) error {
 		return err
 	}
 
-	var relPath string
-
-	pluginName := getPluginNameFromFilePath(apiPath)
-	if pluginName != "" {
-		descApiPath := filepath.Join("desc", "api") + string(filepath.Separator)
-		descApiIndex := strings.Index(apiPath, descApiPath)
-		var pluginAPIDir string
-		if descApiIndex == -1 {
-			if strings.HasSuffix(filepath.Dir(apiPath), filepath.Join("desc", "api")) {
-				pluginAPIDir = filepath.Dir(apiPath)
-			} else {
-				return fmt.Errorf("invalid plugin api path: %s", apiPath)
-			}
-		} else {
-			pluginAPIDir = apiPath[:descApiIndex+len(descApiPath)]
-		}
-
-		relPath, err = filepath.Rel(pluginAPIDir, apiPath)
-		if err != nil {
-			return err
-		}
-		relPath = filepath.Join("plugins", pluginName, relPath)
-	} else {
-		relPath, err = filepath.Rel(config.C.ApiDir(), apiPath)
-		if err != nil {
-			return err
-		}
+	relPath, err := filepath.Rel(config.C.ApiDir(), apiPath)
+	if err != nil {
+		return err
 	}
 
 	swaggerFileName := strings.TrimSuffix(relPath, ".api") + ".swagger"
@@ -342,39 +266,7 @@ func processSwaggerAPIFile(apiPath string) error {
 			}
 
 			tags := cast.ToStringSlice(g.Get(fmt.Sprintf("paths.%s.%s.tags", pmk, pmmk)))
-			pluginName = getPluginNameFromFilePath(apiPath)
-
-			if pluginName != "" {
-				if len(tags) > 0 && !(len(tags) == 1 && tags[0] == "") {
-					var newTags []string
-					for _, tag := range tags {
-						if tag != "" {
-							newTags = append(newTags, "plugins/"+pluginName+"/"+tag)
-						}
-					}
-					if len(newTags) > 0 {
-						_ = g.Set(fmt.Sprintf("paths.%s.%s.tags", pmk, pmmk), newTags)
-					}
-				} else {
-					if goPackage != "" {
-						tagValue := "plugins/" + pluginName + "/" + goPackage
-						_ = g.Set(fmt.Sprintf("paths.%s.%s.tags", pmk, pmmk), []string{tagValue})
-					} else {
-						for _, group := range parse.Service.Groups {
-							for _, route := range group.Routes {
-								if group.GetAnnotation("prefix") != "" {
-									route.Path = group.GetAnnotation("prefix") + route.Path
-								}
-								if route.Method == pmmk && route.Path == adjustHttpPath(pmk) && group.GetAnnotation("group") != "" {
-									tagValue := "plugins/" + pluginName + "/" + group.GetAnnotation("group")
-									_ = g.Set(fmt.Sprintf("paths.%s.%s.tags", pmk, pmmk), []string{tagValue})
-									break
-								}
-							}
-						}
-					}
-				}
-			} else if len(tags) == 0 || (len(tags) == 1 && tags[0] == "") {
+			if len(tags) == 0 || (len(tags) == 1 && tags[0] == "") {
 				if goPackage != "" {
 					_ = g.Set(fmt.Sprintf("paths.%s.%s.tags", pmk, pmmk), []string{goPackage})
 				} else {
@@ -389,14 +281,6 @@ func processSwaggerAPIFile(apiPath string) error {
 							}
 						}
 					}
-				}
-			}
-
-			pluginName = getPluginNameFromFilePath(apiPath)
-			if pluginName != "" {
-				operationID := cast.ToString(g.Get(fmt.Sprintf("paths.%s.%s.operationId", pmk, pmmk)))
-				if operationID != "" {
-					_ = g.Set(fmt.Sprintf("paths.%s.%s.operationId", pmk, pmmk), "plugins/"+pluginName+"/"+operationID)
 				}
 			}
 
@@ -471,19 +355,6 @@ func listSwaggerProtoFiles() ([]string, error) {
 				return nil, err
 			}
 		}
-
-		plugins, err := serverless.GetPlugins()
-		if err == nil {
-			for _, p := range plugins {
-				if pathx.FileExists(filepath.Join(p.Path, "desc", "proto")) {
-					pluginFiles, err := desc.FindRpcServiceProtoFiles(filepath.Join(p.Path, "desc", "proto"))
-					if err != nil {
-						return nil, err
-					}
-					files = append(files, pluginFiles...)
-				}
-			}
-		}
 	}
 
 	for _, v := range config.C.Gen.Swagger.DescIgnore {
@@ -511,39 +382,12 @@ func listSwaggerProtoFiles() ([]string, error) {
 }
 
 func processSwaggerProtoFile(protoPath string) error {
-	pluginName := getPluginNameFromFilePath(protoPath)
-	var pluginProtoDir string
-	var outputDir string
-
-	if pluginName != "" {
-		protoDirPrefix := filepath.Join("", config.C.ProtoDir()) + string(filepath.Separator)
-		descProtoIndex := strings.Index(protoPath, protoDirPrefix)
-		if descProtoIndex == -1 {
-			if strings.HasSuffix(filepath.Dir(protoPath), filepath.Join("", config.C.ProtoDir())) {
-				pluginProtoDir = filepath.Dir(protoPath)
-			} else {
-				return fmt.Errorf("invalid plugin proto path: %s", protoPath)
-			}
-		} else {
-			pluginProtoDir = protoPath[:descProtoIndex+len(protoDirPrefix)]
-		}
-		outputDir = filepath.Join(config.C.Gen.Swagger.Output, "plugins", pluginName)
-	} else {
-		outputDir = config.C.Gen.Swagger.Output
-	}
-
+	outputDir := config.C.Gen.Swagger.Output
 	if err := os.MkdirAll(outputDir, 0o755); err != nil {
 		return err
 	}
 
 	var includeArgs []string
-	if pluginName != "" {
-		includeArgs = append(includeArgs, "-I"+pluginProtoDir)
-		pluginThirdParty := filepath.Join(pluginProtoDir, "third_party")
-		if pathx.FileExists(pluginThirdParty) {
-			includeArgs = append(includeArgs, "-I"+pluginThirdParty)
-		}
-	}
 	includeArgs = append(includeArgs, "-I"+config.C.ProtoDir())
 	includeArgs = append(includeArgs, "-I"+filepath.Join(config.C.ProtoDir(), "third_party"))
 
@@ -583,41 +427,7 @@ func hasSwaggerSourceInput() bool {
 			return true
 		}
 	}
-
-	plugins, err := serverless.GetPlugins()
-	if err != nil {
-		return false
-	}
-
-	for _, p := range plugins {
-		pluginAPIDir := filepath.Join(p.Path, "desc", "api")
-		if pathx.FileExists(pluginAPIDir) {
-			if files, err := desc.FindApiFiles(pluginAPIDir); err == nil && len(files) > 0 {
-				return true
-			}
-		}
-
-		pluginProtoDir := filepath.Join(p.Path, "desc", "proto")
-		if pathx.FileExists(pluginProtoDir) {
-			if files, err := desc.FindExcludeThirdPartyProtoFiles(pluginProtoDir); err == nil && len(files) > 0 {
-				return true
-			}
-		}
-	}
-
 	return false
-}
-
-func splitPluginPaths(files []string) (regular []string, plugin []string) {
-	for _, file := range files {
-		if getPluginNameFromFilePath(file) != "" {
-			plugin = append(plugin, file)
-			continue
-		}
-		regular = append(regular, file)
-	}
-
-	return regular, plugin
 }
 
 // mergeSwaggerFiles 递归扫描并合并所有的 swagger 文件
@@ -717,14 +527,3 @@ func adjustHttpPath(path string) string {
 	return path
 }
 
-func getPluginNameFromFilePath(filePath string) string {
-	if strings.Contains(filePath, "plugins"+string(filepath.Separator)) {
-		parts := strings.Split(filePath, string(filepath.Separator))
-		for i, part := range parts {
-			if part == "plugins" && i+1 < len(parts) {
-				return parts[i+1]
-			}
-		}
-	}
-	return ""
-}

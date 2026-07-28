@@ -78,10 +78,6 @@ func runNewCommand(cmd *cobra.Command, args []string) error {
 		quiet: config.C.Quiet,
 	}
 
-	if config.C.New.Serverless && config.C.New.Output != "" {
-		return stage.fail(errors.New("serverless mode not support output dir, must be in current project"))
-	}
-
 	if config.C.New.Output == "" {
 		if len(args) > 0 {
 			config.C.New.Output = args[0]
@@ -92,10 +88,6 @@ func runNewCommand(cmd *cobra.Command, args []string) error {
 		if pathx.FileExists(config.C.New.Output) {
 			return stage.fail(errors.Errorf("%s already exists", config.C.New.Output))
 		}
-	}
-
-	if config.C.New.Serverless {
-		config.C.New.Output = filepath.Join("plugins", config.C.New.Output)
 	}
 
 	if config.C.New.Module == "" {
@@ -214,8 +206,6 @@ func Run(appName, base string) error {
 		return err
 	}
 	templateData["Style"] = config.C.Style
-	templateData["Serverless"] = config.C.New.Serverless
-
 	jn := PzeroNew{
 		TemplateData: templateData,
 		nc:           config.C.New,
@@ -327,9 +317,6 @@ func (jn *PzeroNew) New(dirname string) ([]*GeneratedFile, error) {
 				}
 				// if ignore is dir
 				for _, v := range ignore {
-					if config.C.New.Serverless {
-						v = filepath.Join(config.C.New.Output, v)
-					}
 					if stat, err := os.Stat(v); err == nil && stat.IsDir() {
 						if filepath.ToSlash(filepath.Dir(string(stylePathBytes))) == filepath.ToSlash(v) {
 							return true
@@ -361,7 +348,6 @@ func GetCommand() *cobra.Command {
 	newCmd.Flags().StringP("local", "", "", "use local template")
 	newCmd.Flags().StringSliceP("features", "", []string{}, "set features such as model/cache/redis")
 	newCmd.Flags().BoolP("mono", "", false, "mono project under go mod project")
-	newCmd.Flags().BoolP("serverless", "", false, "create serverless project")
 	newCmd.Flags().BoolP("gen", "", true, "gen code after new project")
 	newCmd.Flags().StringSliceP("ignore", "", []string{}, "set ignore file")
 	newCmd.Flags().StringSliceP("ignore-extra", "", []string{}, "set ignore extra file")

@@ -28,7 +28,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/gen"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/migrate"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/new"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/command/serverless"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/skills"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/template"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/upgrade"
@@ -196,7 +195,6 @@ func init() {
 	rootCmd.AddCommand(gen.GetCommand())
 	rootCmd.AddCommand(migrate.GetCommand())
 	rootCmd.AddCommand(new.GetCommand())
-	rootCmd.AddCommand(serverless.GetCommand())
 	rootCmd.AddCommand(skills.GetCommand())
 	rootCmd.AddCommand(template.GetCommand())
 	rootCmd.AddCommand(upgrade.GetCommand())

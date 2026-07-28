@@ -1,4 +1,4 @@
-{{ if .Serverless }}{{else}}syntax = "v1"
+syntax = "v1"
 
 info (
     go_package: "version"
@@ -20,4 +20,4 @@ type VersionResponse {
 service {{ .APP | ToCamel }} {
     @handler Version
     get /api/version (VersionRequest) returns (VersionResponse)
-}{{end}}
+}

@@ -37,7 +37,7 @@ type Plugin struct {
 
 type Metadata struct {
 	Desc   Desc
-	Plugin Plugin // serverless plugin
+	Plugin Plugin
 }
 
 // New creates a new pzero cmd plugin with parsed API, Proto, and SQL specifications

@@ -1,4 +1,4 @@
-{{ if .Serverless }}{{else}}package versionlogic
+package versionlogic
 
 import (
 	"context"
@@ -32,4 +32,4 @@ func (l *Version) Version(in *version.VersionRequest) (*version.VersionResponse,
 		Commit:    os.Getenv("COMMIT"),
 		Date:      os.Getenv("DATE"),
 	}, nil
-}{{end}}
+}

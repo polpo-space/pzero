@@ -26,7 +26,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/mod"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/osx"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/serverless"
 )
 
 type DirContext struct {
@@ -35,11 +34,6 @@ type DirContext struct {
 	OptionGoPackage string
 	Resource        string
 	Output          string
-}
-
-type pluginProtoGroup struct {
-	Plugin serverless.Plugin
-	Files  []string
 }
 
 func (d DirContext) GetCall() generator.Dir {
@@ -113,31 +107,13 @@ func Generate(genModule bool) (err error) {
 		return err
 	}
 
-	pluginGroups, err := listZRPCClientPluginGroups()
-	if err != nil {
-		return err
-	}
-
 	if len(files) > 0 {
 		if err = executeStage(
 			console.Green("Gen")+" "+console.Yellow("zrpcclient"),
 			showProgress,
 			showProgress,
 			func(progressChan chan<- progress.Message) error {
-				return generateMainZRPCClient(genModule, files, len(pluginGroups) > 0, progressChan)
-			},
-		); err != nil {
-			return err
-		}
-	}
-
-	if len(pluginGroups) > 0 {
-		if err = executeStage(
-			console.Green("Gen")+" "+console.Yellow("zrpcclient plugin"),
-			showProgress,
-			showProgress,
-			func(progressChan chan<- progress.Message) error {
-				return generatePluginFiles(pluginGroups, progressChan)
+				return generateMainZRPCClient(genModule, files, progressChan)
 			},
 		); err != nil {
 			return err
@@ -152,16 +128,7 @@ func HasInput() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if len(files) > 0 {
-		return true, nil
-	}
-
-	pluginGroups, err := listZRPCClientPluginGroups()
-	if err != nil {
-		return false, err
-	}
-
-	return len(pluginGroups) > 0, nil
+	return len(files) > 0, nil
 }
 
 func executeStage(title string, headerShown, showProgress bool, fn func(chan<- progress.Message) error) error {
@@ -242,41 +209,10 @@ func listZRPCClientProtoFiles() ([]string, error) {
 		}
 	}
 
-	files = lo.Reject(files, func(item string, _ int) bool {
-		return getPluginNameFromFilePath(item) != ""
-	})
-
 	return files, nil
 }
 
-func listZRPCClientPluginGroups() ([]pluginProtoGroup, error) {
-	plugins, _ := serverless.GetPlugins()
-	var groups []pluginProtoGroup
-
-	for _, p := range plugins {
-		pluginProtoDir := filepath.Join(p.Path, "desc", "proto")
-		if !pathx.FileExists(pluginProtoDir) {
-			continue
-		}
-
-		pluginProtoFiles, err := desc.FindRpcServiceProtoFiles(pluginProtoDir)
-		if err != nil {
-			return nil, err
-		}
-		if len(pluginProtoFiles) == 0 {
-			continue
-		}
-
-		groups = append(groups, pluginProtoGroup{
-			Plugin: p,
-			Files:  pluginProtoFiles,
-		})
-	}
-
-	return groups, nil
-}
-
-func generateMainZRPCClient(genModule bool, files []string, hasPlugins bool, progressChan chan<- progress.Message) error {
+func generateMainZRPCClient(genModule bool, files []string, progressChan chan<- progress.Message) error {
 	g := generator.NewGenerator(config.C.Style, false)
 
 	wd, err := os.Getwd()
@@ -432,10 +368,9 @@ func generateMainZRPCClient(genModule bool, files []string, hasPlugins bool, pro
 	}
 
 	template, err := templatex.ParseTemplate(filepath.ToSlash(filepath.Join("client", "zrpcclient-go", "clientset.go.tpl")), map[string]any{
-		"Module":     config.C.Gen.Zrpcclient.GoModule,
-		"Package":    config.C.Gen.Zrpcclient.GoPackage,
-		"Services":   services,
-		"HasPlugins": hasPlugins,
+		"Module":   config.C.Gen.Zrpcclient.GoModule,
+		"Package":  config.C.Gen.Zrpcclient.GoPackage,
+		"Services": services,
 	}, embeded.ReadTemplateFile(filepath.ToSlash(filepath.Join("client", "zrpcclient-go", "clientset.go.tpl"))))
 	if err != nil {
 		return err
@@ -472,301 +407,6 @@ func generateMainZRPCClient(genModule bool, files []string, hasPlugins bool, pro
 	}
 
 	return genNoRpcServiceExcludeThirdPartyProto(genModule, config.C.Gen.Zrpcclient.GoModule, progressChan)
-}
-
-func generatePluginFiles(groups []pluginProtoGroup, progressChan chan<- progress.Message) error {
-	if len(groups) == 0 {
-		return nil
-	}
-
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	var pluginNames []string
-
-	for _, group := range groups {
-		p := group.Plugin
-		pluginProtoDir := filepath.Join(p.Path, "desc", "proto")
-		pluginThirdPartyProtoDir := filepath.Join(p.Path, "desc", "proto", "third_party")
-
-		pluginProtoFiles := group.Files
-		if len(pluginProtoFiles) == 0 {
-			continue
-		}
-
-		var pluginServices []string
-
-		pluginModelDir := filepath.Join(config.C.Gen.Zrpcclient.Output, "plugins", p.Name, "model")
-		err = os.MkdirAll(pluginModelDir, 0o755)
-		if err != nil {
-			return err
-		}
-
-		excludeThirdPartyProtoFiles, err := desc.FindExcludeThirdPartyProtoFiles(pluginProtoDir)
-		if err != nil {
-			return err
-		}
-
-		for _, fp := range pluginProtoFiles {
-			parser := rpcparser.NewDefaultProtoParser()
-			parse, err := parser.Parse(fp, true)
-			if err != nil {
-				continue
-			}
-
-			for _, service := range parse.Service {
-				pluginServices = append(pluginServices, service.Name)
-			}
-
-			var importPaths []string
-			importPaths = append(importPaths, pluginProtoDir)
-			importPaths = append(importPaths, pluginThirdPartyProtoDir)
-
-			var protoParser protoparse.Parser
-			protoParser.InferImportPaths = false
-
-			protoParser.ImportPaths = []string{pluginProtoDir, pluginThirdPartyProtoDir}
-
-			for _, v := range config.C.Gen.Zrpcclient.ProtoInclude {
-				protoParser.ImportPaths = append(protoParser.ImportPaths, v)
-			}
-			protoParser.IncludeSourceCodeInfo = true
-
-			protocCmd := fmt.Sprintf("protoc %s -I%s -I%s --go_out=%s --go-grpc_out=%s",
-				fp,
-				pluginProtoDir,
-				pluginThirdPartyProtoDir,
-				config.C.Gen.Zrpcclient.Output,
-				config.C.Gen.Zrpcclient.Output,
-			)
-
-			for _, exp := range excludeThirdPartyProtoFiles {
-				var expRel string
-				var expErr error
-
-				expRel, expErr = filepath.Rel(pluginProtoDir, exp)
-				if expErr != nil {
-					continue
-				}
-
-				var parserImportPaths []string
-				parserImportPaths = []string{pluginProtoDir, pluginThirdPartyProtoDir}
-				protoParser.ImportPaths = parserImportPaths
-
-				fds, err := protoParser.ParseFiles(expRel)
-				if err != nil {
-					continue
-				}
-
-				if len(fds) == 0 {
-					continue
-				}
-
-				expGoPackage := fds[0].AsFileDescriptorProto().GetOptions().GetGoPackage()
-
-				protocCmd += fmt.Sprintf(" --go_opt=module=%s --go_opt=M%s=%s --go-grpc_opt=module=%s --go-grpc_opt=M%s=%s", config.C.Gen.Zrpcclient.GoModule, expRel, func() string {
-					if strings.HasPrefix(expGoPackage, config.C.Gen.Zrpcclient.GoModule) {
-						return expGoPackage
-					}
-					return filepath.ToSlash(filepath.Join(config.C.Gen.Zrpcclient.GoModule, "plugins", p.Name, "model", expGoPackage))
-				}(), config.C.Gen.Zrpcclient.GoModule, expRel, func() string {
-					if strings.HasPrefix(expGoPackage, config.C.Gen.Zrpcclient.GoModule) {
-						return expGoPackage
-					}
-					return filepath.ToSlash(filepath.Join(config.C.Gen.Zrpcclient.GoModule, "plugins", p.Name, "model", expGoPackage))
-				}())
-			}
-
-			if len(config.C.Gen.Zrpcclient.ProtoInclude) > 0 {
-				protocCmd += fmt.Sprintf(" -I%s ", strings.Join(config.C.Gen.Zrpcclient.ProtoInclude, " -I"))
-			}
-
-			// Debug removed(protocCmd)
-			resp, err := execx.Run(protocCmd, wd)
-			if err != nil {
-				return errors.Errorf("err: [%v], resp: [%s]", err, resp)
-			}
-		}
-
-		if len(pluginServices) == 0 {
-			continue
-		}
-
-		g := generator.NewGenerator(config.C.Style, false)
-
-		for _, fp := range pluginProtoFiles {
-			parser := rpcparser.NewDefaultProtoParser()
-			parse, err := parser.Parse(fp, true)
-			if err != nil {
-				continue
-			}
-
-			pluginDirContext := DirContext{
-				ImportBase:      filepath.Join(config.C.Gen.Zrpcclient.GoModule, "plugins", p.Name),
-				PbPackage:       parse.PbPackage,
-				OptionGoPackage: parse.GoPackage,
-				Output:          filepath.Join(config.C.Gen.Zrpcclient.Output, "plugins", p.Name),
-			}
-
-			for _, service := range parse.Service {
-				_ = os.MkdirAll(filepath.Join(pluginDirContext.GetCall().Filename, strings.ToLower(service.Name)), 0o755)
-			}
-
-			err = g.GenCall(pluginDirContext, parse, &conf.Config{
-				NamingFormat: config.C.Style,
-			}, &generator.ZRpcContext{
-				Multiple:    true,
-				IsGenClient: true,
-			})
-			if err != nil {
-				return err
-			}
-
-			if progressChan != nil {
-				progressChan <- progress.NewFile(fp)
-			}
-		}
-
-		pluginNames = append(pluginNames, p.Name)
-
-		pluginTemplate, err := templatex.ParseTemplate(filepath.ToSlash(filepath.Join("client", "zrpcclient-go", "plugin.go.tpl")), map[string]any{
-			"Module":     config.C.Gen.Zrpcclient.GoModule,
-			"PluginName": p.Name,
-			"Services":   pluginServices,
-		}, embeded.ReadTemplateFile(filepath.ToSlash(filepath.Join("client", "zrpcclient-go", "plugin.go.tpl"))))
-		if err != nil {
-			return err
-		}
-
-		formated, err := gosimports.Process("", pluginTemplate, nil)
-		if err != nil {
-			return errors.Errorf("format plugin go file meet error: %v", err)
-		}
-
-		pluginDir := filepath.Join(config.C.Gen.Zrpcclient.Output, "plugins")
-		err = os.MkdirAll(pluginDir, 0o755)
-		if err != nil {
-			return err
-		}
-
-		err = os.WriteFile(filepath.Join(pluginDir, p.Name+".go"), formated, 0o644)
-		if err != nil {
-			return err
-		}
-	}
-
-	pluginsTemplate, err := templatex.ParseTemplate(filepath.ToSlash(filepath.Join("client", "zrpcclient-go", "plugins.go.tpl")), map[string]any{
-		"Module":      config.C.Gen.Zrpcclient.GoModule,
-		"PluginNames": pluginNames,
-	}, embeded.ReadTemplateFile(filepath.ToSlash(filepath.Join("client", "zrpcclient-go", "plugins.go.tpl"))))
-	if err != nil {
-		return err
-	}
-
-	formated, err := gosimports.Process("", pluginsTemplate, nil)
-	if err != nil {
-		return errors.Errorf("format plugins go file meet error: %v", err)
-	}
-
-	pluginDir := filepath.Join(config.C.Gen.Zrpcclient.Output, "plugins")
-	err = os.MkdirAll(pluginDir, 0o755)
-	if err != nil {
-		return err
-	}
-
-	err = os.WriteFile(filepath.Join(pluginDir, "plugins.go"), formated, 0o644)
-	if err != nil {
-		return err
-	}
-
-	for _, group := range groups {
-		err := genPluginNoRpcServiceExcludeThirdPartyProto(group.Plugin, config.C.Gen.Zrpcclient.GoModule, config.C.Gen.Zrpcclient.Output, progressChan)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func genPluginNoRpcServiceExcludeThirdPartyProto(plugin serverless.Plugin, goModule, output string, progressChan chan<- progress.Message) error {
-	pluginProtoDir := filepath.Join(plugin.Path, "desc", "proto")
-	pluginThirdPartyProtoDir := filepath.Join(plugin.Path, "desc", "proto", "third_party")
-
-	excludeThirdPartyProtoFiles, err := desc.FindNoRpcServiceExcludeThirdPartyProtoFiles(pluginProtoDir)
-	if err != nil || len(excludeThirdPartyProtoFiles) == 0 {
-		return nil
-	}
-
-	var protoParser protoparse.Parser
-	protoParser.InferImportPaths = false
-	protoParser.ImportPaths = []string{pluginProtoDir, pluginThirdPartyProtoDir}
-	protoParser.IncludeSourceCodeInfo = true
-
-	pbDir := filepath.Join(output, "plugins", plugin.Name, "model")
-	err = os.MkdirAll(pbDir, 0o755)
-	if err != nil {
-		return err
-	}
-
-	for _, v := range excludeThirdPartyProtoFiles {
-		rel, err := filepath.Rel(pluginProtoDir, v)
-		if err != nil {
-			return err
-		}
-
-		fds, err := protoParser.ParseFiles(rel)
-		if err != nil {
-			continue
-		}
-
-		if len(fds) == 0 {
-			continue
-		}
-
-		goPackage := fds[0].AsFileDescriptorProto().GetOptions().GetGoPackage()
-
-		command := fmt.Sprintf("protoc %s -I%s -I%s --go_out=%s --go_opt=module=%s --go_opt=M%s=%s --go-grpc_out=%s --go-grpc_opt=module=%s --go-grpc_opt=M%s=%s",
-			v,
-			pluginProtoDir,
-			pluginThirdPartyProtoDir,
-			output,
-			goModule,
-			rel,
-			func() string {
-				if strings.HasPrefix(goPackage, goModule) {
-					return goPackage
-				}
-				return filepath.ToSlash(filepath.Join(goModule, "plugins", plugin.Name, "model", goPackage))
-			}(),
-			output,
-			goModule,
-			rel,
-			func() string {
-				if strings.HasPrefix(goPackage, goModule) {
-					return goPackage
-				}
-				return filepath.ToSlash(filepath.Join(goModule, "plugins", plugin.Name, "model", goPackage))
-			}(),
-		)
-
-		if len(config.C.Gen.Zrpcclient.ProtoInclude) > 0 {
-			command += fmt.Sprintf(" -I%s ", strings.Join(config.C.Gen.Zrpcclient.ProtoInclude, " -I"))
-		}
-
-		// Debug removed(command)
-
-		_, err = execx.Run(command, config.C.Wd())
-		if err != nil {
-			return err
-		}
-		if progressChan != nil {
-			progressChan <- progress.NewFile(v)
-		}
-	}
-	return nil
 }
 
 func genNoRpcServiceExcludeThirdPartyProto(genModule bool, module string, progressChan chan<- progress.Message) error {
@@ -871,14 +511,3 @@ func genNoRpcServiceExcludeThirdPartyProto(genModule bool, module string, progre
 	return nil
 }
 
-func getPluginNameFromFilePath(filePath string) string {
-	if strings.Contains(filePath, "plugins"+string(filepath.Separator)) {
-		parts := strings.Split(filePath, string(filepath.Separator))
-		for i, part := range parts {
-			if part == "plugins" && i+1 < len(parts) {
-				return parts[i+1]
-			}
-		}
-	}
-	return ""
-}

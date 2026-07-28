@@ -28,7 +28,7 @@ icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 - ✅ **开发体验优先**：提供简单好用的一站式生产可用解决方案，一键初始化 api/rpc/gateway 项目，极简指令生成基础框架代码
 - ✅ **AI 赋能**：内置 pzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
 - ✅ **模板驱动**：默认生成即最佳实践，支持自定义模板，可基于远程模板仓库打造企业专属底座
-- ✅ **插件化架构**：模块分层、插件设计，团队协作更顺畅
+- ✅ **清晰分层**：模块结构明确，团队协作边界更清楚
 - ✅ **内置开发组件**：包含缓存(cache)、数据库迁移(migrate)、数据库查询(condition)等常用工具
 - ✅ **生态兼容**：不修改 go-zero，保持生态兼容，解决已有痛点问题并扩展新功能
 - ✅ **接口灵活**：不依赖特定数据库/缓存/配置中心，可根据实际需求自由选择
@@ -284,39 +284,6 @@ pzero skills init --output .claude/skills
 </video>
 
 
-## 插件化架构
-
-支持**插件化开发**，将功能模块作为独立插件加载：
-
-```bash
-# 创建 helloworld api 服务
-pzero new helloword --frame api
-
-cd helloworld
-
-# 增加 api 插件
-pzero new plugin_name --frame api --serverless
-
-# 增加 api 插件(mono类型，即使用 helloworld 的 go module)
-pzero new plugin_name_mono --frame api --serverless --mono
-
-# 编译并加载所有插件
-pzero serverless build
-
-# 卸载所有插件
-pzero serverless delete
-
-# 卸载指定插件
-pzero serverless delete --plugin plugin_name
-```
-
-**完美支持**：
-
-- 📦 功能模块解耦，独立开发和测试
-- 👥 团队协作，不同团队负责不同插件
-- 🔄 按需加载，灵活组装功能
-
----
 
 ## 快速体验，5 分钟上手
 

@@ -22,7 +22,6 @@ import (
 	"{{ .Module }}/internal/middleware"
 	"{{ .Module }}/internal/server"
 	"{{ .Module }}/internal/svc"
-	{{ if not .Serverless }}"{{ .Module }}/plugins"{{end}}
 )
 
 // serverCmd represents the server command
@@ -59,8 +58,6 @@ var serverCmd = &cobra.Command{
         // create zrpc server
         zrpcServer := zrpc.MustNewServer(c.Zrpc.RpcServerConf, func(grpcServer *grpc.Server) {
         	server.RegisterZrpcServer(grpcServer, svcCtx)
-               {{if not .Serverless }}// register plugins
-               plugins.LoadPlugins(grpcServer, svcCtx){{end}}
 			if c.Zrpc.Mode == service.DevMode || c.Zrpc.Mode == service.TestMode {
         		reflection.Register(grpcServer)
         	}
