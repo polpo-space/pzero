@@ -589,42 +589,6 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
 ```
 
-### Dockerfile Configuration
-
-Create `Dockerfile` for containerized deployment:
-
-```dockerfile
-FROM alpine:latest
-
-ENV CGO_ENABLED=0
-
-LABEL \
-    org.opencontainers.image.title="mycli" \
-    org.opencontainers.image.description="My CLI tool" \
-    org.opencontainers.image.url="https://github.com/yourusername/mycli" \
-    org.opencontainers.image.documentation="https://github.com/yourusername/mycli#readme" \
-    org.opencontainers.image.source="https://github.com/yourusername/mycli" \
-    org.opencontainers.image.licenses="MIT" \
-    maintainer="your-name <your-email@example.com>"
-
-WORKDIR /app
-
-COPY dist/mycli_linux_amd64_v1/mycli /dist/mycli_linux_amd64/mycli
-COPY dist/mycli_linux_arm64_v8.0/mycli /dist/mycli_linux_arm64/mycli
-
-RUN if [ $(go env GOARCH) = "amd64" ]; then \
-      cp /dist/mycli_linux_amd64/mycli /usr/local/bin/mycli; \
-    elif [ $(go env GOARCH) = "arm64" ]; then \
-      cp /dist/mycli_linux_arm64/mycli /usr/local/bin/mycli; \
-    fi
-
-RUN apk update --no-cache \
-    && apk add --no-cache tzdata ca-certificates \
-    && rm -rf /dist
-
-ENTRYPOINT ["mycli"]
-```
-
 ### Release Process
 
 **1. Create and push a tag**:
@@ -667,42 +631,13 @@ go install github.com/yourusername/mycli@v1.0.0
 go install github.com/yourusername/mycli@latest
 ```
 
-**Method 3: Using Docker Image**
-
-```bash
-# Run directly
-docker run --rm ghcr.io/yourusername/mycli:latest version
-
-# Create an alias for convenience
-alias mycli='docker run --rm -v $(pwd):/app -w /app ghcr.io/yourusername/mycli:latest'
-
-# Then use it like a local installation
-mycli version
-mycli --help
-```
-
-Or create a shell script `mycli-docker.sh`:
-
-```bash
-#!/bin/bash
-docker run --rm -v "$(pwd)":/app -w /app ghcr.io/yourusername/mycli:latest "$@"
-```
-
-Then add it to your PATH:
-
-```bash
-chmod +x mycli-docker.sh
-sudo mv mycli-docker.sh /usr/local/bin/mycli
-```
-
 ### Advantages of Automated Distribution Process
 
 ✅ **Fully Automated**: End-to-end automation from code tag to release completion
 ✅ **Multi-platform Support**: Build once, support Linux, macOS, Windows with multiple architectures
-✅ **Multiple Distribution Formats**: Binary files, Docker images, go install - multiple installation methods
+✅ **Multiple Distribution Formats**: Binary files and `go install` - multiple installation methods
 ✅ **Version Management**: Automatically inject version info, manage releases through tags
 ✅ **Security Assurance**: Automatically generate SHA256 checksums to ensure download integrity
-✅ **Container Deployment**: Automatically build and push multi-arch Docker images to GHCR
 
 ---
 
@@ -720,7 +655,6 @@ This demo project is created entirely following the workflow in this guide and i
 - ✅ **Unified configuration management**: Shows usage of config files, environment variables, and command-line flags
 - ✅ **GoReleaser configuration**: Complete cross-platform build configuration
 - ✅ **GitHub Actions workflow**: Automated release process
-- ✅ **Dockerfile**: Multi-architecture containerization support
 - ✅ **Complete documentation**: Detailed README and usage instructions
 
 ### Quick Try
@@ -751,7 +685,6 @@ mycli/
 │   │   └── greet/            # Greet command (custom)
 │   └── config/               # Configuration management
 │       └── config.go
-├── Dockerfile                 # Docker configuration
 ├── .goreleaser.yaml          # GoReleaser configuration
 ├── .github/workflows/
 │   └── release.yml           # GitHub Actions

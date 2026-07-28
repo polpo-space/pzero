@@ -177,7 +177,6 @@ pzero new project_name --remote https://github.com/jzero-io/templates --branch m
 ```bash
 $ tree ~/.pzero/templates/local/myapi
 └── app
-    ├── Dockerfile.tpl
     ├── README.md.tpl
     ├── cmd
     │   ├── root.go.tpl
