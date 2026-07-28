@@ -12,7 +12,7 @@ title: Home
 
 **pzero** is a framework developed based on the [go-zero framework](https://github.com/zeromicro/go-zero) and [go-zero/goctl tools](https://github.com/zeromicro/go-zero/tree/master/tools/goctl). It enables one-click initialization of api/gateway/rpc projects.
 
-Based on describable files (**api/proto/sql**), it automatically generates **server-side and client-side** framework code. Combined with built-in pzero-skills, it empowers AI to generate business logic code that follows best practices, reducing development cognitive load and freeing your hands!
+Based on describable files (**api/proto/sql**), it automatically generates **server-side and client-side** framework code. Combined with Agent Skills maintained in the repository's `skills/` directory, it empowers AI to generate business logic code that better matches business constraints and architecture conventions, reducing development cognitive load and freeing your hands!
 
 Key features include:
 

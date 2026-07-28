@@ -83,8 +83,3 @@ pzero gen --quiet
 pzero gen --debug
 ```
 
-## 自定义 CLI 插件
-
-如果内置命令不够用，`pzero` 也支持将未知命令转发给 `PATH` 中的外部可执行文件。
-
-具体说明请参阅 [自定义 pzero CLI 插件](./cli-plugin.md)。

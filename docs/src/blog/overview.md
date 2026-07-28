@@ -21,12 +21,12 @@ If you have these concerns, today's article is a must-read!
 
 🏗️ **Generate basic framework code through templates**: Automatically generate framework code (api → api framework code, proto → proto framework code, sql/remote database address → model code) based on descriptor files
 
-🤖 **Generate business code through Agent Skills**: Built-in pzero-skills enables AI to generate business logic code that follows best practices
+🤖 **Generate business code through Agent Skills**: Combine project-maintained Agent Skills so AI can generate business logic code that follows your architecture and engineering conventions
 
 **Core Value and Design Philosophy**:
 
 - ✅ **Developer Experience First**: Provides a simple, easy-to-use, one-stop production-ready solution, one-click initialize api/rpc/gateway projects, minimal commands to generate basic framework code
-- ✅ **AI Empowered**: Built-in pzero-skills enables AI to generate business logic code that follows best practices
+- ✅ **AI Empowered**: Project-maintained Agent Skills let AI generate business logic code that better matches engineering conventions
 - ✅ **Template-Driven**: Default generation follows best practices, supports custom templates, can build enterprise-specific foundation based on remote template repositories
 - ✅ **Clear Layering**: Modular structure and clearer collaboration boundaries for teams
 - ✅ **Built-in Components**: Includes common tools like cache, migrate, and condition
@@ -248,16 +248,13 @@ gen:
 
 ## Generate Business Code Through Agent Skills
 
-Based on pzero-skills, let AI automatically generate business code that follows best practices:
+Use Agent Skills maintained in the repository `skills/` directory to let AI automatically generate business code that follows your team's best practices:
 
 ```bash
-# Output AI Skills configuration to Claude (default ~/.claude/skills)
-pzero skills init
+# Maintain skills in the project repository, such as:
+skills/
 
-# Output to current project
-pzero skills init --output .claude/skills
-
-# In Claude, describe requirements in natural language, recommend starting with pzero-skills
+# Then describe requirements in natural language directly in your AI tool
 ```
 
 **What can AI do for you**:

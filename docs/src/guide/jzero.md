@@ -83,8 +83,3 @@ pzero gen --quiet
 pzero gen --debug
 ```
 
-## Custom CLI plugins
-
-If built-in commands are not enough, `pzero` can dispatch unknown commands to external executables in `PATH`.
-
-See [Custom CLI plugins](./cli-plugin.md).

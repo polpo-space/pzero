@@ -48,7 +48,7 @@ You: Finally works (but spent 30 minutes, experienced n rounds of dialogue)
 **By defining workflows and best practices in agent skills, reduce the "tug of war" between users and AI**:
 
 1. **Standardized workflow**: `api/proto/sql` → `pzero gen` → framework code → AI fills business logic
-2. **Complete framework knowledge**: pzero-skills contains framework best practices, AI follows automatically
+2. **Complete framework knowledge**: Project-maintained Agent Skills capture framework best practices, and AI can follow them automatically
 3. **Work within constraints**: AI intelligently fills business logic under framework constraints, both efficient and standardized
 4. **One-time generation is usable**: Reduce repeated modifications, guaranteed code quality
 
@@ -133,7 +133,7 @@ Let's see how two engines work together perfectly through a specific example.
 
 Your requirement:
 ```
-pzero-skills create user management api, supporting:
+Create a user management api, following the project's Agent Skills and existing architecture:
 1. User registration (username 3-20 characters, email validation, password at least 8 characters)
 2. Get user info
 ```
@@ -524,14 +524,14 @@ For a framework like pzero with clear conventions and simple commands, **skills 
 # 1. Install pzero
 go install github.com/polpo-space/pzero/cmd/pzero@latest
 
-# 2. Initialize pzero-skills
-pzero skills init
+# 2. Prepare repository-local Agent Skills
+# Keep skills in the repository, such as skills/
 
 # 3. Create project
 pzero new simpleapi --frame api
 
 # 4. Describe requirements in Claude Code
-# "Use pzero-skills to create a user management api..."
+# "Create a user management api and follow the project's Agent Skills..."
 ```
 
 **Find it useful? Please give pzero a ⭐ Star to support our continued improvement!**
