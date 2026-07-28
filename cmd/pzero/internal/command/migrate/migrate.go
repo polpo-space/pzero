@@ -7,9 +7,7 @@ package migrate
 import (
 	"fmt"
 
-	_ "github.com/golang-migrate/migrate/v4/database/mysql"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
-	_ "github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/spf13/cobra"
 
