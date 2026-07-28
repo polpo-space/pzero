@@ -106,40 +106,6 @@ go run main.go server
 ```
 :::
 
-## 初始化 gateway 项目
-
-:::important 同时支持 grpc/http 接口
-:::
-
-::: code-tabs#shell
-
-@tab pzero cli
-
-```bash
-pzero new your_project --frame gateway
-cd your_project
-# 下载依赖
-go mod tidy
-# 启动服务端程序
-go run main.go server
-# 访问 swagger ui
-http://localhost:8001/swagger
-```
-
-@tab pzero Docker
-
-```bash
-docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest new your_project --frame gateway
-cd your_project
-# 下载依赖
-go mod tidy
-# 启动服务端程序
-go run main.go server
-# 访问 swagger ui
-http://localhost:8001/swagger
-```
-:::
-
 ## 可选特性 model/redis/model+redis
 
 基于可选特性, 提供了一整套使用 model/redis/model 的解决方案

@@ -56,23 +56,6 @@ pzero new myproject --frame rpc
 - 📡 Service discovery
 - 🔐 Built-in retry and circuit breaking
 
-#### 3️⃣ Gateway Project (API Gateway)
-
-```bash
-pzero new myproject --frame gateway
-```
-
-**Use Cases**:
-- ✅ Unified entry point management
-- ✅ Multi-service aggregation
-- ✅ Need to support both HTTP and gRPC
-
-**Features**:
-- 🌐 Support both HTTP and gRPC
-- 🔄 Smart routing and forwarding
-- ⚖️ Load balancing
-- 🛡️ Unified authentication and authorization
-
 ### Start Service
 
 ```bash

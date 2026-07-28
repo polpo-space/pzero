@@ -56,23 +56,6 @@ pzero new myproject --frame rpc
 - 📡 服务发现
 - 🔐 内置重试和熔断
 
-#### 3️⃣ Gateway 项目（API 网关）
-
-```bash
-pzero new myproject --frame gateway
-```
-
-**适用场景**：
-- ✅ 统一入口管理
-- ✅ 多服务聚合
-- ✅ 需要同时支持 HTTP 和 gRPC
-
-**特点**：
-- 🌐 同时支持 HTTP 和 gRPC
-- 🔄 智能路由转发
-- ⚖️ 负载均衡
-- 🛡️ 统一认证鉴权
-
 ### 启动服务
 
 ```bash

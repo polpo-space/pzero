@@ -25,7 +25,7 @@ If you have these concerns, today's article is a must-read!
 
 **Core Value and Design Philosophy**:
 
-- ✅ **Developer Experience First**: Provides a simple, easy-to-use, one-stop production-ready solution, one-click initialize api/rpc/gateway projects, minimal commands to generate basic framework code
+- ✅ **Developer Experience First**: Provides a simple, easy-to-use, one-stop production-ready solution, one-click initialize api/rpc projects, minimal commands to generate basic framework code
 - ✅ **AI Empowered**: Project-maintained Agent Skills let AI generate business logic code that better matches engineering conventions
 - ✅ **Template-Driven**: Default generation follows best practices, supports custom templates, can build enterprise-specific foundation based on remote template repositories
 - ✅ **Clear Layering**: Modular structure and clearer collaboration boundaries for teams
@@ -296,9 +296,6 @@ pzero check
 pzero new helloworld --frame api
 # rpc project
 pzero new helloworld --frame rpc
-# gateway project
-pzero new helloworld --frame gateway
-
 cd helloworld
 
 # Download dependencies

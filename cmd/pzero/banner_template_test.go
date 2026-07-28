@@ -13,7 +13,6 @@ func TestBannerTemplatesUseServiceName(t *testing.T) {
 	}{
 		{name: "api", frame: "api", serviceRef: "c.Rest.Name"},
 		{name: "rpc", frame: "rpc", serviceRef: "c.Zrpc.Name"},
-		{name: "gateway", frame: "gateway", serviceRef: "c.Gateway.Name"},
 	}
 
 	for _, tt := range tests {
