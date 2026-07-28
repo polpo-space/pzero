@@ -48,7 +48,7 @@ AI：继续修改...
 **通过 agent skills 中定义的工作流程以及最佳实践，减少用户与 AI 之间的"拉扯"**：
 
 1. **标准化工作流**：`api/proto/sql` → `pzero gen` → 框架代码 → AI 填充业务逻辑
-2. **完整的框架知识**：pzero-skills 包含框架最佳实践，AI 自动遵循
+2. **完整的框架知识**：项目自维护的 Agent Skills 可以沉淀框架最佳实践，AI 能自动遵循
 3. **约束条件下发挥**：AI 在框架约束下智能填充，既高效又规范
 4. **一次生成即可用**：减少反复修改，代码质量有保障
 
@@ -133,7 +133,7 @@ pzero 双引擎模式将代码生成分为两个阶段，AI 先生成描述文�
 
 你的需求：
 ```
-pzero-skills 创建用户管理 api，支持：
+创建一个用户管理 api，并遵循项目中的 Agent Skills 和现有架构，支持：
 1. 用户注册（用户名 3-20 位、邮箱验证、密码至少 8 位）
 2. 获取用户信息
 ```
@@ -524,14 +524,14 @@ pzero 从一开始就采用了一种极其简单的代码生成方式：
 # 1. 安装 pzero
 go install github.com/polpo-space/pzero/cmd/pzero@latest
 
-# 2. 初始化 pzero-skills
-pzero skills init
+# 2. 准备仓库内维护的 Agent Skills
+# 将 skills 放在仓库中，例如 skills/
 
 # 3. 创建项目
 pzero new simpleapi --frame api
 
 # 4. 在 Claude Code 中描述需求
-# "使用 pzero-skills 创建一个用户管理 api..."
+# "创建一个用户管理 api，并遵循项目中的 Agent Skills..."
 ```
 
 **觉得有用？请给 pzero 一个 ⭐ Star，支持我们继续改进！**

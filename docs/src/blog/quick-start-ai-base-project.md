@@ -128,11 +128,11 @@ With the AI base project, you only need to focus on business logic development. 
 
 ### Scenario: Develop User Registration Feature
 
-**Using pzero + AI Skills**:
+**Using pzero + project-maintained Agent Skills**:
 
 ```bash
 # Just one sentence
-"Use pzero-skills to create user registration feature, supporting username, email, password with validation and deduplication"
+"Create a user registration feature, supporting username, email, password with validation and deduplication. Follow the project's Agent Skills and existing architecture."
 ```
 
 **AI Automatically Completes**:
