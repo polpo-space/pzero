@@ -38,7 +38,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/hooks"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/plugin"
 )
 
 var WorkingDir string
@@ -146,19 +145,6 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	// Initialize plugin handler
-	pluginHandler := plugin.NewDefaultHandler([]string{"pzero"})
-	if len(os.Args) > 1 {
-		cmdPathPieces := os.Args[1:]
-
-		// only look for suitable extension executables if
-		// the specified command does not already exist
-		if _, _, err := rootCmd.Find(cmdPathPieces); err != nil {
-			if err := plugin.HandlePluginCommand(pluginHandler, cmdPathPieces); err != nil {
-				cobra.CheckErr(err)
-			}
-		}
-	}
 	if err := rootCmd.Execute(); err != nil {
 		if console.IsRenderedError(err) {
 			os.Exit(1)
