@@ -6,7 +6,7 @@
 package dsn
 
 import (
-	"net"
+	"errors"
 	"net/url"
 	"strings"
 )
@@ -19,15 +19,10 @@ const (
 	Port     = "port"
 )
 
-// ParseDSN parses various supported DSN types into a map of key/value pairs which can be used as valid tags.
+// ParseDSN parses postgres/pgx DSNs into a map of key/value pairs.
 func ParseDSN(driverName, dsn string) (meta map[string]string, err error) {
 	meta = make(map[string]string)
 	switch driverName {
-	case "mysql":
-		meta, err = parseMySQLDSN(dsn)
-		if err != nil {
-			return meta, err
-		}
 	case "postgres", "pgx":
 		meta, err = parsePostgresDSN(dsn)
 		if err != nil {
@@ -37,8 +32,7 @@ func ParseDSN(driverName, dsn string) (meta map[string]string, err error) {
 		// Try to parse the DSN and see if the scheme contains a known driver name.
 		u, e := url.Parse(dsn)
 		if e != nil {
-			// dsn is not a valid URL, so just ignore
-			return meta, err
+			return meta, e
 		}
 		if driverName != u.Scheme {
 			// In some cases the driver is registered under a non-official name.
@@ -47,24 +41,9 @@ func ParseDSN(driverName, dsn string) (meta map[string]string, err error) {
 			// In these cases, we try to parse the DSN based upon the DSN itself, instead of the registered driver name
 			return ParseDSN(u.Scheme, dsn)
 		}
+		return meta, &url.Error{Op: "parse", URL: dsn, Err: errors.New("unsupported driver")}
 	}
 	return meta, nil
-}
-
-// parseMySQLDSN parses a mysql-type dsn into a map.
-func parseMySQLDSN(dsn string) (m map[string]string, err error) {
-	var cfg *mySQLConfig
-	if cfg, err = mySQLConfigFromDSN(dsn); err == nil {
-		host, port, _ := net.SplitHostPort(cfg.Addr)
-		m = map[string]string{
-			"user":     cfg.User,
-			"host":     host,
-			"port":     port,
-			"database": cfg.DBName,
-		}
-		return m, nil
-	}
-	return nil, err
 }
 
 // parsePostgresDSN parses a postgres-type dsn into a map.

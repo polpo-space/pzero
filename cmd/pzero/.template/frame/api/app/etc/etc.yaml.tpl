@@ -10,8 +10,8 @@ log:
     mode: console
 {{ if has "model" .Features }}
 sqlx:
-    driverName: "mysql"
-    dataSource: "root:123456@tcp(127.0.0.1:3306)/{{ .APP }}?charset=utf8mb4&parseTime=True&loc=Local"
+    driverName: "pgx"
+    dataSource: "postgres://postgres:postgres@127.0.0.1:5432/{{ .APP }}?sslmode=disable"
 {{ end }}{{ if has "redis" .Features }}
 redis:
     host: "127.0.0.1:6379"

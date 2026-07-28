@@ -13,8 +13,8 @@ order: 5.5
 
 ```yaml
 migrate:
-  driver: "mysql"
-  datasource-url: "root:123456@tcp(127.0.0.1:3306)/jzero-admin"
+  driver: "pgx"
+  datasource-url: "postgres://postgres:postgres@127.0.0.1:5432/jzero-admin?sslmode=disable"
 ```
 
 ## Upgrade
