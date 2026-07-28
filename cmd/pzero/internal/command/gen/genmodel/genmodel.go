@@ -7,12 +7,9 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/samber/lo"
-	ddlparser "github.com/zeromicro/ddl-parser/parser"
 	"github.com/zeromicro/go-zero/core/stores/postgres"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
@@ -24,7 +21,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console/progress"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/dsn"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/filex"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/gitstatus"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/osx"
 )
 
@@ -39,52 +35,38 @@ type Conn struct {
 
 func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error) {
 	var (
-		allTables     []string
-		err           error
-		genCodeTables []string
-		conns         []Conn
-		genFiles      []string
+		allTables []string
+		err       error
+		conns     []Conn
+		genFiles  []string
 	)
 
 	if !pathx.FileExists(config.C.SqlDir()) && !config.C.Gen.ModelDatasource {
 		return nil, nil
 	}
 
-	if config.C.Gen.ModelDriver == "postgres" {
-		config.C.Gen.ModelDriver = "pgx"
+	driver, err := normalizeModelDriver(config.C.Gen.ModelDriver)
+	if err != nil {
+		return nil, err
+	}
+	config.C.Gen.ModelDriver = driver
+
+	if !config.C.Gen.ModelDatasource {
+		return nil, errors.New("postgres model only supports datasource mode")
+	}
+	if hasSQLInput() {
+		return nil, errors.New("postgres model generation only supports datasource input")
 	}
 
-	if config.C.Gen.ModelDriver == "pgx" && !config.C.Gen.ModelDatasource {
-		return nil, errors.New("postgres model only support datasource mode")
-	}
-
-	if config.C.Gen.ModelDatasource {
-		switch config.C.Gen.ModelDriver {
-		case "mysql":
-			for _, v := range config.C.Gen.ModelDatasourceUrl {
-				meta, err := dsn.ParseDSN(config.C.Gen.ModelDriver, v)
-				if err != nil {
-					return nil, err
-				}
-				conns = append(conns, Conn{
-					Schema:  meta[dsn.Database],
-					SqlConn: sqlx.NewMysql(v),
-				})
-			}
-		case "pgx":
-			for _, v := range config.C.Gen.ModelDatasourceUrl {
-				meta, err := dsn.ParseDSN(config.C.Gen.ModelDriver, v)
-				if err != nil {
-					return nil, err
-				}
-				conns = append(conns, Conn{
-					Schema:  meta[dsn.Database],
-					SqlConn: postgres.New(v),
-				})
-			}
-		default:
-			return nil, errors.Errorf("model driver %s not support", config.C.Gen.ModelDriver)
+	for _, v := range config.C.Gen.ModelDatasourceUrl {
+		meta, err := dsn.ParseDSN(config.C.Gen.ModelDriver, v)
+		if err != nil {
+			return nil, err
 		}
+		conns = append(conns, Conn{
+			Schema:  meta[dsn.Database],
+			SqlConn: postgres.New(v),
+		})
 	}
 
 	// 处理模板
@@ -112,204 +94,88 @@ func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error
 
 	goctlHome = tempDir
 
-	var (
-		sqlFiles        []string
-		genCodeSqlFiles []string
-	)
-	genCodeSqlSpecMap := make(map[string]*ddlparser.Table)
-
-	if !config.C.Gen.ModelDatasource {
-		sqlFiles, err = pzerodesc.FindSqlFiles(config.C.SqlDir())
-		if err != nil {
-			return nil, err
-		}
-
-		switch {
-		case config.C.Gen.GitChange && gitstatus.IsGitRepo(filepath.Join(config.C.Wd())) && len(config.C.Gen.Desc) == 0:
-			m, _, err := gitstatus.ChangedFiles(config.C.SqlDir(), ".sql")
-			if err == nil {
-				genCodeSqlFiles = append(genCodeSqlFiles, m...)
-			}
-		case len(config.C.Gen.Desc) > 0:
-			for _, v := range config.C.Gen.Desc {
-				if !osx.IsDir(v) {
-					if filepath.Ext(v) == ".sql" {
-						genCodeSqlFiles = append(genCodeSqlFiles, filepath.Clean(v))
-					}
-				} else {
-					specifiedSqlFiles, err := pzerodesc.FindSqlFiles(v)
-					if err != nil {
-						return nil, err
-					}
-					genCodeSqlFiles = append(genCodeSqlFiles, specifiedSqlFiles...)
-				}
-			}
-		default:
-			genCodeSqlFiles, err = pzerodesc.FindSqlFiles(config.C.SqlDir())
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		// ignore sql desc
-		for _, v := range config.C.Gen.DescIgnore {
-			if !osx.IsDir(v) {
-				if filepath.Ext(v) == ".sql" {
-					genCodeSqlFiles = lo.Reject(genCodeSqlFiles, func(item string, _ int) bool {
-						return item == filepath.Clean(v)
-					})
-					sqlFiles = lo.Reject(sqlFiles, func(item string, _ int) bool {
-						return item == filepath.Clean(v)
-					})
-				}
-			} else {
-				specifiedSqlFiles, err := pzerodesc.FindSqlFiles(v)
-				if err != nil {
-					return nil, err
-				}
-				for _, saf := range specifiedSqlFiles {
-					genCodeSqlFiles = lo.Reject(genCodeSqlFiles, func(item string, _ int) bool {
-						return item == saf
-					})
-					sqlFiles = lo.Reject(sqlFiles, func(item string, _ int) bool {
-						return item == saf
-					})
-				}
-			}
-		}
-	}
-
-	var mu sync.Mutex
-
-	if config.C.Gen.ModelDatasource && len(config.C.Gen.Desc) == 0 {
-		if len(config.C.Gen.ModelDatasourceTable) == 1 && config.C.Gen.ModelDatasourceTable[0] == "*" {
-			allTables, err = getAllTables(conns, config.C.Gen.ModelDriver)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			allTables = config.C.Gen.ModelDatasourceTable
-		}
-		// For datasource mode, generate code for each table directly
-		var eg errgroup.Group
-		eg.SetLimit(len(allTables))
-		for _, tableName := range allTables {
-			eg.Go(func() error {
-				if progressChan != nil {
-					progressChan <- progress.NewFile(tableName)
-				}
-				return generateModelFromDatasource(tableName, goctlHome)
-			})
-		}
-		if err = eg.Wait(); err != nil {
-			return nil, err
-		}
-		err = jm.GenRegister(allTables)
-		if err != nil {
-			return nil, err
-		}
-		// Add table names to genFiles for datasource mode
-		genFiles = append(genFiles, allTables...)
-		return genFiles, nil
-	} else if len(genCodeSqlFiles) != 0 {
-		var eg errgroup.Group
-		for _, f := range sqlFiles {
-			eg.Go(func() error {
-				tableParsers, err := ParseSql(filepath.Join(config.C.Wd(), f))
-				if err != nil {
-					return err
-				}
-				mu.Lock()
-				defer mu.Unlock()
-				genCodeSqlSpecMap[f] = tableParsers[0]
-
-				bf := strings.TrimSuffix(filepath.Base(f), ".sql")
-
-				for _, tp := range tableParsers {
-					if strings.Contains(bf, ".") {
-						allTables = append(allTables, strings.Split(bf, ".")[0]+"."+tp.Name)
-					} else {
-						allTables = append(allTables, tp.Name)
-					}
-				}
-				return nil
-			})
-		}
-		if err = eg.Wait(); err != nil {
-			return nil, err
-		}
-	} else {
+	if len(config.C.Gen.Desc) != 0 {
 		return nil, nil
 	}
 
-	var eg errgroup.Group
-	eg.SetLimit(len(genCodeSqlFiles))
-	for _, f := range genCodeSqlFiles {
-		eg.Go(func() error {
-			tableParser := genCodeSqlSpecMap[f]
-			genCodeTables = append(genCodeTables, tableParser.Name)
-			if progressChan != nil {
-				displayName := fmt.Sprintf("%s (%s)", f, tableParser.Name)
-				progressChan <- progress.NewFile(displayName)
-			}
-			return generateModelFromSqlFile(f, goctlHome)
-		})
+	if len(config.C.Gen.ModelDatasourceTable) == 1 && config.C.Gen.ModelDatasourceTable[0] == "*" {
+		allTables, err = getAllTables(conns)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		allTables = config.C.Gen.ModelDatasourceTable
 	}
 
+	// For datasource mode, generate code for each table directly
+	var eg errgroup.Group
+	eg.SetLimit(len(allTables))
+	for _, tableName := range allTables {
+		eg.Go(func() error {
+			if progressChan != nil {
+				progressChan <- progress.NewFile(tableName)
+			}
+			return generateModelFromDatasource(tableName, goctlHome)
+		})
+	}
 	if err = eg.Wait(); err != nil {
 		return nil, err
 	}
-
-	// Add SQL files to genFiles
-	genFiles = append(genFiles, genCodeSqlFiles...)
-
 	err = jm.GenRegister(allTables)
 	if err != nil {
 		return nil, err
 	}
-
-	// Close progress channel to signal completion
-	if progressChan != nil {
-		close(progressChan)
-	}
-
+	// Add table names to genFiles for datasource mode
+	genFiles = append(genFiles, allTables...)
 	return genFiles, nil
 }
 
-func getAllTables(conns []Conn, driver string) ([]string, error) {
+func getAllTables(conns []Conn) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
 	var allTables []string
 
-	switch driver {
-	case "mysql":
-		for _, conn := range conns {
-			var tables []string
-			err := conn.SqlConn.QueryRowsCtx(ctx, &tables, "show tables")
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range tables {
-				allTables = append(allTables, v)
-			}
+	if config.C.Gen.ModelSchema == "" {
+		config.C.Gen.ModelSchema = "public"
+	}
+	for _, conn := range conns {
+		var tables []string
+		err := conn.SqlConn.QueryRowsCtx(ctx, &tables, fmt.Sprintf("select tablename from pg_tables where schemaname = '%s'", config.C.Gen.ModelSchema))
+		if err != nil {
+			return nil, err
 		}
-	case "pgx":
-		if config.C.Gen.ModelSchema == "" {
-			config.C.Gen.ModelSchema = "public"
-		}
-		for _, conn := range conns {
-			var tables []string
-			err := conn.SqlConn.QueryRowsCtx(ctx, &tables, fmt.Sprintf("select tablename from pg_tables where schemaname = '%s'", config.C.Gen.ModelSchema))
-			if err != nil {
-				return nil, err
-			}
-			for _, v := range tables {
-				allTables = append(allTables, v)
-			}
+		for _, v := range tables {
+			allTables = append(allTables, v)
 		}
 	}
 	return allTables, nil
+}
+
+func normalizeModelDriver(driver string) (string, error) {
+	switch driver {
+	case "", "postgres", "pgx":
+		return "pgx", nil
+	default:
+		return "", errors.Errorf("model driver %s not support, only postgres is supported", driver)
+	}
+}
+
+func hasSQLInput() bool {
+	if len(config.C.Gen.Desc) != 0 {
+		for _, v := range config.C.Gen.Desc {
+			if filepath.Ext(v) == ".sql" || osx.IsDir(v) {
+				return true
+			}
+		}
+	}
+
+	if pathx.FileExists(config.C.SqlDir()) {
+		sqlFiles, err := pzerodesc.FindSqlFiles(config.C.SqlDir())
+		return err == nil && len(sqlFiles) > 0
+	}
+
+	return false
 }
 
 func getIsCacheTable(t string) bool {
@@ -356,115 +222,31 @@ func generateModelFromDatasource(tableName, goctlHome string) error {
 		modelDir = filepath.Join("internal", "model", strings.ToLower(bf))
 	}
 
-	if config.C.Gen.ModelDriver == "pgx" {
-		if schema == "" {
-			schema = "public"
-		}
-		var datasourceUrl string
-		if strings.Contains(tableName, ".") {
-			for _, v := range config.C.Gen.ModelDatasourceUrl {
-				meta, err := dsn.ParseDSN("pgx", v)
-				if err != nil {
-					return err
-				}
-				if meta[dsn.Database] == strings.Split(tableName, ".")[0] {
-					datasourceUrl = v
-					break
-				}
-			}
-		} else {
-			datasourceUrl = config.C.Gen.ModelDatasourceUrl[0]
-		}
-
-		cmd := exec.Command("goctl", "model", "pg", "datasource", "--url", datasourceUrl, "--schema", schema, "-t", bf, "--dir", modelDir, "--home", goctlHome, "--style", config.C.Style, "-i", strings.Join(getIgnoreColumns(bf), ","), "--cache="+fmt.Sprintf("%t", getIsCacheTable(bf)), "-p", config.C.Gen.ModelCachePrefix, "--strict="+fmt.Sprintf("%t", config.C.Gen.ModelStrict))
-		// Debug removed(cmd.String())
-		resp, err := cmd.CombinedOutput()
-		if err != nil {
-			return errors.Errorf("gen model code meet error. Err: %s:%s", err.Error(), resp)
-		}
-	} else if config.C.Gen.ModelDriver == "mysql" {
-		var datasourceUrl string
-		if strings.Contains(tableName, ".") {
-			for _, v := range config.C.Gen.ModelDatasourceUrl {
-				meta, err := dsn.ParseDSN("mysql", v)
-				if err != nil {
-					return err
-				}
-				if meta[dsn.Database] == strings.Split(tableName, ".")[0] {
-					datasourceUrl = v
-					break
-				}
-			}
-		} else {
-			datasourceUrl = config.C.Gen.ModelDatasourceUrl[0]
-		}
-
-		cmd := exec.Command("goctl", "model", "mysql", "datasource", "--url", datasourceUrl, "-t", bf, "--dir", modelDir, "--home", goctlHome, "--style", config.C.Style, "-i", strings.Join(getIgnoreColumns(bf), ","), "--cache="+fmt.Sprintf("%t", getIsCacheTable(bf)), "-p", config.C.Gen.ModelCachePrefix, "--strict="+fmt.Sprintf("%t", config.C.Gen.ModelStrict))
-		// Debug removed(cmd.String())
-		resp, err := cmd.CombinedOutput()
-		if err != nil {
-			return errors.Errorf("gen model code meet error. Err: %s:%s", err.Error(), resp)
-		}
+	if schema == "" {
+		schema = "public"
 	}
-
-	return nil
-}
-
-func generateModelFromSqlFile(sqlFile, goctlHome string) error {
-	bf := strings.TrimSuffix(filepath.Base(sqlFile), ".sql")
-
-	var (
-		modelDir string
-		schema   = config.C.Gen.ModelSchema
-	)
-	if strings.Contains(bf, ".") {
-		split := strings.Split(bf, ".")
-		modelDir = filepath.Join("internal", "model", split[0], strings.ToLower(split[1]))
+	var datasourceUrl string
+	if strings.Contains(tableName, ".") {
+		for _, v := range config.C.Gen.ModelDatasourceUrl {
+			meta, err := dsn.ParseDSN("pgx", v)
+			if err != nil {
+				return err
+			}
+			if meta[dsn.Database] == strings.Split(tableName, ".")[0] {
+				datasourceUrl = v
+				break
+			}
+		}
 	} else {
-		modelDir = filepath.Join("internal", "model", strings.ToLower(bf))
+		datasourceUrl = config.C.Gen.ModelDatasourceUrl[0]
 	}
 
-	if config.C.Gen.ModelDriver == "pgx" {
-		if schema == "" {
-			schema = "public"
-		}
-	} else if config.C.Gen.ModelDriver == "mysql" {
-		if strings.Contains(bf, ".") {
-			schema = strings.Split(bf, ".")[0]
-		} else {
-			if schema == "" {
-				if len(config.C.Gen.ModelDatasourceUrl) >= 1 {
-					meta, err := dsn.ParseDSN("mysql", config.C.Gen.ModelDatasourceUrl[0])
-					if err != nil {
-						return err
-					}
-					schema = meta[dsn.Database]
-				}
-			}
-		}
-	}
-
-	cmd := exec.Command("goctl", "model", "mysql", "ddl", "--database", schema, "--src", sqlFile, "--dir", modelDir, "--home", goctlHome, "--style", config.C.Style, "-i", strings.Join(getIgnoreColumns(bf), ","), "--cache="+fmt.Sprintf("%t", getIsCacheTable(bf)), "-p", config.C.Gen.ModelCachePrefix, "--strict="+fmt.Sprintf("%t", config.C.Gen.ModelStrict))
+	cmd := exec.Command("goctl", "model", "pg", "datasource", "--url", datasourceUrl, "--schema", schema, "-t", bf, "--dir", modelDir, "--home", goctlHome, "--style", config.C.Style, "-i", strings.Join(getIgnoreColumns(bf), ","), "--cache="+fmt.Sprintf("%t", getIsCacheTable(bf)), "-p", config.C.Gen.ModelCachePrefix, "--strict="+fmt.Sprintf("%t", config.C.Gen.ModelStrict))
 	// Debug removed(cmd.String())
 	resp, err := cmd.CombinedOutput()
 	if err != nil {
 		return errors.Errorf("gen model code meet error. Err: %s:%s", err.Error(), resp)
 	}
+
 	return nil
-}
-
-// Parse parses ddl into golang structure
-func ParseSql(filename string) ([]*ddlparser.Table, error) {
-	p := ddlparser.NewParser()
-	tables, err := p.From(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	// Restrict SQL files to only one table
-	if len(tables) != 1 {
-		return nil, errors.Errorf("SQL file %s contains %d tables, but only one table per SQL file is allowed", filename, len(tables))
-	}
-
-	return tables, nil
 }
