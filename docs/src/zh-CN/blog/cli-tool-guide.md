@@ -581,42 +581,6 @@ jobs:
             ghcr.io/${{ github.repository }}:${{ steps.get_version.outputs.VERSION }}
 ```
 
-### Dockerfile 配置
-
-创建 `Dockerfile` 用于容器化部署：
-
-```dockerfile
-FROM alpine:latest
-
-ENV CGO_ENABLED=0
-
-LABEL \
-    org.opencontainers.image.title="mycli" \
-    org.opencontainers.image.description="My CLI tool" \
-    org.opencontainers.image.url="https://github.com/yourusername/mycli" \
-    org.opencontainers.image.documentation="https://github.com/yourusername/mycli#readme" \
-    org.opencontainers.image.source="https://github.com/yourusername/mycli" \
-    org.opencontainers.image.licenses="MIT" \
-    maintainer="your-name <your-email@example.com>"
-
-WORKDIR /app
-
-COPY dist/mycli_linux_amd64_v1/mycli /dist/mycli_linux_amd64/mycli
-COPY dist/mycli_linux_arm64_v8.0/mycli /dist/mycli_linux_arm64/mycli
-
-RUN if [ $(go env GOARCH) = "amd64" ]; then \
-      cp /dist/mycli_linux_amd64/mycli /usr/local/bin/mycli; \
-    elif [ $(go env GOARCH) = "arm64" ]; then \
-      cp /dist/mycli_linux_arm64/mycli /usr/local/bin/mycli; \
-    fi
-
-RUN apk update --no-cache \
-    && apk add --no-cache tzdata ca-certificates \
-    && rm -rf /dist
-
-ENTRYPOINT ["mycli"]
-```
-
 ### 发布流程
 
 **1. 创建并推送标签**：
@@ -659,42 +623,13 @@ go install github.com/yourusername/mycli@v1.0.0
 go install github.com/yourusername/mycli@latest
 ```
 
-**方式三：使用 Docker 镜像**
-
-```bash
-# 直接运行
-docker run --rm ghcr.io/yourusername/mycli:latest version
-
-# 创建别名方便使用
-alias mycli='docker run --rm -v $(pwd):/app -w /app ghcr.io/yourusername/mycli:latest'
-
-# 然后就可以像本地安装一样使用
-mycli version
-mycli --help
-```
-
-或者创建一个 shell 脚本 `mycli-docker.sh`：
-
-```bash
-#!/bin/bash
-docker run --rm -v "$(pwd)":/app -w /app ghcr.io/yourusername/mycli:latest "$@"
-```
-
-然后将其添加到 PATH：
-
-```bash
-chmod +x mycli-docker.sh
-sudo mv mycli-docker.sh /usr/local/bin/mycli
-```
-
 ### 自动化分发流程的优势
 
 ✅ **全自动化流程**：从代码标签到发布完成的全程自动化
 ✅ **多平台支持**：一次构建，支持 Linux、macOS、Windows 多架构
-✅ **多格式分发**：二进制文件、Docker 镜像、go install 多种安装方式
+✅ **多格式分发**：二进制文件和 `go install` 多种安装方式
 ✅ **版本管理**：自动注入版本信息，通过标签管理发布
 ✅ **安全性保障**：自动生成 SHA256 校验和，确保下载完整性
-✅ **容器化部署**：自动构建并推送多架构 Docker 镜像到 GHCR
 
 ---
 
@@ -712,7 +647,6 @@ sudo mv mycli-docker.sh /usr/local/bin/mycli
 - ✅ **统一配置管理**：展示配置文件、环境变量、命令行标志的使用
 - ✅ **GoReleaser 配置**：完整的跨平台构建配置
 - ✅ **GitHub Actions 工作流**：自动化发布流程
-- ✅ **Dockerfile**：多架构容器化支持
 - ✅ **完整文档**：详细的 README 和使用说明
 
 ### 快速体验
@@ -743,7 +677,6 @@ mycli/
 │   │   └── greet/            # 问候命令（自定义）
 │   └── config/               # 配置管理
 │       └── config.go
-├── Dockerfile                 # Docker 配置
 ├── .goreleaser.yaml          # GoReleaser 配置
 ├── .github/workflows/
 │   └── release.yml           # GitHub Actions

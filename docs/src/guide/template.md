@@ -177,7 +177,6 @@ Template structure:
 ```bash
 $ tree ~/.pzero/templates/local/myapi
 └── app
-    ├── Dockerfile.tpl
     ├── README.md.tpl
     ├── cmd
     │   ├── root.go.tpl
