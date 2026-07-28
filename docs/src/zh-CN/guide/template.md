@@ -72,8 +72,6 @@ internal/{{ .APP | lower }}/{{ FormatStyle .Style "service_context.go.tpl" }}
 | `DirName` | `string` | 输出目录名 |
 | `Style` | `string` | 文件命名风格，默认 `gozero` |
 | `Features` | `[]string` | `pzero new --features` 传入的特性列表 |
-| `Serverless` | `bool` | 是否以 serverless 模式创建项目 |
-
 例如：
 
 ```text
@@ -83,9 +81,6 @@ module {{ .Module }}
 // enable model feature
 {{ end }}
 
-{{ if .Serverless }}
-// serverless mode
-{{ end }}
 ```
 
 :::tip

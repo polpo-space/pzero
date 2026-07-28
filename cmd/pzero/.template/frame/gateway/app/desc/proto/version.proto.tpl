@@ -1,4 +1,4 @@
-{{ if .Serverless }}{{else}}syntax = "proto3";
+syntax = "proto3";
 
 package version;
 
@@ -22,4 +22,4 @@ service Version {
             get: "/api/version"
         };
     };
-}{{end}}
+}

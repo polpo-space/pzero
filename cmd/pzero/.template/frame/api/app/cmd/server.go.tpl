@@ -16,7 +16,6 @@ import (
 	"{{ .Module }}/internal/middleware"
 	"{{ .Module }}/internal/handler"
 	"{{ .Module }}/internal/svc"
-	{{ if not .Serverless }}"{{ .Module }}/plugins"{{end}}
 )
 
 var serverCmd = &cobra.Command{
@@ -54,9 +53,6 @@ var serverCmd = &cobra.Command{
 		swaggerv2.RegisterRoutes(restServer)
 		// register middleware
 		middleware.Register(restServer)
-
-	    {{ if not .Serverless }}// load plugins
-	    plugins.LoadPlugins(restServer, svcCtx){{end}}
 
 		group := service.NewServiceGroup()
 		group.Add(restServer)

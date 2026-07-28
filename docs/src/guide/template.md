@@ -72,8 +72,6 @@ When `pzero new` runs, pzero injects the following built-in variables into the t
 | `DirName` | `string` | Output directory name |
 | `Style` | `string` | File naming style, default is `gozero` |
 | `Features` | `[]string` | Feature list passed by `pzero new --features` |
-| `Serverless` | `bool` | Whether the project is created in serverless mode |
-
 Example:
 
 ```text
@@ -83,9 +81,6 @@ module {{ .Module }}
 // enable model feature
 {{ end }}
 
-{{ if .Serverless }}
-// serverless mode
-{{ end }}
 ```
 
 :::tip

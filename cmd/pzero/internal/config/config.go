@@ -64,9 +64,6 @@ type Config struct {
 	// upgrade command
 	Upgrade UpgradeConfig `mapstructure:"upgrade"`
 
-	// serverless command
-	Serverless ServerlessConfig `mapstructure:"serverless"`
-
 	// migrate command
 	Migrate MigrateConfig `mapstructure:"migrate"`
 
@@ -78,7 +75,6 @@ type NewConfig struct {
 	Name                 string   `mapstructure:"name"`                  // 新建项目名称
 	Module               string   `mapstructure:"module"`                // 新建的项目的 go module
 	Mono                 bool     `mapstructure:"mono"`                  // 是否是 mono 项目(即在一个mod项目之下, 但该项目本身无 go.mod 文件)
-	Serverless           bool     `mapstructure:"serverless"`            // 是否是 serverless 插件
 	Output               string   `mapstructure:"output"`                // 输出到的目录
 	Remote               string   `mapstructure:"remote"`                // 远程仓库地址
 	RemoteTimeout        int      `mapstructure:"remote-timeout"`        // 远程仓库超时时间, 单位秒
@@ -176,14 +172,6 @@ type TemplateBuildConfig struct {
 
 type UpgradeConfig struct {
 	Channel string `mapstructure:"channel"`
-}
-
-type ServerlessConfig struct {
-	Delete ServerlessDeleteConfig `mapstructure:"delete"`
-}
-
-type ServerlessDeleteConfig struct {
-	Plugin []string `mapstructure:"plugin"`
 }
 
 type MigrateConfig struct {

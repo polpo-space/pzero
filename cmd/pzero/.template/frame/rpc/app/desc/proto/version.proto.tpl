@@ -1,7 +1,7 @@
-{{ if .Serverless }}{{else}}syntax = "proto3";
+syntax = "proto3";
 
-package {{if .Serverless}}{{.APP | lower}}{{end}}version;
-option go_package = "./types/{{if .Serverless}}{{.APP | lower}}{{end}}version";
+package version;
+option go_package = "./types/version";
 
 message VersionRequest {}
 
@@ -12,6 +12,6 @@ message VersionResponse {
     string date = 4;
 }
 
-service {{if .Serverless}}{{.APP | ToCamel}}{{end}}Version {
+service Version {
     rpc Version(VersionRequest) returns(VersionResponse) {};
-}{{end}}
+}

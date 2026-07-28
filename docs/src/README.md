@@ -19,7 +19,6 @@ Key features include:
 * Supports flexible control of pzero configurations through combinations of **configuration files/command-line parameters/environment variables**, with minimal commands to generate code, AI-friendly
 * Supports generating code based on **git-changed files** or specific descriptor files, or ignoring specific descriptor files, improving code generation efficiency for large projects
 * Built-in common development templates with enhanced template features, supports **custom templates** to build proprietary enterprise code templates, significantly reducing development costs
-* Supports **plugin architecture**, where functional modules can be dynamically loaded as independent plugins, supporting plugin creation, compilation, and uninstallation, perfectly adapted for team collaboration and module decoupling
 
 For more details, please visit: [https://docs.jzero.io](https://docs.jzero.io)
 
@@ -28,7 +27,7 @@ For more details, please visit: [https://docs.jzero.io](https://docs.jzero.io)
 * **Developer Experience**: Provides a simple, easy-to-use, one-stop production-ready solution that enhances the development experience
 * **Template-Driven**: All code generation is based on template rendering, with default generation following best practices, and supports custom template content
 * **Ecosystem Compatibility**: Does not modify go-zero and go-zero/goctl, maintains ecosystem compatibility while addressing existing pain points and extending new features
-* **Team Development**: Through module **layering** and **plugin** design, it's friendly to team development
+* **Team Development**: Through clear module **layering**, it's friendly to team development
 * **Interface Design**: Does not depend on specific databases/cache/config centers and other infrastructure, allowing free choice based on actual needs
 
 ## Quick Start

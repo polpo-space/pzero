@@ -28,7 +28,7 @@ If you have these concerns, today's article is a must-read!
 - ✅ **Developer Experience First**: Provides a simple, easy-to-use, one-stop production-ready solution, one-click initialize api/rpc/gateway projects, minimal commands to generate basic framework code
 - ✅ **AI Empowered**: Project-maintained Agent Skills let AI generate business logic code that better matches engineering conventions
 - ✅ **Template-Driven**: Default generation follows best practices, supports custom templates, can build enterprise-specific foundation based on remote template repositories
-- ✅ **Plugin Architecture**: Module layering, plugin design, smoother team collaboration
+- ✅ **Clear Layering**: Modular structure and clearer collaboration boundaries for teams
 - ✅ **Built-in Components**: Includes common tools like cache, migrate, and condition
 - ✅ **Ecosystem Compatible**: Doesn't modify go-zero, maintains ecosystem compatibility while addressing existing pain points and extending new features
 - ✅ **Flexible Interface**: Doesn't depend on specific database/cache/config center, free choice based on actual needs
@@ -281,39 +281,6 @@ skills/
 </video>
 
 
-## Plugin Architecture
-
-Support **plugin development**, loading functional modules as independent plugins:
-
-```bash
-# Create helloworld api service
-pzero new helloword --frame api
-
-cd helloworld
-
-# Add api plugin
-pzero new plugin_name --frame api --serverless
-
-# Add api plugin (mono type, use helloworld's go module)
-pzero new plugin_name_mono --frame api --serverless --mono
-
-# Build and load all plugins
-pzero serverless build
-
-# Unload all plugins
-pzero serverless delete
-
-# Unload specific plugin
-pzero serverless delete --plugin plugin_name
-```
-
-**Perfectly supports**:
-
-- 📦 Functional module decoupling, independent development and testing
-- 👥 Team collaboration, different teams responsible for different plugins
-- 🔄 Load on demand, flexible assembly of functions
-
----
 
 ## Quick Experience, Get Started in 5 Minutes
 
