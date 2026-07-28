@@ -510,4 +510,3 @@ func genNoRpcServiceExcludeThirdPartyProto(genModule bool, module string, progre
 	}
 	return nil
 }
-

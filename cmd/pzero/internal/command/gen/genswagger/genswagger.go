@@ -526,4 +526,3 @@ func adjustHttpPath(path string) string {
 	path = strings.ReplaceAll(path, "}", "")
 	return path
 }
-
