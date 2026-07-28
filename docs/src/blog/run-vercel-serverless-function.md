@@ -11,12 +11,12 @@ icon: /icons/emojione-v1-rocket.svg
 
 🏗️ **Generate Framework Code Through Templates**: Automatically generate framework code from description files (api → api framework code, proto → proto framework code, sql/remote database address → model code)
 
-🤖 **Generate Business Code Through Agent Skills**: Built-in pzero-skills enables AI to generate business logic code that follows best practices
+🤖 **Generate Business Code Through Agent Skills**: Project-maintained Agent Skills help AI generate business logic code that follows team conventions
 
 **Core Value and Design Philosophy**:
 
 - ✅ **Development Experience First**: Provides a simple, easy-to-use, production-ready solution, one-click initialize api/rpc/gateway projects, minimalist commands to generate basic framework code
-- ✅ **AI Empowered**: Built-in pzero-skills enables AI to generate business logic code following best practices
+- ✅ **AI Empowered**: Project-maintained Agent Skills help AI generate business logic code that follows team conventions
 - ✅ **Template Driven**: Default generation follows best practices, supports custom templates, can build enterprise-specific infrastructure based on remote template repositories
 - ✅ **Plugin Architecture**: Modular layering, plugin design, smoother team collaboration
 - ✅ **Built-in Development Components**: Includes common tools like cache, database migration (migrate), and database query (condition)

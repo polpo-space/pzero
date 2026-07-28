@@ -134,11 +134,11 @@ pzero new myproject --template https://github.com/your-org/pzero-template --bran
 
 ### 场景：开发用户注册功能
 
-**使用 pzero + AI Skills**：
+**使用 pzero + 项目自维护的 Agent Skills**：
 
 ```bash
 # 只需要一句话
-"用 pzero-skills 创建用户注册功能，支持用户名、邮箱、密码，需要验证和去重"
+"创建一个用户注册功能，支持用户名、邮箱、密码，需要验证和去重，并遵循项目里的 Agent Skills 和现有架构约束"
 ```
 
 **AI 自动完成**：

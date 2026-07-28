@@ -8,7 +8,7 @@
 
 基于 [go-zero框架](https://github.com/zeromicro/go-zero) 以及 [go-zero/goctl工具](https://github.com/zeromicro/go-zero/tree/master/tools/goctl) 开发的 [pzero](https://github.com/polpo-space/pzero) 框架, 可一键初始化 api/gateway/rpc 项目。
 
-基于可描述文件(**api/proto/sql**)自动生成**服务端和客户端**框架代码, 基于内置的 pzero-skills 让 AI 生成符合最佳实践的业务逻辑代码，降低开发心智, 解放双手!
+基于可描述文件(**api/proto/sql**)自动生成**服务端和客户端**框架代码，并可结合仓库内 `skills/` 目录维护的 Agent Skills 让 AI 生成更贴合业务与架构约束的业务逻辑代码，降低开发心智, 解放双手!
 
 具备以下特点:
 

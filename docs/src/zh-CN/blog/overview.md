@@ -21,12 +21,12 @@ icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 
 🏗️ **通过模板生成基础框架代码**：基于描述文件自动生成框架代码（api → api 框架代码、proto → proto 框架代码、sql/远程数据库地址 → model 代码）
 
-🤖 **通过 Agent Skills 生成业务代码**：内置 pzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
+🤖 **通过 Agent Skills 生成业务代码**：结合项目自维护的 Agent Skills，让 AI 生成符合团队架构和工程规范的业务逻辑代码
 
 **核心价值与设计理念**：
 
 - ✅ **开发体验优先**：提供简单好用的一站式生产可用解决方案，一键初始化 api/rpc/gateway 项目，极简指令生成基础框架代码
-- ✅ **AI 赋能**：内置 pzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
+- ✅ **AI 赋能**：项目自维护的 Agent Skills 让 AI 生成更贴合工程规范的业务逻辑代码
 - ✅ **模板驱动**：默认生成即最佳实践，支持自定义模板，可基于远程模板仓库打造企业专属底座
 - ✅ **插件化架构**：模块分层、插件设计，团队协作更顺畅
 - ✅ **内置开发组件**：包含缓存(cache)、数据库迁移(migrate)、数据库查询(condition)等常用工具
@@ -248,16 +248,13 @@ gen:
 
 ## 通过 Agent Skills 生成业务代码
 
-基于 pzero-skills，让 AI 自动生成符合最佳实践的业务代码：
+结合仓库 `skills/` 目录中维护的 Agent Skills，让 AI 自动生成符合团队最佳实践的业务代码：
 
 ```bash
-# 输出 AI Skills 配置到 Claude（默认 ~/.claude/skills）
-pzero skills init
+# 在项目仓库中维护 skills，例如：
+skills/
 
-# 输出到当前项目
-pzero skills init --output .claude/skills
-
-# 在 Claude 中用自然语言描述需求, 推荐使用 pzero-skills 开头
+# 然后直接在 AI 工具中用自然语言描述需求
 ```
 
 **AI 能帮你做什么**：
