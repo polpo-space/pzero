@@ -234,7 +234,7 @@ func closeAfter(primaryErr error, migrator Migrator) error {
 }
 
 func parseVersion(raw string) (uint, error) {
-	version, err := strconv.ParseUint(raw, 10, 64)
+	version, err := strconv.ParseUint(raw, 10, strconv.IntSize)
 	if err != nil {
 		return 0, err
 	}
