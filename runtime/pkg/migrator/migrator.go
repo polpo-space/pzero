@@ -1,5 +1,5 @@
-// Package migrator provides PostgreSQL schema migration execution and service
-// commands backed by pgx.
+// Package migrator is a public pzero runtime API for PostgreSQL schema
+// migration execution and service commands backed by pgx.
 package migrator
 
 import (
