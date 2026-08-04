@@ -66,7 +66,7 @@ jobs:
       - name: Extract Docker metadata
         if: ${{ inputs.docker }}
         id: docker_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/polpo-space/pzero
           tags: |
