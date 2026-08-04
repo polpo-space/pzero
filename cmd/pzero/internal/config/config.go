@@ -23,6 +23,8 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/hooks"
 )
 
+const DefaultStyle = "go_zero"
+
 // C global command flags
 var C Config
 
@@ -93,11 +95,6 @@ type NewConfig struct {
 
 type GenConfig struct {
 	Hooks HooksConfig `mapstructure:"hooks"`
-
-	// gen persistent flags
-	// Style: code style
-	// Deprecated
-	Style string `mapstructure:"style"`
 
 	Desc                    []string `mapstructure:"desc"`
 	DescIgnore              []string `mapstructure:"desc-ignore"`

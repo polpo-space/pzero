@@ -36,6 +36,32 @@ func TestBannerTemplatesUseServiceName(t *testing.T) {
 	}
 }
 
+func TestAPIServerTemplateDoesNotRegisterSwaggerRoutesByDefault(t *testing.T) {
+	serverTemplate := readEmbeddedTemplate(t, ".template/frame/api/app/cmd/server.go.tpl")
+	for _, unwanted := range []string{
+		"github.com/polpo-space/pzero/core/swaggerv2",
+		"swaggerv2.RegisterRoutes(restServer)",
+	} {
+		if strings.Contains(serverTemplate, unwanted) {
+			t.Fatalf("API server template still contains %q", unwanted)
+		}
+	}
+}
+
+func TestAPIRouteTemplatesDoNotUseDummyTimeReferences(t *testing.T) {
+	for _, path := range []string{
+		".template/frame/api/app/internal/handler/routes.go.tpl",
+		".template/api/routes.go.tpl",
+	} {
+		content := readEmbeddedTemplate(t, path)
+		for _, unwanted := range []string{"_ = time.Now()", "_ = http.StatusOK"} {
+			if strings.Contains(content, unwanted) {
+				t.Fatalf("route template %s still contains %q", path, unwanted)
+			}
+		}
+	}
+}
+
 func readEmbeddedTemplate(t *testing.T, path string) string {
 	t.Helper()
 

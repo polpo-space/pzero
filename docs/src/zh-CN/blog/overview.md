@@ -266,7 +266,7 @@ skills/
 
 **数据库操作**：
 - ✅ 自动创建 SQL 迁移文件（xx.up.sql & xx.down.sql）
-- ✅ 自动执行数据库迁移（`pzero migrate up`）
+- ✅ 通过生成的服务显式执行数据库迁移（`go run . migrate up`）
 - ✅ 自动生成 Model 代码（`pzero gen --desc desc/sql/xxx.sql`）
 
 **RPC 服务开发**：

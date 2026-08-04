@@ -168,7 +168,7 @@ func runNewCommand(cmd *cobra.Command, args []string) error {
 
 	// for gen persistent flags
 	if config.C.Style == "" {
-		config.C.Style = "gozero"
+		config.C.Style = config.DefaultStyle
 	}
 	if config.C.Home == "" {
 		config.C.Home = filepath.Join(config.C.Wd(), ".template")
