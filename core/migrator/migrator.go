@@ -183,7 +183,7 @@ func (d *defaultMigrator) Goto(version uint) error {
 }
 
 func (d *defaultMigrator) Force(version uint) error {
-	maxInt := uint(^uint(0) >> 1)
+	maxInt := ^uint(0) >> 1
 	if version > maxInt {
 		return fmt.Errorf("migration version %d overflows int", version)
 	}

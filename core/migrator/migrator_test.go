@@ -14,6 +14,8 @@ func TestNewRejectsNonPgxDrivers(t *testing.T) {
 
 	for _, driver := range []string{"mysql", "sqlite", ""} {
 		t.Run(driver, func(t *testing.T) {
+			t.Parallel()
+
 			_, err := New(sqlx.SqlConf{
 				DriverName: driver,
 				DataSource: "unused",
@@ -53,6 +55,8 @@ func TestParsePgxConfig(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
 			config, err := parsePgxConfig(sqlx.SqlConf{
 				DriverName: "pgx",
 				DataSource: test.dataSource,
