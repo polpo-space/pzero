@@ -35,10 +35,27 @@ func TestAPIRPCTemplatesProvideServiceMigrateCommand(t *testing.T) {
 			for _, direction := range []string{"up", "down"} {
 				migrationPath := ".template/frame/" + frame + "/app/desc/sql_migration/1_initialize_schema." + direction + ".sql.tpl"
 				migrationTemplate := readEmbeddedTemplate(t, migrationPath)
-				if !strings.Contains(migrationTemplate, `{{ if has "model" .Features }}`) {
+				if !strings.Contains(migrationTemplate, `if has "model" .Features`) {
 					t.Fatalf("%s %s migration template is not model-gated", frame, direction)
 				}
+				if strings.Contains(strings.ToLower(migrationTemplate), "select 1") {
+					t.Fatalf("%s %s migration template executes placeholder SQL", frame, direction)
+				}
+				if !strings.Contains(migrationTemplate, "-- Write your "+direction+" migration SQL here.") {
+					t.Fatalf("%s %s migration template is missing its placeholder comment", frame, direction)
+				}
 				assertTemplateEmptyWithoutModel(t, migrationPath, migrationTemplate)
+
+				rendered, err := pzerotemplatex.ParseTemplate(migrationPath, map[string]any{
+					"Features": []string{"model"},
+				}, []byte(migrationTemplate))
+				if err != nil {
+					t.Fatalf("render %s %s migration template: %v", frame, direction, err)
+				}
+				want := "-- Write your " + direction + " migration SQL here.\n"
+				if string(rendered) != want {
+					t.Fatalf("%s %s migration template rendered %q, want %q", frame, direction, rendered, want)
+				}
 			}
 
 			readmeTemplate := readEmbeddedTemplate(t,

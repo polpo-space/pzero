@@ -1,2 +1,2 @@
-{{ if has "model" .Features }}-- todo: add your down sql here and delete this line
-select 1;{{end}}
+{{- if has "model" .Features }}-- Write your down migration SQL here.
+{{ end -}}
