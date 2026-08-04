@@ -162,7 +162,7 @@ func appendToolVersion(items []string, name string, v *goversion.Version) []stri
 func init() {
 	cobra.OnInitialize(InitConfig)
 
-	rootCmd.PersistentFlags().StringP("style", "", "gozero", "The file naming format, see [https://github.com/zeromicro/go-zero/blob/master/tools/goctl/config/readme.md]")
+	rootCmd.PersistentFlags().StringP("style", "", config.DefaultStyle, "The file naming format, see [https://github.com/zeromicro/go-zero/blob/master/tools/goctl/config/readme.md]")
 	rootCmd.PersistentFlags().StringP("home", "", ".template", "set template home")
 	rootCmd.PersistentFlags().StringVarP(&config.CfgFile, "config", "f", ".pzero.yaml", "set config file")
 	rootCmd.PersistentFlags().StringVarP(&config.CfgEnvFile, "config-env", "", ".pzero.env.yaml", "set config env file")

@@ -434,6 +434,8 @@ func (ja *PzeroApi) generateRoutesGoFile(apiFiles []string, apiSpecMap map[strin
 			"Routes":         allRoutesGoBody,
 			"Module":         ja.Module,
 			"HandlerImports": lo.Uniq(handlerImports),
+			"UseHTTP":        strings.Contains(allRoutesGoBody, "http."),
+			"UseTime":        strings.Contains(allRoutesGoBody, "time."),
 		},
 		embeded.ReadTemplateFile(filepath.Join("api", "routes.go.tpl")),
 	)

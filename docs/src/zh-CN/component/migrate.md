@@ -4,12 +4,14 @@ icon: /icons/streamline-plump-color-database.svg
 order: 3
 ---
 
-migrate 组件默认读取 desc/sql_migration 下的 sql 文件, 管理 sql.
+migrate 组件从 `desc/sql_migration` 读取并管理 PostgreSQL migration，
+只支持 go-zero 的 `pgx` driver。
 
-* Up: 默认升级所有 up 脚本, 支持传入 steps 参数升级几个
-* Down: 默认回滚所有 down 脚本, 支持传入 steps 参数回滚几个
-* Goto: 切到某个版本
-* Version: 获取当前版本
+* Up：应用全部待执行 migration，也可以限制执行步数
+* Down：回滚 migration，也可以限制回滚步数
+* Goto：迁移到指定版本
+* Force：不执行 migration，直接设置版本并清除 dirty 状态
+* Version：获取当前版本和 dirty 状态
 
 ::: code-tabs#shell
 
@@ -19,8 +21,8 @@ migrate 组件默认读取 desc/sql_migration 下的 sql 文件, 管理 sql.
 package main
 
 import (
+	"github.com/polpo-space/pzero/core/migrator"
 	"github.com/zeromicro/go-zero/core/conf"
-	"github.com/polpo-space/pzero/core/stores/migrate"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -32,11 +34,10 @@ func main() {
 	var c Config
 	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	m, err := migrate.NewMigrate(c.Sqlx)
+	m, err := migrator.New(c.Sqlx)
 	if err != nil {
 		panic(err)
 	}
-	
 	defer m.Close()
 
 	if err = m.Up(); err != nil {
@@ -49,124 +50,27 @@ func main() {
 
 ```yaml
 sqlx:
-    datasource: "jzero-admin.db"
-    driverName: "sqlite"
+  driverName: "pgx"
+  dataSource: "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
 ```
 
 @tab desc/sql_migration/1_init.up.sql
+
 ```sql
-DROP TABLE IF EXISTS `manage_user`;
-
-CREATE TABLE `manage_user` (
-                               `id` bigint NOT NULL AUTO_INCREMENT,
-                               `uuid` varchar(36) NOT NULL UNIQUE,
-                               `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                               `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                               `username` varchar(30) NOT NULL,
-                               `password` varchar(100) NOT NULL,
-                               `nickname` varchar(30) NOT NULL,
-                               `gender` varchar(1) NOT NULL,
-                               `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-                               `status` varchar(1) NOT NULL,
-                               `email` varchar(100) NOT NULL,
-                               PRIMARY KEY (`id`),
-                               UNIQUE KEY `uni_manage_user_username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-INSERT INTO `manage_user` (`uuid`, `create_time`, `update_time`, `username`, `password`, `nickname`, `gender`, `phone`, `status`, `email`)
-VALUES
-    ('1c2d3e4f-5a6b-7c8d-9e0f-1a2b3c4d5e6f','2024-10-24 09:45:00','2024-10-31 09:40:13','admin','123456','超级管理员','1','','1','');
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 ```
 
 @tab desc/sql_migration/1_init.down.sql
 
 ```sql
-DROP TABLE IF EXISTS `manage_user`;
+DROP TABLE IF EXISTS users;
 ```
+
 :::
 
-## 支持多数据库切换
-
-:::tip 根据 driver 区分不同的数据库的迁移目录
-:::
-
-migrate 增加可选参数 `WithSourceAppendDriver`:
-
-* mysql source: desc/sql_migration/mysql
-* pgx source: desc/sql_migration/pgx
-* sqlite source: desc/sql_migration/sqlite
-
-::: code-tabs#shell
-
-@tab main.go
-
-```go
-package main
-
-import (
-	"github.com/zeromicro/go-zero/core/conf"
-	"github.com/polpo-space/pzero/core/stores/migrate"
-	"github.com/zeromicro/go-zero/core/stores/sqlx"
-)
-
-type Config struct {
-	Sqlx sqlx.SqlConf
-}
-
-func main() {
-	var c Config
-	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
-
-	m, err := migrate.NewMigrate(c.Sqlx, migrate.WithSourceAppendDriver(true))
-	if err != nil {
-		panic(err)
-	}
-	
-	defer m.Close()
-
-	if err = m.Up(); err != nil {
-		panic(err)
-	}
-}
-
-```
-
-@tab etc/etc.yaml
-
-```yaml
-sqlx:
-    datasource: "jzero-admin.db"
-    driverName: "sqlite"
-```
-
-@tab desc/sql_migration/sqlite/1_init.up.sql
-```sql
-DROP TABLE IF EXISTS `manage_user`;
-
-CREATE TABLE `manage_user` (
-                               `id` bigint NOT NULL AUTO_INCREMENT,
-                               `uuid` varchar(36) NOT NULL UNIQUE,
-                               `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                               `update_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                               `username` varchar(30) NOT NULL,
-                               `password` varchar(100) NOT NULL,
-                               `nickname` varchar(30) NOT NULL,
-                               `gender` varchar(1) NOT NULL,
-                               `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-                               `status` varchar(1) NOT NULL,
-                               `email` varchar(100) NOT NULL,
-                               PRIMARY KEY (`id`),
-                               UNIQUE KEY `uni_manage_user_username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-INSERT INTO `manage_user` (`uuid`, `create_time`, `update_time`, `username`, `password`, `nickname`, `gender`, `phone`, `status`, `email`)
-VALUES
-    ('1c2d3e4f-5a6b-7c8d-9e0f-1a2b3c4d5e6f','2024-10-24 09:45:00','2024-10-31 09:40:13','admin','123456','超级管理员','1','','1','');
-```
-
-@tab desc/sql_migration/sqlite/1_init.down.sql
-
-```sql
-DROP TABLE IF EXISTS `manage_user`;
-```
-:::
+默认直接读取 `desc/sql_migration`。如果现有项目仍按 driver 保存 migration，
+可以传入 `migrate.WithSourceAppendDriver(true)`，读取 `desc/sql_migration/pgx`。

@@ -16,16 +16,22 @@ pzero check
 pzero gen
 ```
 
-## Build docker image
+{{ if has "model" .Features }}## Database migrations
+
+Service migrations support PostgreSQL through the `pgx` driver only.
+
+Create a migration file pair:
 
 ```shell
-# add a builder first
-docker buildx create --use --name=mybuilder --driver docker-container --driver-opt image=dockerpracticesig/buildkit:master
-
-# build and load
-docker buildx build --platform linux/{{ .GoArch }} --progress=plain -t {{ .APP }}:latest . --load
+go run . migrate create add_example
 ```
 
-## Documents
+Apply pending migrations explicitly before starting the server:
 
-https://docs.jzero.io
+```shell
+go run . migrate up --config etc/etc.yaml
+```
+
+Run `go run . migrate --help` for rollback, version, goto, and force commands.
+
+{{ end }}

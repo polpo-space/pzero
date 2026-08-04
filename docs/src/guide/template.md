@@ -70,7 +70,7 @@ When `pzero new` runs, pzero injects the following built-in variables into the t
 | `GoVersion` | `string` | Current Go version |
 | `GoArch` | `string` | Current architecture such as `amd64` or `arm64` |
 | `DirName` | `string` | Output directory name |
-| `Style` | `string` | File naming style, default is `gozero` |
+| `Style` | `string` | File naming style, default is `go_zero` |
 | `Features` | `[]string` | Feature list passed by `pzero new --features` |
 Example:
 

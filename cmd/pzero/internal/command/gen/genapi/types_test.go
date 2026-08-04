@@ -38,6 +38,40 @@ func formatFile(t *testing.T, fset *token.FileSet, f any) string {
 	return buf.String()
 }
 
+func TestRenderTypesFileConditionallyImportsTime(t *testing.T) {
+	ja := &PzeroApi{}
+
+	withoutTime, err := ja.renderTypesFile([]spec.Type{
+		spec.DefineStruct{
+			RawName: "User",
+			Members: []spec.Member{
+				{Name: "Name", Type: spec.PrimitiveType{RawName: "string"}},
+			},
+		},
+	}, "types")
+	if err != nil {
+		t.Fatalf("render types without time: %v", err)
+	}
+	if strings.Contains(string(withoutTime), `"time"`) || strings.Contains(string(withoutTime), "time.Now()") {
+		t.Fatalf("types without time contain a time placeholder:\n%s", withoutTime)
+	}
+
+	withTime, err := ja.renderTypesFile([]spec.Type{
+		spec.DefineStruct{
+			RawName: "Event",
+			Members: []spec.Member{
+				{Name: "CreatedAt", Type: spec.PrimitiveType{RawName: "time.Time"}},
+			},
+		},
+	}, "types")
+	if err != nil {
+		t.Fatalf("render types with time: %v", err)
+	}
+	if !strings.Contains(string(withTime), `"time"`) || !strings.Contains(string(withTime), "CreatedAt time.Time") {
+		t.Fatalf("types with time are missing the required import:\n%s", withTime)
+	}
+}
+
 func TestSeparateTypesGoRewritesDefaultTypesFileWhenNoDefaultTypesRemain(t *testing.T) {
 	tmpDir := t.TempDir()
 	setTypesDir(t, defaultTypesDir)

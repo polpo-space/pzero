@@ -50,9 +50,9 @@ When helping with pzero development:
 ### Database Operations
 
 - [Best Practices](references/database-patterns/best-practices.md): Model import rules, condition chain usage, error handling, field constants
-- [SQL Migration Guide](references/database-patterns/sql-migration.md): Managing schema changes with up/down migrations
+- [SQL Migration Guide](references/database-patterns/sql-migration.md): Managing pgx schema changes through generated service commands
 - [Model Generation](references/database-patterns/model-generation.md): Generate models from SQL files or remote datasource
-- [Database Connection](references/database-patterns/database-connection.md): MySQL, PostgreSQL, SQLite, Redis configuration
+- [Database Connection](references/database-patterns/database-connection.md): PostgreSQL (`pgx`) and Redis configuration
 - [CRUD Operations](references/database-patterns/crud-operations.md): Generated methods and usage patterns
 
 **Critical reminder**: Always use `condition.NewChain()`, never use `condition.New()`.
@@ -69,16 +69,19 @@ When helping with pzero development:
 
 **Local SQL Mode**:
 1. Create or update SQL schema in `desc/sql/*.sql`
-2. Create migration files in `desc/sql_migration/`
-3. Apply migrations with `pzero migrate up`
-4. Generate models with `pzero gen --desc desc/sql/users.sql`
+2. Create a migration pair with `<service> migrate create <name>`
+3. Implement both files in `desc/sql_migration/`
+4. Apply migrations explicitly with `<service> migrate up --config etc/etc.yaml`
+5. Generate models with `pzero gen --desc desc/sql/users.sql`
 
 **Remote Datasource Mode**:
-1. Create migration files in `desc/sql_migration/`
-2. Apply migrations
+1. Create and implement migration files in `desc/sql_migration/`
+2. Apply migrations explicitly through the generated service binary
 3. Generate models with `pzero gen`
 
 Common steps:
+- Use PostgreSQL through the `pgx` driver; service migrations reject other drivers
+- Run migrations as an explicit release or operator action, never during server startup
 - Inject model into ServiceContext
 - Use the condition builder in logic layer
 - Handle errors properly
@@ -104,6 +107,8 @@ Typical pzero project structure:
 myproject/
 ├── skills/
 ├── .pzero.yaml
+├── cmd/
+│   └── migrate.go
 ├── desc/
 │   ├── api/
 │   ├── sql/
@@ -130,6 +135,9 @@ myproject/
 - Import models with aliases like `xxmodel`
 - Use `errors.Is(err, model.ErrNotFound)` from `github.com/pkg/errors`
 - Run `pzero gen --desc` before implementing logic
+- Use the default `go_zero` file naming style unless the project explicitly requires another style
+- Run schema migrations through the generated API/RPC service command
+- Keep migration execution explicit and PostgreSQL/pgx-only
 - Use generated field constants
 
 ### Never Do
@@ -140,6 +148,7 @@ myproject/
 - Never import models without aliases
 - Never compare model errors with `==`
 - Never hard-code configuration values
+- Never run migrations automatically during server startup
 - Never implement logic before generating framework code
 
 ## Resources

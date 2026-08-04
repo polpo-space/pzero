@@ -2,17 +2,9 @@
 package handler
 
 import (
-	"net/http"
-	"time"
-
 	"github.com/zeromicro/go-zero/rest"
 
 	"{{.Module}}/internal/svc"
-)
-
-var (
-	_ = http.StatusOK
-	_ = time.Now()
 )
 
 func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {}

@@ -266,7 +266,7 @@ skills/
 
 **Database Operations**:
 - ✅ Automatically create SQL migration files (xx.up.sql & xx.down.sql)
-- ✅ Automatically execute database migration (`pzero migrate up`)
+- ✅ Explicitly execute database migration through the generated service (`go run . migrate up`)
 - ✅ Automatically generate Model code (`pzero gen --desc desc/sql/xxx.sql`)
 
 **RPC Service Development**:

@@ -2,9 +2,6 @@ package cmd
 
 import (
 	"github.com/common-nighthawk/go-figure"
-	{{ if has "model" .Features }}
-    "github.com/polpo-space/pzero/core/stores/migrate"{{end}}
-	"github.com/polpo-space/pzero/core/swaggerv2"
 	"github.com/spf13/cobra"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -34,11 +31,6 @@ var serverCmd = &cobra.Command{
 		// print version
 		printVersion()
 
-		{{ if has "model" .Features }}m, err := migrate.NewMigrate(c.Sqlx.SqlConf)
-        logx.Must(err)
-        defer m.Close()
-        logx.Must(m.Up()){{end}}
-
 		// create service context
 		svcCtx := svc.NewServiceContext(c)
 
@@ -49,8 +41,6 @@ var serverCmd = &cobra.Command{
 
 		// register auto generated routes
 		handler.RegisterHandlers(restServer, svcCtx)
-		// register swagger routes
-		swaggerv2.RegisterRoutes(restServer)
 		// register middleware
 		middleware.Register(restServer)
 

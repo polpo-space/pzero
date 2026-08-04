@@ -70,7 +70,7 @@ internal/{{ .APP | lower }}/{{ FormatStyle .Style "service_context.go.tpl" }}
 | `GoVersion` | `string` | 当前 Go 版本 |
 | `GoArch` | `string` | 当前架构，如 `amd64`、`arm64` |
 | `DirName` | `string` | 输出目录名 |
-| `Style` | `string` | 文件命名风格，默认 `gozero` |
+| `Style` | `string` | 文件命名风格，默认 `go_zero` |
 | `Features` | `[]string` | `pzero new --features` 传入的特性列表 |
 例如：
 

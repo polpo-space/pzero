@@ -24,11 +24,6 @@ import (
 )
 
 func Run() error {
-	// 兼容之前的 gen style
-	if config.C.Gen.Style != "" && config.C.Gen.Style != "gozero" {
-		config.C.Style = config.C.Gen.Style
-	}
-
 	var module string
 	moduleStruct, err := mod.GetGoMod(config.C.Wd())
 	if err != nil {

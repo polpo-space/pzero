@@ -3,20 +3,20 @@ package migrateversion
 import (
 	"fmt"
 
-	"github.com/polpo-space/pzero/core/stores/migrate"
+	"github.com/polpo-space/pzero/core/migrator"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
 )
 
 func Run(args []string) error {
-	m, err := migrate.NewMigrate(sqlx.SqlConf{
+	m, err := migrator.New(sqlx.SqlConf{
 		DataSource: config.C.Migrate.DataSourceUrl,
 		DriverName: config.C.Migrate.Driver,
 	},
-		migrate.WithXMigrationsTable(config.C.Migrate.XMigrationsTable),
-		migrate.WithSource(config.C.Migrate.Source),
-		migrate.WithSourceAppendDriver(config.C.Migrate.SourceAppendDriver))
+		migrator.WithXMigrationsTable(config.C.Migrate.XMigrationsTable),
+		migrator.WithSource(config.C.Migrate.Source),
+		migrator.WithSourceAppendDriver(config.C.Migrate.SourceAppendDriver))
 	if err != nil {
 		return err
 	}
