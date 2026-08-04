@@ -96,7 +96,7 @@ func newUpCommand(loadSQLConf SQLConfigLoader, options *commandOptions) *cobra.C
 				return err
 			}
 			if cmd.Flags().Changed("steps") && steps <= 0 {
-				return fmt.Errorf("up steps must be greater than 0")
+				return errors.New("up steps must be greater than 0")
 			}
 
 			migrator, err := loadMigrator(cmd, loadSQLConf, options)
@@ -124,7 +124,7 @@ func newDownCommand(loadSQLConf SQLConfigLoader, options *commandOptions) *cobra
 				return err
 			}
 			if steps <= 0 {
-				return fmt.Errorf("down steps must be greater than 0")
+				return errors.New("down steps must be greater than 0")
 			}
 
 			migrator, err := loadMigrator(cmd, loadSQLConf, options)
@@ -252,7 +252,7 @@ func createMigrationFiles(dir, rawName string, now time.Time) ([]string, error) 
 
 	name := normalizeMigrationName(rawName)
 	if name == "" {
-		return nil, fmt.Errorf("migration name cannot be empty")
+		return nil, errors.New("migration name cannot be empty")
 	}
 	if !validMigrationName.MatchString(name) {
 		return nil, fmt.Errorf("migration name %q must contain only ASCII letters, digits, spaces, hyphens, or underscores", rawName)
