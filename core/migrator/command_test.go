@@ -18,7 +18,7 @@ type fakeMigrator struct {
 	upSteps       []uint
 	downSteps     []uint
 	gotoVersions  []uint
-	forceVersions []uint
+	forceVersions []int
 	version       uint
 	dirty         bool
 	err           error
@@ -40,7 +40,7 @@ func (f *fakeMigrator) Goto(version uint) error {
 	return f.err
 }
 
-func (f *fakeMigrator) Force(version uint) error {
+func (f *fakeMigrator) Force(version int) error {
 	f.forceVersions = append(f.forceVersions, version)
 	return f.err
 }

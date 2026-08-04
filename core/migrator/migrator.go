@@ -37,7 +37,7 @@ type (
 
 		// Force sets a migration version and clears the dirty state without
 		// running migrations.
-		Force(version uint) error
+		Force(version int) error
 
 		// Version returns the currently active migration version.
 		// If no migration has been applied, yet, it will return ErrNilVersion.
@@ -182,12 +182,8 @@ func (d *defaultMigrator) Goto(version uint) error {
 	return d.migrate.Migrate(version)
 }
 
-func (d *defaultMigrator) Force(version uint) error {
-	maxInt := ^uint(0) >> 1
-	if version > maxInt {
-		return fmt.Errorf("migration version %d overflows int", version)
-	}
-	return d.migrate.Force(int(version))
+func (d *defaultMigrator) Force(version int) error {
+	return d.migrate.Force(version)
 }
 
 func (d *defaultMigrator) Version() (uint, bool, error) {

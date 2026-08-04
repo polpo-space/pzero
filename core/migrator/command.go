@@ -164,7 +164,7 @@ func newForceCommand(loadSQLConf SQLConfigLoader, options *commandOptions) *cobr
 		Long:  "Force sets the database migration version without running migrations. Verify the database state manually before using it.",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			version, err := parseVersion(args[0])
+			version, err := parseForceVersion(args[0])
 			if err != nil {
 				return err
 			}
@@ -243,6 +243,17 @@ func parseVersion(raw string) (uint, error) {
 		return 0, fmt.Errorf("migration version %s overflows int on %d-bit architecture", raw, strconv.IntSize)
 	}
 	return uint(version), nil
+}
+
+func parseForceVersion(raw string) (int, error) {
+	version, err := strconv.Atoi(raw)
+	if err != nil {
+		return 0, err
+	}
+	if version < 0 {
+		return 0, fmt.Errorf("migration version %q: invalid syntax", raw)
+	}
+	return version, nil
 }
 
 func createMigrationFiles(dir, rawName string, now time.Time) ([]string, error) {
