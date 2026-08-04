@@ -14,7 +14,7 @@ func TestAPIRPCTemplatesProvideServiceMigrateCommand(t *testing.T) {
 			commandTemplate := readEmbeddedTemplate(t, commandPath)
 			for _, want := range []string{
 				`{{ if has "model" .Features }}`,
-				`github.com/polpo-space/pzero/runtime/pkg/migrator`,
+				`github.com/polpo-space/pzero/runtime/migrator`,
 				`migrator.NewCommand`,
 				`conf.Load(configPath, &c, conf.UseEnv())`,
 				`return c.Sqlx.SqlConf, nil`,

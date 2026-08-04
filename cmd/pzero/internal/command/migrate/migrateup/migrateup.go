@@ -2,7 +2,7 @@ package migrateup
 
 import (
 	"github.com/pkg/errors"
-	"github.com/polpo-space/pzero/runtime/pkg/migrator"
+	"github.com/polpo-space/pzero/runtime/migrator"
 	"github.com/spf13/cast"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 

@@ -3,7 +3,7 @@
 ## Runtime contract
 
 - API and RPC projects generated with the `model` feature include a `migrate` subcommand.
-- The implementation lives in `github.com/polpo-space/pzero/runtime/pkg/migrator`.
+- The implementation lives in `github.com/polpo-space/pzero/runtime/migrator`.
 - Migration execution supports PostgreSQL through `pgx` only.
 - Commands load `sqlx.SqlConf` from the service root's inherited `--config` flag.
 - Starting the API or RPC server never applies migrations automatically.

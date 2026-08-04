@@ -1,7 +1,7 @@
 {{ if has "model" .Features }}package cmd
 
 import (
-	"github.com/polpo-space/pzero/runtime/pkg/migrator"
+	"github.com/polpo-space/pzero/runtime/migrator"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 

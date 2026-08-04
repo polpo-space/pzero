@@ -21,7 +21,7 @@ migrate 组件从 `desc/sql_migration` 读取并管理 PostgreSQL migration，
 package main
 
 import (
-	"github.com/polpo-space/pzero/runtime/pkg/migrator"
+	"github.com/polpo-space/pzero/runtime/migrator"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )

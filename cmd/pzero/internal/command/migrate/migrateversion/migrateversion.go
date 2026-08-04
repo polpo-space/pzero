@@ -3,7 +3,7 @@ package migrateversion
 import (
 	"fmt"
 
-	"github.com/polpo-space/pzero/runtime/pkg/migrator"
+	"github.com/polpo-space/pzero/runtime/migrator"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
