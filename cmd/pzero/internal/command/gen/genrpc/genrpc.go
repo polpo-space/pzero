@@ -233,14 +233,20 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 					continue
 				}
 
+				// M 选项的 key 需与 proto import 路径一致（buf 布局多为 user/v1/xxx.proto）
+				importName, err := protoImportName(exp, protoDirs)
+				if err != nil {
+					importName = filepath.ToSlash(expRel)
+				}
+
 				goPackage := expFds[0].AsFileDescriptorProto().GetOptions().GetGoPackage()
 				mapped := resolveGoPackageImport(jr.Module, goPackage)
 				if isExternalGoPackage(goPackage) {
 					command += fmt.Sprintf(" --go_opt=M%s=%s --go-grpc_opt=M%s=%s",
-						expRel, mapped, expRel, mapped)
+						importName, mapped, importName, mapped)
 				} else {
 					command += fmt.Sprintf(" --go_opt=module=%s --go_opt=M%s=%s --go-grpc_opt=module=%s --go-grpc_opt=M%s=%s",
-						jr.Module, expRel, mapped, jr.Module, expRel, mapped)
+						jr.Module, importName, mapped, jr.Module, importName, mapped)
 				}
 			}
 
@@ -409,6 +415,29 @@ func relToProtoDir(file string, protoDirs []string) (protoRoot, rel string, err 
 		return dir, rel, nil
 	}
 	return "", "", fmt.Errorf("proto file %s is not under configured proto-dir %v", file, protoDirs)
+}
+
+// protoImportName 返回用于 protoc M 选项 / import 的路径：在所有 -I 根中取最长 rel（通常对应 buf module 根）。
+func protoImportName(file string, protoDirs []string) (string, error) {
+	file = filepath.Clean(file)
+	var best string
+	for _, root := range buildProtoImportPaths(protoDirs) {
+		rel, err := filepath.Rel(root, file)
+		if err != nil {
+			continue
+		}
+		if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+			continue
+		}
+		rel = filepath.ToSlash(rel)
+		if best == "" || len(rel) > len(best) {
+			best = rel
+		}
+	}
+	if best == "" {
+		return "", fmt.Errorf("proto file %s is not under any import path for proto-dir %v", file, protoDirs)
+	}
+	return best, nil
 }
 
 func resolveGoPackageImport(module, goPackage string) string {

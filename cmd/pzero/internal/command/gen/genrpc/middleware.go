@@ -31,24 +31,22 @@ type PzeroProtoApiMiddleware struct {
 func (jr *PzeroRpc) genApiMiddlewares(protoFiles []string) (err error) {
 	var fds []*desc.FileDescriptor
 
-	// parse proto
+	// parse proto（与 genrpc 共用 proto-dir / import 根，支持中央 contracts）
 	var protoParser protoparse.Parser
 
 	protoParser.InferImportPaths = false
 
+	protoDirs := config.C.ProtoDirs()
 	var files []string
 	for _, protoFilename := range protoFiles {
-		rel, err := filepath.Rel(filepath.Join("desc", "proto"), protoFilename)
+		_, rel, err := relToProtoDir(protoFilename, protoDirs)
 		if err != nil {
 			return err
 		}
 		files = append(files, rel)
 	}
 
-	protoParser.ImportPaths = []string{filepath.Join("desc", "proto"), filepath.Join("desc", "proto", "third_party")}
-	if len(config.C.Gen.ProtoInclude) > 0 {
-		protoParser.ImportPaths = append(protoParser.ImportPaths, config.C.Gen.ProtoInclude...)
-	}
+	protoParser.ImportPaths = buildProtoImportPaths(protoDirs)
 	protoParser.IncludeSourceCodeInfo = true
 	fds, err = protoParser.ParseFiles(files...)
 	if err != nil {

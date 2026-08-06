@@ -14,6 +14,17 @@ func TestIsExternalGoPackage(t *testing.T) {
 	}
 }
 
+func TestProtoImportNamePrefersBufStylePath(t *testing.T) {
+	dirs := []string{"../../../contracts/proto/user"}
+	got, err := protoImportName("../../../contracts/proto/user/v1/user_messages.proto", dirs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != "user/v1/user_messages.proto" {
+		t.Fatalf("got %q want user/v1/user_messages.proto", got)
+	}
+}
+
 func TestResolveGoPackageImport(t *testing.T) {
 	module := "github.com/example/svc"
 
