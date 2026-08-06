@@ -270,7 +270,7 @@ skills/
 
 **RPC Service Development**:
 - ✅ Automatically write `.proto` files to define service interfaces
-- ✅ Automatically generate RPC server and client code
+- ✅ Automatically generate RPC server code
 - ✅ Automatically implement server business logic, following Handler → Logic → Model three-layer architecture
 
 ---
