@@ -122,4 +122,7 @@ pzero new your_project --features model,cache
 
 # 使用场景: 需要连接关系型数据库(model)
 pzero new your_project --features model
+
+# 使用场景: RPC 同进程合并定时任务 (ServiceGroup)
+pzero new your_project --frame rpc --features job
 ```

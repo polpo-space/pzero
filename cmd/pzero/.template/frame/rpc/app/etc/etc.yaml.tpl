@@ -16,4 +16,7 @@ sqlx:
 redis:
     host: "127.0.0.1:6379"
     type: "node"
-    pass: "123456"{{ end }}
+    pass: "123456"{{ end }}{{ if has "job" .Features }}
+job:
+    enable: false
+{{ end }}
