@@ -125,8 +125,6 @@ type GenConfig struct {
 
 	// Gen Sub Command
 	Swagger GenSwaggerConfig `mapstructure:"swagger"`
-
-	Zrpcclient GenZrpcclientConfig `mapstructure:"zrpcclient"`
 }
 
 type GenSwaggerConfig struct {
@@ -135,18 +133,6 @@ type GenSwaggerConfig struct {
 	Output     string   `mapstructure:"output"`
 	Route2Code bool     `mapstructure:"route2code"`
 	Merge      bool     `mapstructure:"merge"`
-}
-
-type GenZrpcclientConfig struct {
-	Hooks HooksConfig `mapstructure:"hooks"`
-
-	Desc         []string `mapstructure:"desc"`
-	DescIgnore   []string `mapstructure:"desc-ignore"`
-	ProtoInclude []string `mapstructure:"proto-include"`
-	Output       string   `mapstructure:"output"`
-	GoVersion    string   `mapstructure:"goVersion"`
-	GoModule     string   `mapstructure:"goModule"`
-	GoPackage    string   `mapstructure:"goPackage"`
 }
 
 type TemplateConfig struct {

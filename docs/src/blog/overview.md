@@ -167,12 +167,11 @@ service UserService {
 }
 ```
 
-→ Generate RPC server code, client code, HTTP Gateway, middleware
+→ Generate RPC server code, HTTP Gateway, middleware
 
 **Feature Description**:
 - ✅ **Support multiple proto files**: Can define multiple proto files in project (e.g., user.proto, order.proto, product.proto)
 - ✅ Support **importing common proto** files
-- ✅ **One-click generate RPC client**: Generate independent RPC client code, decouple from server, separate server and client
 - ✅ **Built-in field validation**: Automatic parameter validation based on `buf.validate`, supports CEL expressions
 - ✅ **Flexible middleware configuration**: Support configuring HTTP/RPC middleware for entire service or single method
 
@@ -271,7 +270,7 @@ skills/
 
 **RPC Service Development**:
 - ✅ Automatically write `.proto` files to define service interfaces
-- ✅ Automatically generate RPC server and client code
+- ✅ Automatically generate RPC server code
 - ✅ Automatically implement server business logic, following Handler → Logic → Model three-layer architecture
 
 ---

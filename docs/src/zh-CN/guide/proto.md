@@ -9,7 +9,6 @@ order: 1
 
 - ✅ **支持多 proto 文件**：可在项目中定义多个 proto 文件（如 user.proto、order.proto、product.proto）
 - ✅ 支持**引入公共 proto** 文件
-- ✅ **一键生成 RPC 客户端**：生成独立的 RPC 客户端代码，脱离服务端依赖，解耦服务端和客户端
 - ✅ **内置字段验证**：基于 `buf.validate` 实现自动参数校验
 - ✅ **灵活中间件配置**：支持为整个 service 或单个 method 配置 HTTP/RPC 中间件
 

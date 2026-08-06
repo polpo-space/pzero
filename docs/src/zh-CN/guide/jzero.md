@@ -41,29 +41,29 @@ PZERO_GEN_GIT_CHANGE: true
 
 ### 子命令
 
-对于子命令的配置, 如: `pzero gen zrpcclient --output client` 对应 `.pzero.yaml` 内容
+对于子命令的配置, 如: `pzero gen swagger --output desc/swagger` 对应 `.pzero.yaml` 内容
 
 ::: code-tabs#yaml
 @tab .pzero.yaml
 ```yaml
 gen:
-  zrpcclient:
-    output: client
+  swagger:
+    output: desc/swagger
 ```
 :::
 
-`pzero gen zrpcclient` + `.pzero.yaml` = `pzero gen zrpcclient --output client`
+`pzero gen swagger` + `.pzero.yaml` = `pzero gen swagger --output desc/swagger`
 
-同样支持环境变量的配置 `PZERO_GEN_ZRPCCLIENT_NAME`
+同样支持环境变量的配置
 
 ::: code-tabs#yaml
 @tab .pzero.env.yaml
 ```yaml
-PZERO_GEN_ZRPCCLIENT_OUTPUT: client
+PZERO_GEN_SWAGGER_OUTPUT: desc/swagger
 ```
 :::
 
-`pzero gen zrpcclient` + `.pzero.env.yaml` = `pzero gen zrpcclient --output client`
+`pzero gen swagger` + `.pzero.env.yaml` = `pzero gen swagger --output desc/swagger`
 
 ## 设置工作目录
 

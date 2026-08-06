@@ -9,7 +9,6 @@ order: 1
 
 - ✅ **Support multiple proto files**: Can define multiple proto files in project (e.g., user.proto, order.proto, product.proto)
 - ✅ Support **importing common proto** files
-- ✅ **One-click generate RPC client**: Generate independent RPC client code, decouple from server dependency
 - ✅ **Built-in field validation**: Automatic parameter validation based on `buf.validate`
 - ✅ **Flexible middleware configuration**: Support configuring HTTP/RPC middleware for entire service or single method
 

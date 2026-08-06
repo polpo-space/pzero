@@ -167,12 +167,11 @@ service UserService {
 }
 ```
 
-→ 生成 RPC 服务端代码、客户端代码、HTTP Gateway、中间件
+→ 生成 RPC 服务端代码、HTTP Gateway、中间件
 
 **特性说明**：
 - ✅ **支持多 proto 文件**：可在项目中定义多个 proto 文件（如 user.proto、order.proto、product.proto）
 - ✅ 支持**引入公共 proto** 文件
-- ✅ **一键生成 RPC 客户端**：生成独立的 RPC 客户端代码，脱离服务端依赖，解耦服务端和客户端
 - ✅ **内置字段验证**：基于 `buf.validate` 实现自动参数校验，支持 CEL 表达式
 - ✅ **灵活中间件配置**：支持为整个 service 或单个 method 配置 HTTP/RPC 中间件
  
@@ -271,7 +270,7 @@ skills/
 
 **RPC 服务开发**：
 - ✅ 自动编写 `.proto` 文件定义服务接口
-- ✅ 自动生成 RPC 服务端和客户端代码
+- ✅ 自动生成 RPC 服务端代码
 - ✅ 自动实现服务端业务逻辑，遵循 Handler → Logic → Model 三层架构
 
 ---

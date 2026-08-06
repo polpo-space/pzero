@@ -41,29 +41,29 @@ PZERO_GEN_GIT_CHANGE: true
 
 ### Subcommands
 
-For subcommand configuration, such as: `pzero gen zrpcclient --output client` corresponds to `.pzero.yaml` content
+For subcommand configuration, such as: `pzero gen swagger --output desc/swagger` corresponds to `.pzero.yaml` content
 
 ::: code-tabs#yaml
 @tab .pzero.yaml
 ```yaml
 gen:
-  zrpcclient:
-    output: client
+  swagger:
+    output: desc/swagger
 ```
 :::
 
-`pzero gen zrpcclient` + `.pzero.yaml` = `pzero gen zrpcclient --output client`
+`pzero gen swagger` + `.pzero.yaml` = `pzero gen swagger --output desc/swagger`
 
-Also supports environment variable configuration `PZERO_GEN_ZRPCCLIENT_NAME`
+Also supports environment variable configuration
 
 ::: code-tabs#yaml
 @tab .pzero.env.yaml
 ```yaml
-PZERO_GEN_ZRPCCLIENT_OUTPUT: client
+PZERO_GEN_SWAGGER_OUTPUT: desc/swagger
 ```
 :::
 
-`pzero gen zrpcclient` + `.pzero.env.yaml` = `pzero gen zrpcclient --output client`
+`pzero gen swagger` + `.pzero.env.yaml` = `pzero gen swagger --output desc/swagger`
 
 ## Set working directory
 
