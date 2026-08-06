@@ -50,21 +50,21 @@ func NewJobServer(svcCtx *svc.ServiceContext) *JobServer {
 }
 
 func (s *JobServer) registerJobs(cfg config.JobConf, handlers map[string]func(context.Context) error) {
+	for name := range cfg.Jobs {
+		if _, ok := handlers[name]; !ok {
+			logx.Must(fmt.Errorf("job %s has no handler", name))
+		}
+	}
+
 	for name, spec := range cfg.Jobs {
 		if !spec.Enable {
 			continue
 		}
 		if spec.Cron == "" {
-			logx.Errorf("job %s skipped: empty cron", name)
-			continue
-		}
-		handler, ok := handlers[name]
-		if !ok {
-			logx.Errorf("job %s skipped: handler not registered", name)
-			continue
+			logx.Must(fmt.Errorf("job %s has empty cron", name))
 		}
 
-		jobName, jobHandler := name, handler
+		jobName, jobHandler := name, handlers[name]
 		_, err := s.cron.AddFunc(spec.Cron, func() {
 			s.run(jobName, jobHandler)
 		})
