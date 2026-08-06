@@ -39,7 +39,10 @@ jobs:
             cmd/pzero/go.sum
 
       - name: Download Go modules
-        run: go mod download
+        run: |
+          go mod download
+          # go.work.sum may refresh during download; GoReleaser requires a clean tree
+          git restore --source=HEAD --worktree --staged -- go.work.sum || true
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v7
