@@ -2,13 +2,13 @@ package versionlogic
 
 import (
 	"context"
-	"os"
 	"runtime"
 
 	"github.com/zeromicro/go-zero/core/logx"
 
 	"{{.Module}}/internal/svc"
 	"{{.Module}}/internal/types/version"
+	ver "{{.Module}}/version"
 )
 
 type Version struct {
@@ -27,9 +27,9 @@ func NewVersion(ctx context.Context, svcCtx *svc.ServiceContext) *Version {
 
 func (l *Version) Version(in *version.VersionRequest) (*version.VersionResponse, error) {
 	return &version.VersionResponse{
-		Version:   os.Getenv("VERSION"),
+		Version:   ver.Version,
 		GoVersion: runtime.Version(),
-		Commit:    os.Getenv("COMMIT"),
-		Date:      os.Getenv("DATE"),
+		Commit:    ver.Commit,
+		Date:      ver.Date,
 	}, nil
 }
