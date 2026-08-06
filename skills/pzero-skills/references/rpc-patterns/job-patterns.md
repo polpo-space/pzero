@@ -60,7 +60,12 @@ job:
 
 ## Handler -> Logic
 
-Handler only creates logic and calls it. Handler map keys **must match** `job.jobs` names:
+Handler only creates logic and calls it. Handler map keys **must match** `job.jobs` names. Startup **fail-fast**:
+
+- every key under `job.jobs` must have a registered handler (even if `enable: false`)
+- enabled jobs must have a non-empty `cron`
+
+Missing handler or empty cron aborts process start (`logx.Must`), so yaml/config drift cannot silently ship.
 
 ```go
 handlers := map[string]func(context.Context) error{
