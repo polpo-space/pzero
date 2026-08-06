@@ -196,8 +196,6 @@ $ tree ~/.pzero/templates/local/myapi
     ├── internal
     │   ├── config
     │   │   └── config.go.tpl
-    │   ├── custom
-    │   │   └── custom.go.tpl
     │   ├── handler
     │   │   ├── helloworld
     │   │   │   └── helloworld_compact.go.tpl
