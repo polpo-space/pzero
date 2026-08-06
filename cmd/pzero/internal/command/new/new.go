@@ -350,7 +350,7 @@ func GetCommand() *cobra.Command {
 	newCmd.Flags().StringP("branch", "b", "", "use remote template repo branch")
 	newCmd.Flags().BoolP("cache", "", false, "remote template using cache")
 	newCmd.Flags().StringP("local", "", "", "use local template")
-	newCmd.Flags().StringSliceP("features", "", []string{}, "set features such as model/cache/redis")
+	newCmd.Flags().StringSliceP("features", "", []string{}, "set features such as model/cache/redis/job")
 	newCmd.Flags().BoolP("mono", "", false, "mono project under go mod project")
 	newCmd.Flags().BoolP("gen", "", true, "gen code after new project")
 	newCmd.Flags().StringSliceP("ignore", "", []string{}, "set ignore file")

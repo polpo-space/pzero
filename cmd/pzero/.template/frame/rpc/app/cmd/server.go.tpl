@@ -45,7 +45,12 @@ var serverCmd = &cobra.Command{
 
 	    group := service.NewServiceGroup()
 	    group.Add(zrpcServer)
-
+{{ if has "job" .Features }}
+	    if c.Job.Enable {
+	    	group.Add(server.NewJobServer(svcCtx))
+	    	logx.Info("Job server enabled")
+	    }
+{{ end }}
         logx.Infof("Starting rpc server at %s...", c.Zrpc.ListenOn)
         group.Start()
 	},

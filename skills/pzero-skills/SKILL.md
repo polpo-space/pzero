@@ -46,6 +46,7 @@ When helping with pzero development:
 - [Proto File Structure](references/rpc-patterns/proto-file-structure.md): Proto standards, multi-proto support, file structure, HTTP gateway, OpenAPI docs
 - [Proto Field Validation](references/rpc-patterns/proto-validation.md): Field validation with protovalidate, CEL expressions, built-in constraints
 - [Proto Middleware](references/rpc-patterns/proto-middleware.md): HTTP/RPC middleware at service and method levels
+- [Job Patterns](references/rpc-patterns/job-patterns.md): In-process scheduled jobs via `--features job` (ServiceGroup merge deploy)
 
 ### Database Operations
 
