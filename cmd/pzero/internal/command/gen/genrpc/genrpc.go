@@ -323,6 +323,11 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 		pbImports = append(pbImports, fmt.Sprintf(`"%s"`, resolveGoPackageImport(jr.Module, protoSpecMap[v].GoPackage)))
 	}
 
+	// 同 go_package 多 proto/service 时去重 import
+	serverImports = lo.Uniq(serverImports)
+	pbImports = lo.Uniq(pbImports)
+	registerServers = lo.Uniq(registerServers)
+
 	if len(protoFiles) > 0 {
 		if err = jr.genServer(serverImports, pbImports, registerServers); err != nil {
 			return nil, err
