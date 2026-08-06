@@ -38,15 +38,16 @@ func NewJobServer(svcCtx *svc.ServiceContext) *JobServer {
 	}
 }
 
-// Start implements service.Service. It blocks until Stop is called.
+// Start implements service.Service. cron.Start is async; Stop waits for jobs to finish.
 func (s *JobServer) Start() {
 	logx.Info("Starting job server...")
-	s.cron.Run()
+	s.cron.Start()
 }
 
 // Stop implements service.Service.
 func (s *JobServer) Stop() {
 	logx.Info("Stopping job server...")
-	<-s.cron.Stop().Done()
+	ctx := s.cron.Stop()
+	<-ctx.Done()
 }
 {{ end -}}

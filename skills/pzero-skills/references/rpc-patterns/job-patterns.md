@@ -54,7 +54,7 @@ _, _ = c.AddFunc("@every 5s", func() { ... })
 _, _ = c.AddFunc("0 * * * * *", func() { ... })
 ```
 
-`JobServer.Start` uses `cron.Run()` (blocking). `Stop` uses `cron.Stop()`.
+`JobServer.Start` uses `cron.Start()` (async). `Stop` waits on `cron.Stop()` until running jobs finish.
 
 ## Adding a new job
 
