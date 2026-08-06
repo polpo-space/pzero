@@ -212,7 +212,6 @@ $ tree ~/.pzero/templates/local/myapi
     │   │   ├── response.go.tpl
     │   │   └── validator.go.tpl
     │   ├── svc
-    │   │   ├── config.go.tpl
     │   │   ├── middleware.go.tpl
     │   │   └── servicecontext.go.tpl
     │   └── types
