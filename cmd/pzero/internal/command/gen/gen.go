@@ -55,6 +55,7 @@ func GetCommand() *cobra.Command {
 		genCmd.Flags().BoolP("git-change", "", false, "set is git change, if changes then generate code")
 		genCmd.Flags().StringP("api-types-dir", "", filepath.Join("internal", "types"), "set generated api types dir, relative to the project root")
 		genCmd.Flags().BoolP("route2code", "", false, "is generate route2code")
+		genCmd.Flags().StringSliceP("proto-dir", "", []string{}, "RPC proto scan roots, default desc/proto")
 		genCmd.Flags().StringSliceP("proto-include", "", []string{}, "proto include path")
 		genCmd.Flags().StringP("model-driver", "", "postgres", "goctl model driver, postgres only")
 		genCmd.Flags().BoolP("model-strict", "", false, "goctl model strict mode, see [https://go-zero.dev/docs/tutorials/cli/model]")
