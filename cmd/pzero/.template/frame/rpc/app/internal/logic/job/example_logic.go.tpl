@@ -23,13 +23,13 @@ func NewExampleLogic(ctx context.Context, svcCtx *svc.ServiceContext) *ExampleLo
 	}
 }
 
-func (l *ExampleLogic) EveryFiveSeconds() error {
-	l.Info("example job: every five seconds")
+func (l *ExampleLogic) ExampleInterval() error {
+	l.Info("example job: exampleInterval")
 	return nil
 }
 
-func (l *ExampleLogic) EveryMinute() error {
-	l.Info("example job: every minute")
+func (l *ExampleLogic) ExampleMinute() error {
+	l.Info("example job: exampleMinute")
 	return nil
 }
 {{ end -}}

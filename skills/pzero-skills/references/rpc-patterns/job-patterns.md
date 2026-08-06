@@ -4,64 +4,83 @@ Job（定时任务）可与 gRPC 合并部署在同一进程，通过 `pzero new
 
 ## Scope
 
-- Supported: merge deploy with `service.ServiceGroup`
+- Supported: merge deploy with `service.ServiceGroup`, config-driven schedules
 - Not generated: standalone `cmd/job`, job desc files for `pzero gen`, distributed locks / etcd election
 
 ## Layout
 
 ```text
 internal/
-  config/config.go          # Job.Enable
+  config/config.go          # JobConf + JobSpec
   job/example_job.go        # thin handler: func(ctx) error
   logic/job/example_logic.go
-  server/job.go             # robfig/cron + service.Service
+  server/job.go             # wire name -> handler, register from config
 cmd/server.go               # if c.Job.Enable { group.Add(jobServer) }
-etc/etc.yaml                # job.enable: false
+etc/etc.yaml                # job.enable / workers / timezone / jobs
 ```
 
-## Enable
+## Config
+
+Schedules live in yaml — do not hardcode cron in `AddFunc`.
 
 ```yaml
 job:
   enable: true
+  workers: 5
+  timezone: Asia/Shanghai
+  jobs:
+    orderTimeout:
+      enable: true
+      cron: "*/30 * * * * *"
+    paymentExpire:
+      enable: true
+      cron: "0 */1 * * * *"
 ```
 
-When enabled, `cmd/server` adds `JobServer` to the same `ServiceGroup` as zrpc.
+Scaffold defaults:
+
+```yaml
+job:
+  enable: false
+  workers: 1
+  timezone: Asia/Shanghai
+  jobs:
+    exampleInterval:
+      enable: true
+      cron: "@every 5s"
+    exampleMinute:
+      enable: true
+      cron: "0 * * * * *"
+```
+
+- `job.enable`: process-level switch (whether JobServer joins ServiceGroup)
+- `job.workers`: max concurrent job executions (semaphore)
+- `job.timezone`: cron location (`cron.WithLocation`)
+- `job.jobs.<name>`: per-job enable + cron (6-field with seconds, or `@every`)
 
 ## Handler -> Logic
 
-Handler only creates logic and calls it:
+Handler only creates logic and calls it. Handler map keys **must match** `job.jobs` names:
 
 ```go
-func (j *ExampleJob) EveryMinute(ctx context.Context) error {
-	return joblogic.NewExampleLogic(ctx, j.svcCtx).EveryMinute()
+handlers := map[string]func(context.Context) error{
+	"exampleInterval": exampleJob.ExampleInterval,
+	"orderTimeout":    orderJob.OrderTimeout,
 }
 ```
 
-Put business code in `internal/logic/job/`.
-
-## Register jobs
-
-Jobs are registered in code inside `internal/server/job.go` (not YAML):
-
-```go
-c := cron.New(cron.WithSeconds())
-
-// fixed interval
-_, _ = c.AddFunc("@every 5s", func() { ... })
-
-// 6-field cron (seconds first)
-_, _ = c.AddFunc("0 * * * * *", func() { ... })
-```
-
-`JobServer.Start` uses `cron.Start()` (async). `Stop` waits on `cron.Stop()` until running jobs finish.
-
 ## Adding a new job
 
-1. Add a method on a job handler under `internal/job/`
+1. Add handler method under `internal/job/`
 2. Implement logic under `internal/logic/job/`
-3. Register it in `internal/server/job.go` with `AddFunc`
-4. Keep `job.enable` as the process-level switch
+3. Register `name -> handler` in `internal/server/job.go`
+4. Add `job.jobs.<name>` with `enable` + `cron` in `etc/etc.yaml`
+
+Changing schedule / toggling a job should only need yaml (and redeploy), not code edits to cron strings.
+
+## Lifecycle
+
+`JobServer.Start` uses `cron.Start()` (async). `Stop` waits on `cron.Stop()` until running jobs finish.
 
 ## Multi-instance note
 

@@ -2,39 +2,83 @@
 
 import (
 	"context"
+	"time"
 
 	"github.com/robfig/cron/v3"
 	"github.com/zeromicro/go-zero/core/logx"
 
+	"{{ .Module }}/internal/config"
 	"{{ .Module }}/internal/job"
 	"{{ .Module }}/internal/svc"
 )
 
 // JobServer runs scheduled jobs in-process with the RPC server.
+// Schedules come from config (job.jobs); handlers are wired by name here.
 type JobServer struct {
-	svcCtx *svc.ServiceContext
-	cron   *cron.Cron
+	svcCtx  *svc.ServiceContext
+	cron    *cron.Cron
+	workers chan struct{}
 }
 
 func NewJobServer(svcCtx *svc.ServiceContext) *JobServer {
-	c := cron.New(cron.WithSeconds())
+	cfg := svcCtx.Config.Job
+	workers := cfg.Workers
+	if workers <= 0 {
+		workers = 1
+	}
+
+	opts := []cron.Option{cron.WithSeconds()}
+	if cfg.Timezone != "" {
+		loc, err := time.LoadLocation(cfg.Timezone)
+		logx.Must(err)
+		opts = append(opts, cron.WithLocation(loc))
+	}
+
+	s := &JobServer{
+		svcCtx:  svcCtx,
+		cron:    cron.New(opts...),
+		workers: make(chan struct{}, workers),
+	}
+
 	exampleJob := job.NewExampleJob(svcCtx)
+	handlers := map[string]func(context.Context) error{
+		"exampleInterval": exampleJob.ExampleInterval,
+		"exampleMinute":   exampleJob.ExampleMinute,
+	}
+	s.registerJobs(cfg, handlers)
+	return s
+}
 
-	_, _ = c.AddFunc("@every 5s", func() {
-		if err := exampleJob.EveryFiveSeconds(context.Background()); err != nil {
-			logx.Errorf("job EveryFiveSeconds failed: %v", err)
+func (s *JobServer) registerJobs(cfg config.JobConf, handlers map[string]func(context.Context) error) {
+	for name, spec := range cfg.Jobs {
+		if !spec.Enable {
+			continue
 		}
-	})
-
-	_, _ = c.AddFunc("0 * * * * *", func() {
-		if err := exampleJob.EveryMinute(context.Background()); err != nil {
-			logx.Errorf("job EveryMinute failed: %v", err)
+		if spec.Cron == "" {
+			logx.Errorf("job %s skipped: empty cron", name)
+			continue
 		}
-	})
+		handler, ok := handlers[name]
+		if !ok {
+			logx.Errorf("job %s skipped: handler not registered", name)
+			continue
+		}
 
-	return &JobServer{
-		svcCtx: svcCtx,
-		cron:   c,
+		jobName, jobHandler := name, handler
+		_, err := s.cron.AddFunc(spec.Cron, func() {
+			s.run(jobName, jobHandler)
+		})
+		logx.Must(err)
+		logx.Infof("job registered: %s cron=%s", jobName, spec.Cron)
+	}
+}
+
+func (s *JobServer) run(name string, handler func(context.Context) error) {
+	s.workers <- struct{}{}
+	defer func() { <-s.workers }()
+
+	if err := handler(context.Background()); err != nil {
+		logx.Errorf("job %s failed: %v", name, err)
 	}
 }
 

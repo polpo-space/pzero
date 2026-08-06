@@ -38,5 +38,13 @@ type LogConf struct {
 	Redis         cache.CacheConf
 }{{ end }}
 {{ if has "job" .Features }}type JobConf struct {
-	Enable bool `json:",default=false"`
+	Enable   bool               `json:",default=false"`
+	Workers  int                `json:",default=1"`
+	Timezone string             `json:",default=Asia/Shanghai"`
+	Jobs     map[string]JobSpec `json:",optional"`
+}
+
+type JobSpec struct {
+	Enable bool   `json:",default=true"`
+	Cron   string
 }{{ end }}
