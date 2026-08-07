@@ -57,7 +57,7 @@ jobs:
 
       - name: Log in to ghcr
         if: ${{ inputs.docker }}
-        uses: docker/login-action@v4.5.2
+        uses: docker/login-action@v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -66,7 +66,7 @@ jobs:
       - name: Extract Docker metadata
         if: ${{ inputs.docker }}
         id: docker_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ghcr.io/polpo-space/pzero
           tags: |
