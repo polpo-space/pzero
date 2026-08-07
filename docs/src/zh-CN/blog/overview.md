@@ -190,7 +190,7 @@ CREATE TABLE `user` (
 → 生成 Model 层代码、CRUD 操作，支持复杂查询
 
 **特性说明**：
-- ✅ **多种数据源**：支持基于 sql 文件或远程数据库连接生成 model 代码
+- ✅ **多种数据源**：支持基于远程 PostgreSQL 数据源生成 model 代码
 - ✅ **自动生成 CRUD 接口**：自动生成增删改查等基础操作
 - ✅ **复杂查询支持**：提供强大的链式查询处理复杂业务场景
 - ✅ **一套代码适配多数据库**：生成的代码兼容 MySQL、PostgreSQL、Sqlite 等多种数据库，无需重新生成，轻松切换数据库底层存储
@@ -266,7 +266,7 @@ skills/
 **数据库操作**：
 - ✅ 自动创建 SQL 迁移文件（xx.up.sql & xx.down.sql）
 - ✅ 通过生成的服务显式执行数据库迁移（`go run . migrate up`）
-- ✅ 自动生成 Model 代码（`pzero gen --desc desc/sql/xxx.sql`）
+- ✅ 自动生成 Model 代码（`model-datasource: true` + `pzero gen`）
 
 **RPC 服务开发**：
 - ✅ 自动编写 `.proto` 文件定义服务接口

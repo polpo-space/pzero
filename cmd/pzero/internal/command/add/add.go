@@ -15,7 +15,7 @@ import (
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:          "add",
-	Short:        `Used to add api/proto/sql file`,
+	Short:        `Used to add api/proto file, or a desc/sql schema snapshot`,
 	SilenceUsage: true,
 }
 
@@ -41,7 +41,7 @@ var addProtoCmd = &cobra.Command{
 
 var addSqlCmd = &cobra.Command{
 	Use:   "sql",
-	Short: `Add sql`,
+	Short: `Add schema snapshot under desc/sql (not model gen input)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runAddStage("sql", args, addsql.Run)
 	},

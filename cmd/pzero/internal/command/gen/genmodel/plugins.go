@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/rinchsan/gosimports"
-	"github.com/samber/lo"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
@@ -146,15 +145,7 @@ func (jm *PzeroModel) GenRegister(tables []string) error {
 		"ModelExpiryTable":         modelExpiryTable,
 		"ModelNotFoundExpiryTable": modelNotFoundExpiryTable,
 		"ModelCache":               config.C.Gen.ModelCache,
-	}, lo.If(
-		// 兼容老版本 model 路径
-		// TODO: wait to remove
-		embeded.ReadTemplateFile(filepath.Join("plugins", "model", "model.go.tpl")) != nil,
-		embeded.ReadTemplateFile(filepath.Join("plugins", "model", "model.go.tpl"))).
-		Else(
-			embeded.ReadTemplateFile(filepath.Join("model", "model.go.tpl")),
-		),
-	)
+	}, embeded.ReadTemplateFile(filepath.Join("model", "model.go.tpl")))
 	if err != nil {
 		return err
 	}

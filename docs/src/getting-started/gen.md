@@ -4,9 +4,9 @@ icon: /icons/vscode-icons-folder-type-api-opened.svg
 order: 4
 ---
 
-pzero code generation command is extremely simple, only need `pzero gen` to automatically recognize all descriptor files/configurations and complete code generation.
+pzero keeps code generation minimal: `pzero gen` discovers descriptors and config, then generates code.
 
-After adding descriptor files with the `pzero add` command from the previous document, execute `pzero gen` to see the generated files.
+After adding descriptors with `pzero add`, run `pzero gen` to see generated files.
 
 ## Generate code
 
@@ -27,29 +27,31 @@ docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen
 ```
 :::
 
-## Generate code based on git changes
+Model generation requires `model-datasource: true` and `model-datasource-url`. `desc/sql` is only a schema snapshot and does not trigger model generation.
 
-::: tip Get new/modified descriptor files based on git status -su
+## Generate from git changes
+
+::: tip Uses git status -su for added/changed descriptors
 :::
 
 ```shell
 pzero gen --git-change
 ```
 
-## Generate code for specific desc
+## Generate with explicit desc
+
+`--desc` scopes **api/proto** generation; model generation is skipped when desc is set.
 
 ```shell
 pzero gen --desc desc/api/xx.api
 pzero gen --desc desc/proto/xx.proto
-pzero gen --desc desc/sql/xx.sql
 ```
 
-## Ignore specific desc when generating code
+## Ignore descriptors
 
 ```shell
 pzero gen --desc-ignore desc/api/xx.api
 pzero gen --desc-ignore desc/proto/xx.proto
-pzero gen --desc-ignore desc/sql/xx.sql
 ```
 
-For more usage, see: [pzero guide](../guide/pzero.md)
+More usage: [pzero guide](../guide/pzero.md)
