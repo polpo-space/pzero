@@ -15,7 +15,7 @@ import (
 // addCmd represents the add command
 var addCmd = &cobra.Command{
 	Use:          "add",
-	Short: `Used to add api/proto file, or a desc/sql schema snapshot`,
+	Short:        `Used to add api/proto file, or a desc/sql schema snapshot`,
 	SilenceUsage: true,
 }
 

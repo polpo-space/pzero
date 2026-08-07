@@ -61,7 +61,7 @@ func main() {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use: "pzero",
+	Use:   "pzero",
 	Short: `Used to create project by templates and generate server/client code by api/proto descriptors and PostgreSQL datasources.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Run environment check first
