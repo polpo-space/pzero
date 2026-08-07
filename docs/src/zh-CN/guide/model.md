@@ -153,7 +153,7 @@ pzero gen
 
 具体使用请参阅: [condition组件](../component/condition.md)
 
-## 从 jzero / wownow-micro 迁移注意
+## 从 jzero 迁移注意
 
 1. 保留 `desc/sql` snapshot；不要删，也不会再阻塞 `pzero gen`。
 2. 配置 `model-datasource: true` 与 `model-datasource-url`，并把 **全部** 需要注册的表写入 `model-datasource-table`（`model.go` 会按该列表全量重写）。

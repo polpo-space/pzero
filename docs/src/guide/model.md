@@ -192,7 +192,7 @@ Generated `internal/model/model.go` stays consistent with the selected PostgreSQ
 
 For detailed usage, see: [condition component](../component/condition.md)
 
-## Migrating from jzero / wownow-micro
+## Migrating from jzero
 
 1. Keep `desc/sql` snapshots; they no longer block `pzero gen`.
 2. Enable `model-datasource: true` with `model-datasource-url`, and list **every** table that must be registered in `model-datasource-table` (`model.go` is fully rewritten from that list).
