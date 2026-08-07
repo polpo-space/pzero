@@ -101,9 +101,9 @@ type GenConfig struct {
 	GitChange               bool     `mapstructure:"git-change"`
 	ApiTypesDir             string   `mapstructure:"api-types-dir"`
 	Route2Code              bool
-	ProtoDirs    []string `mapstructure:"proto-dir"` // RPC proto 扫描根，空则回落 desc/proto
-	ProtoInclude []string `mapstructure:"proto-include"`
-	RpcClient    bool     `mapstructure:"rpc-client"`
+	ProtoDirs               []string `mapstructure:"proto-dir"` // RPC proto 扫描根，空则回落 desc/proto
+	ProtoInclude            []string `mapstructure:"proto-include"`
+	RpcClient               bool     `mapstructure:"rpc-client"`
 	ModelDriver             string   `mapstructure:"model-driver"`
 	ModelStrict             bool     `mapstructure:"model-strict"`
 	ModelIgnoreColumns      []string `mapstructure:"model-ignore-columns"`
