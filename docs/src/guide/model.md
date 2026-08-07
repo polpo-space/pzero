@@ -165,16 +165,14 @@ Generated `internal/model/model.go` stays consistent with the selected PostgreSQ
 
 ## Default generated methods
 
-* WithTable: Specify table name, used for table sharding scenarios
-* Insert: Insert single row
-* InsertV2: Insert single row (insert v2 version, can get auto-increment primary key)
+* Insert: Insert single row (PostgreSQL `RETURNING` populates auto-increment primary key)
 * BulkInsert: Batch insert
 * Update: Update single row by primary key
 * Delete: Delete single row by primary key
 * FindOne: Query single row by primary key
 * FindByCondition: Conditional query
 * FindFieldsByCondition: Conditional query (specify query fields)
-* FindOneByCondition: Conditional single row query
+* FindOneByCondition: Conditional single row query (use this instead of per-index `FindOneBy*` helpers)
 * FindOneFieldsByCondition: Conditional single row query (specify query fields)
 * CountByCondition: Conditional total count
 * PageByCondition: Conditional pagination query

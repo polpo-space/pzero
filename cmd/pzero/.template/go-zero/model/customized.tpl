@@ -1,11 +1,3 @@
-func (m *custom{{.upperStartCamelObject}}Model) WithTable(f func(table string) string) {{.lowerStartCamelObject}}Model  {
-	mc := &custom{{.upperStartCamelObject}}Model{
-		default{{.upperStartCamelObject}}Model: m.clone(),
-	}
-	mc.table = condition.QuoteWithFlavor(m.flavor, f(m.table))
-	return mc
-}
-
 func (m *custom{{.upperStartCamelObject}}Model) BulkInsert(ctx context.Context, session sqlx.Session, datas []*{{.upperStartCamelObject}}) error {
     if len(datas) == 0 {
         return nil
@@ -50,12 +42,8 @@ func (m *custom{{.upperStartCamelObject}}Model) FindFieldsByCondition(ctx contex
 	return resp, nil
 }
 
-func (m *custom{{.upperStartCamelObject}}Model) FindSelectedColumnsByCondition(ctx context.Context, session sqlx.Session, columns []string, conditions ...condition.Condition) ([]*{{.upperStartCamelObject}}, error) {
-    return m.FindFieldsByCondition(ctx, session, condition.ToFieldSlice(columns), conditions...)
-}
-
 func (m *custom{{.upperStartCamelObject}}Model) FindByCondition(ctx context.Context, session sqlx.Session, conditions ...condition.Condition) ([]*{{.upperStartCamelObject}}, error) {
-   return m.FindSelectedColumnsByCondition(ctx, session, {{.lowerStartCamelObject}}FieldNames, conditions...)
+   return m.FindFieldsByCondition(ctx, session, condition.ToFieldSlice({{.lowerStartCamelObject}}FieldNames), conditions...)
 }
 
 func (m *custom{{.upperStartCamelObject}}Model) CountByCondition(ctx context.Context, session sqlx.Session, conditions ...condition.Condition) (int64, error) {

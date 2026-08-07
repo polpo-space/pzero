@@ -337,7 +337,7 @@ func (l *Register) Register(req *types.RegisterRequest) (resp *types.RegisterRes
         Password: string(hashedPassword),
     }
 
-    err = l.svcCtx.Model.User.InsertV2(l.ctx, nil, user)
+    err = l.svcCtx.Model.User.Insert(l.ctx, nil, user)
     if err != nil {
         l.Logger.Errorf("failed to insert user: %v", err)
         return nil, err

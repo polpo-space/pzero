@@ -3,23 +3,24 @@
 ## Generated Methods
 
 - `Insert`
-- `InsertV2`
 - `BulkInsert`
 - `FindOne`
 - `FindByCondition`
+- `FindFieldsByCondition`
 - `FindOneByCondition`
+- `FindOneFieldsByCondition`
 - `CountByCondition`
 - `PageByCondition`
 - `Update`
 - `UpdateFieldsByCondition`
 - `Delete`
 - `DeleteByCondition`
-- `WithTable(...).Method(...)`
 
 ## Guidance
 
-- Use generated CRUD methods for normal operations
-- Use `InsertV2` when you need the inserted ID
+- Use `Insert` for single-row inserts on PostgreSQL
+- Use `FindOneByCondition` with `condition` for unique-index lookups (per-index `FindOneBy*` helpers are not generated)
+- Use `FindFieldsByCondition` instead of the removed `FindSelectedColumnsByCondition`
 - Use `UpdateFieldsByCondition` for partial updates
 - Use `condition.NewChain()` to build conditions
 - Only write custom SQL for queries the generated methods cannot express cleanly
