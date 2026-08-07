@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/polpo-space/pzero/runtime/migrator"
 	"github.com/spf13/cobra"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+
+	"github.com/polpo-space/pzero/runtime/migrator"
 )
 
 const MigrationDir = "desc/sql_migration"
