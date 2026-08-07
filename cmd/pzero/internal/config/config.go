@@ -101,6 +101,7 @@ type GenConfig struct {
 	GitChange               bool     `mapstructure:"git-change"`
 	ApiTypesDir             string   `mapstructure:"api-types-dir"`
 	Route2Code              bool
+	ProtoDirs               []string `mapstructure:"proto-dir"` // RPC proto 扫描根，空则回落 desc/proto
 	ProtoInclude            []string `mapstructure:"proto-include"`
 	RpcClient               bool     `mapstructure:"rpc-client"`
 	ModelDriver             string   `mapstructure:"model-driver"`
@@ -198,7 +199,25 @@ func (c *Config) Wd() string {
 }
 
 func (c *Config) ProtoDir() string {
-	return filepath.Join("desc", "proto")
+	dirs := c.ProtoDirs()
+	return dirs[0]
+}
+
+// ProtoDirs 返回 RPC proto 扫描根列表。未配置时回落 desc/proto，保持旧行为。
+func (c *Config) ProtoDirs() []string {
+	if len(c.Gen.ProtoDirs) > 0 {
+		dirs := make([]string, 0, len(c.Gen.ProtoDirs))
+		for _, d := range c.Gen.ProtoDirs {
+			d = filepath.Clean(d)
+			if d != "" && d != "." {
+				dirs = append(dirs, d)
+			}
+		}
+		if len(dirs) > 0 {
+			return dirs
+		}
+	}
+	return []string{filepath.Join("desc", "proto")}
 }
 
 func (c *Config) ApiDir() string {

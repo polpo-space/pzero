@@ -47,8 +47,10 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 		registerServers RegisterLines
 	)
 
-	// 获取全量 proto 文件
-	protoFiles, err := pzerodesc.FindRpcServiceProtoFiles(config.C.ProtoDir())
+	protoDirs := config.C.ProtoDirs()
+
+	// 获取全量 proto 文件（支持多 proto-dir）
+	protoFiles, err := findRpcServiceProtoFilesInDirs(protoDirs)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +61,6 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 
 	protoSpecMap := make(map[string]*rpcparser.Proto, len(protoFiles))
 	for _, v := range protoFiles {
-		// parse proto
 		protoParser := rpcparser.NewDefaultProtoParser()
 		var parse rpcparser.Proto
 		parse, err = protoParser.Parse(v, true)
@@ -69,14 +70,17 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 		protoSpecMap[v] = &parse
 	}
 
-	// 获取需要生成代码的proto 文件
+	// 获取需要生成代码的 proto 文件
 	var genCodeProtoFiles []string
 	genCodeProtoSpecMap := make(map[string]*rpcparser.Proto, len(protoFiles))
 
 	switch {
 	case config.C.Gen.GitChange && gitstatus.IsGitRepo(filepath.Join(config.C.Wd())) && len(config.C.Gen.Desc) == 0:
-		m, _, err := gitstatus.ChangedFiles(config.C.ProtoDir(), ".proto")
-		if err == nil {
+		for _, dir := range protoDirs {
+			m, _, err := gitstatus.ChangedFiles(dir, ".proto")
+			if err != nil {
+				continue
+			}
 			genCodeProtoFiles = append(genCodeProtoFiles, m...)
 			for _, file := range m {
 				genCodeProtoSpecMap[file] = protoSpecMap[file]
@@ -86,8 +90,9 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 		for _, v := range config.C.Gen.Desc {
 			if !osx.IsDir(v) {
 				if filepath.Ext(v) == ".proto" {
+					cleaned := filepath.Clean(v)
 					genCodeProtoFiles = append(genCodeProtoFiles, filepath.Join(strings.Split(filepath.ToSlash(v), "/")...))
-					genCodeProtoSpecMap[filepath.Clean(v)] = protoSpecMap[filepath.Clean(v)]
+					genCodeProtoSpecMap[cleaned] = protoSpecMap[cleaned]
 				}
 			} else {
 				specifiedProtoFiles, err := pzerodesc.FindRpcServiceProtoFiles(v)
@@ -101,7 +106,6 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			}
 		}
 	default:
-		// 否则生成代码的 proto 文件为全量 proto 文件
 		genCodeProtoFiles = protoFiles
 		genCodeProtoSpecMap = protoSpecMap
 	}
@@ -110,14 +114,12 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 	for _, v := range config.C.Gen.DescIgnore {
 		if !osx.IsDir(v) {
 			if filepath.Ext(v) == ".proto" {
-				// delete item in genCodeApiFiles by filename
 				genCodeProtoFiles = lo.Reject(genCodeProtoFiles, func(item string, _ int) bool {
 					return item == filepath.Clean(v)
 				})
 				protoFiles = lo.Reject(protoFiles, func(item string, _ int) bool {
 					return item == filepath.Clean(v)
 				})
-				// delete map key
 				delete(genCodeProtoSpecMap, filepath.Clean(v))
 				delete(protoSpecMap, filepath.Clean(v))
 			}
@@ -143,21 +145,12 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 		return protoSpecMap, nil
 	}
 
-	// 处理模板
-	var goctlHome string
-	tempDir, err := os.MkdirTemp(os.TempDir(), "")
+	tempDir, err := os.MkdirTemp(os.TempDir(), "pzero-rpc-")
 	if err != nil {
 		return nil, err
 	}
 	defer os.RemoveAll(tempDir)
 
-	// // 先写入内置模板
-	// err = embeded.WriteTemplateDir(filepath.Join("go-zero", "rpc"), filepath.Join(tempDir, "rpc"))
-	// if err != nil {
-	//	return nil, err
-	// }
-
-	// 如果用户自定义了模板，则复制覆盖
 	customTemplatePath := filepath.Join(config.C.Home, "go-zero", "rpc")
 	if pathx.FileExists(customTemplatePath) {
 		err = filex.CopyDir(customTemplatePath, filepath.Join(tempDir, "rpc"))
@@ -165,24 +158,22 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			return nil, err
 		}
 	}
+	goctlHome := tempDir
 
-	goctlHome = tempDir
+	pbOutDirExternal := filepath.Join(tempDir, "pbout")
+	if err = os.MkdirAll(pbOutDirExternal, 0o755); err != nil {
+		return nil, err
+	}
 
-	excludeThirdPartyProtoFiles, err := pzerodesc.FindExcludeThirdPartyProtoFiles(config.C.ProtoDir())
+	excludeThirdPartyProtoFiles, err := findExcludeThirdPartyProtoFilesInDirs(protoDirs)
 	if err != nil {
 		return nil, err
 	}
 
-	// 获取 proto 的 go_package
+	importPaths := buildProtoImportPaths(protoDirs)
 	var protoParser protoparse.Parser
 	protoParser.InferImportPaths = false
-
-	protoDir := filepath.Join("desc", "proto")
-	thirdPartyProtoDir := filepath.Join("desc", "proto", "third_party")
-	protoParser.ImportPaths = []string{protoDir, thirdPartyProtoDir}
-	for _, v := range config.C.Gen.ProtoInclude {
-		protoParser.ImportPaths = append(protoParser.ImportPaths, v)
-	}
+	protoParser.ImportPaths = importPaths
 	protoParser.IncludeSourceCodeInfo = true
 
 	for _, v := range protoFiles {
@@ -196,10 +187,10 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			return nil, err
 		}
 
-		if lo.Contains(genCodeProtoFiles, v) {
-			zrpcOut := "."
+		fileExternal := isExternalGoPackage(protoSpecMap[v].GoPackage)
 
-			rel, err := filepath.Rel(protoDir, v)
+		if lo.Contains(genCodeProtoFiles, v) {
+			protoRoot, rel, err := relToProtoDir(v, protoDirs)
 			if err != nil {
 				return nil, err
 			}
@@ -208,70 +199,67 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			if err != nil {
 				return nil, err
 			}
-
 			if len(fds) == 0 {
 				continue
 			}
 
-			goPackage := fds[0].AsFileDescriptorProto().GetOptions().GetGoPackage()
+			pbOutDir := "."
+			if fileExternal {
+				pbOutDir = pbOutDirExternal
+			}
 
-			command := fmt.Sprintf("goctl rpc protoc %s -I%s -I%s --go_out=%s --go-grpc_out=%s --zrpc_out=%s --client=%t --home %s -m --style %s",
+			includeArgs := buildProtocIncludeArgs(protoDirs)
+			command := fmt.Sprintf("goctl rpc protoc %s%s --go_out=%s --go-grpc_out=%s --zrpc_out=%s --client=%t --home %s -m --style %s",
 				v,
-				config.C.ProtoDir(),
-				filepath.Join(config.C.ProtoDir(), "third_party"),
-				filepath.Join("."),
-				filepath.Join("."),
-				zrpcOut,
+				includeArgs,
+				pbOutDir,
+				pbOutDir,
+				".",
 				config.C.Gen.RpcClient,
 				goctlHome,
 				config.C.Style)
 
 			for _, exp := range excludeThirdPartyProtoFiles {
-				rel, err = filepath.Rel(config.C.ProtoDir(), exp)
+				_, expRel, err := relToProtoDir(exp, protoDirs)
 				if err != nil {
 					return nil, err
 				}
 
-				fds, err = protoParser.ParseFiles(rel)
+				expFds, err := protoParser.ParseFiles(expRel)
 				if err != nil {
 					return nil, err
 				}
-
-				if len(fds) == 0 {
+				if len(expFds) == 0 {
 					continue
 				}
 
-				goPackage = fds[0].AsFileDescriptorProto().GetOptions().GetGoPackage()
+				// M 选项的 key 需与 proto import 路径一致（buf 布局多为 user/v1/xxx.proto）
+				importName, err := protoImportName(exp, protoDirs)
+				if err != nil {
+					importName = filepath.ToSlash(expRel)
+				}
 
-				command += fmt.Sprintf(" --go_opt=module=%s --go_opt=M%s=%s --go-grpc_opt=module=%s --go-grpc_opt=M%s=%s",
-					jr.Module,
-					rel,
-					func() string {
-						if strings.HasPrefix(goPackage, jr.Module) {
-							return goPackage
-						}
-						return filepath.ToSlash(filepath.Join(jr.Module, "internal", goPackage))
-					}(),
-					jr.Module,
-					rel,
-					func() string {
-						if strings.HasPrefix(goPackage, jr.Module) {
-							return goPackage
-						}
-						return filepath.ToSlash(filepath.Join(jr.Module, "internal", goPackage))
-					}())
+				goPackage := expFds[0].AsFileDescriptorProto().GetOptions().GetGoPackage()
+				mapped := resolveGoPackageImport(jr.Module, goPackage)
+				if isExternalGoPackage(goPackage) {
+					command += fmt.Sprintf(" --go_opt=M%s=%s --go-grpc_opt=M%s=%s",
+						importName, mapped, importName, mapped)
+				} else {
+					command += fmt.Sprintf(" --go_opt=module=%s --go_opt=M%s=%s --go-grpc_opt=module=%s --go-grpc_opt=M%s=%s",
+						jr.Module, importName, mapped, jr.Module, importName, mapped)
+				}
 			}
 
-			if len(config.C.Gen.ProtoInclude) > 0 {
-				command += fmt.Sprintf(" -I%s ", strings.Join(config.C.Gen.ProtoInclude, " -I"))
-			}
+			_ = protoRoot // used via include args / rel resolution
 
 			_, err = execx.Run(command, config.C.Wd())
 			if err != nil {
 				return nil, err
 			}
 
-			// Send proto file progress
+			// goctl zrpc_out=. 会在已有 cmd/ 脚手架项目里再吐一份入口；清掉以免污染
+			jr.cleanupGoctlFrameArtifacts(v)
+
 			if progressChan != nil {
 				progressChan <- progress.NewFile(v)
 				if config.C.Debug {
@@ -309,21 +297,17 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			}
 		}
 
-		// # gen proto descriptor
-		if lo.Contains(genCodeProtoFiles, v) {
+		// descriptor set：仅本地 pb（相对 go_package）；外部 contracts 的 descriptor 归外部管线
+		if lo.Contains(genCodeProtoFiles, v) && !fileExternal {
 			if pzerodesc.IsNeedGenProtoDescriptor(protoSpecMap[v]) {
 				if !pathx.FileExists(pzerodesc.GetProtoDescriptorPath(v)) {
 					_ = os.MkdirAll(filepath.Dir(pzerodesc.GetProtoDescriptorPath(v)), 0o755)
 				}
-				protocCommand := fmt.Sprintf("protoc --include_imports -I%s -I%s --descriptor_set_out=%s %s",
-					config.C.ProtoDir(),
-					filepath.Join(config.C.ProtoDir(), "third_party"),
+				protocCommand := fmt.Sprintf("protoc --include_imports%s --descriptor_set_out=%s %s",
+					buildProtocIncludeArgs(protoDirs),
 					pzerodesc.GetProtoDescriptorPath(v),
 					v,
 				)
-				if len(config.C.Gen.ProtoInclude) > 0 {
-					protocCommand += fmt.Sprintf(" -I%s", strings.Join(config.C.Gen.ProtoInclude, " -I"))
-				}
 				_, err = execx.Run(protocCommand, config.C.Wd())
 				if err != nil {
 					return nil, err
@@ -333,18 +317,26 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 
 		for _, s := range protoSpecMap[v].Service {
 			serverImports = append(serverImports, fmt.Sprintf(`%ssvr "%s/internal/server/%s"`, strings.ToLower(s.Name), jr.Module, strings.ToLower(s.Name)))
-			registerServers = append(registerServers, fmt.Sprintf("%s.Register%sServer(grpcServer, %ssvr.New%s(ctx))", filepath.Base(protoSpecMap[v].GoPackage), stringx.FirstUpper(s.Name), strings.ToLower(s.Name), stringx.FirstUpper(stringx.ToCamel(s.Name))))
+			pbPkgName := filepath.Base(strings.TrimPrefix(protoSpecMap[v].GoPackage, "./"))
+			registerServers = append(registerServers, fmt.Sprintf("%s.Register%sServer(grpcServer, %ssvr.New%s(ctx))", pbPkgName, stringx.FirstUpper(s.Name), strings.ToLower(s.Name), stringx.FirstUpper(stringx.ToCamel(s.Name))))
 		}
-		pbImports = append(pbImports, fmt.Sprintf(`"%s/internal/%s"`, jr.Module, strings.TrimPrefix(protoSpecMap[v].GoPackage, "./")))
+		pbImports = append(pbImports, fmt.Sprintf(`"%s"`, resolveGoPackageImport(jr.Module, protoSpecMap[v].GoPackage)))
 	}
 
-	if pathx.FileExists(config.C.ProtoDir()) {
+	// 同 go_package 多 proto/service 时去重 import
+	serverImports = lo.Uniq(serverImports)
+	pbImports = lo.Uniq(pbImports)
+	registerServers = lo.Uniq(registerServers)
+
+	if len(protoFiles) > 0 {
 		if err = jr.genServer(serverImports, pbImports, registerServers); err != nil {
 			return nil, err
 		}
-		// gen common proto pb
-		if err = jr.genNoRpcServiceExcludeThirdPartyProto(config.C.ProtoDir()); err != nil {
-			return nil, err
+		// 无 service 的公共 proto：只为相对 go_package 生成本地 pb
+		for _, dir := range protoDirs {
+			if err = jr.genNoRpcServiceExcludeThirdPartyProto(dir); err != nil {
+				return nil, err
+			}
 		}
 		if err = jr.genApiMiddlewares(protoFiles); err != nil {
 			return nil, err
@@ -352,4 +344,147 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 	}
 
 	return protoSpecMap, nil
+}
+
+func findRpcServiceProtoFilesInDirs(dirs []string) ([]string, error) {
+	var all []string
+	for _, dir := range dirs {
+		files, err := pzerodesc.FindRpcServiceProtoFiles(dir)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, files...)
+	}
+	return lo.Uniq(all), nil
+}
+
+func findExcludeThirdPartyProtoFilesInDirs(dirs []string) ([]string, error) {
+	var all []string
+	for _, dir := range dirs {
+		files, err := pzerodesc.FindExcludeThirdPartyProtoFiles(dir)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, files...)
+	}
+	return lo.Uniq(all), nil
+}
+
+func buildProtoImportPaths(protoDirs []string) []string {
+	var paths []string
+	seen := map[string]struct{}{}
+	add := func(p string) {
+		p = filepath.Clean(p)
+		if p == "" || p == "." {
+			return
+		}
+		if _, ok := seen[p]; ok {
+			return
+		}
+		seen[p] = struct{}{}
+		paths = append(paths, p)
+	}
+
+	for _, dir := range protoDirs {
+		add(dir)
+		add(filepath.Join(dir, "third_party"))
+		// buf module 常见布局：contracts/proto/<domain>/v1/*.proto，import 根在 contracts/proto
+		add(filepath.Dir(dir))
+	}
+	for _, inc := range config.C.Gen.ProtoInclude {
+		add(inc)
+	}
+	return paths
+}
+
+func buildProtocIncludeArgs(protoDirs []string) string {
+	var b strings.Builder
+	for _, p := range buildProtoImportPaths(protoDirs) {
+		b.WriteString(" -I")
+		b.WriteString(p)
+	}
+	return b.String()
+}
+
+func relToProtoDir(file string, protoDirs []string) (protoRoot, rel string, err error) {
+	file = filepath.Clean(file)
+	for _, dir := range protoDirs {
+		dir = filepath.Clean(dir)
+		rel, err = filepath.Rel(dir, file)
+		if err != nil {
+			continue
+		}
+		if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+			continue
+		}
+		return dir, rel, nil
+	}
+	return "", "", fmt.Errorf("proto file %s is not under configured proto-dir %v", file, protoDirs)
+}
+
+// protoImportName 返回用于 protoc M 选项 / import 的路径：在所有 -I 根中取最长 rel（通常对应 buf module 根）。
+func protoImportName(file string, protoDirs []string) (string, error) {
+	file = filepath.Clean(file)
+	var best string
+	for _, root := range buildProtoImportPaths(protoDirs) {
+		rel, err := filepath.Rel(root, file)
+		if err != nil {
+			continue
+		}
+		if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+			continue
+		}
+		rel = filepath.ToSlash(rel)
+		if best == "" || len(rel) > len(best) {
+			best = rel
+		}
+	}
+	if best == "" {
+		return "", fmt.Errorf("proto file %s is not under any import path for proto-dir %v", file, protoDirs)
+	}
+	return best, nil
+}
+
+func resolveGoPackageImport(module, goPackage string) string {
+	goPackage = strings.TrimSpace(goPackage)
+	if goPackage == "" {
+		return filepath.ToSlash(filepath.Join(module, "internal", "types"))
+	}
+	if isExternalGoPackage(goPackage) {
+		return goPackage
+	}
+	if strings.HasPrefix(goPackage, module) {
+		return goPackage
+	}
+	return filepath.ToSlash(filepath.Join(module, "internal", strings.TrimPrefix(goPackage, "./")))
+}
+
+// isExternalGoPackage：绝对 go_package（非 ./ 相对路径）表示 PB 由外部管线生成，pzero 只出 stub。
+func isExternalGoPackage(goPackage string) bool {
+	goPackage = strings.TrimSpace(goPackage)
+	return goPackage != "" && !strings.HasPrefix(goPackage, ".")
+}
+
+// cleanupGoctlFrameArtifacts 删除 goctl 在已有 pzero 项目中多余生成的入口/配置。
+func (jr *PzeroRpc) cleanupGoctlFrameArtifacts(protoFile string) {
+	base := strings.TrimSuffix(filepath.Base(protoFile), filepath.Ext(protoFile))
+	wd := config.C.Wd()
+	candidates := []string{
+		filepath.Join(wd, base+".go"),
+		filepath.Join(wd, "etc", base+".yaml"),
+	}
+	// 已有 cmd/ 脚手架时，根目录 main 由 goctl 生成的同名文件应删除
+	if pathx.FileExists(filepath.Join(wd, "cmd")) {
+		for _, p := range candidates {
+			if pathx.FileExists(p) {
+				_ = os.Remove(p)
+			}
+		}
+	}
+	// go_zero style 会再写 service_context.go，与模板 servicecontext.go 冲突
+	goZeroSvc := filepath.Join(wd, "internal", "svc", "service_context.go")
+	legacySvc := filepath.Join(wd, "internal", "svc", "servicecontext.go")
+	if pathx.FileExists(goZeroSvc) && pathx.FileExists(legacySvc) {
+		_ = os.Remove(goZeroSvc)
+	}
 }
