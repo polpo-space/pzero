@@ -1,4 +1,4 @@
-package migrator
+package cmd
 
 import (
 	"bytes"
@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/polpo-space/pzero/runtime/migrator"
 	"github.com/spf13/cobra"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
@@ -283,7 +284,7 @@ func newCommandForTestWithLoader(
 	root.SetErr(out)
 	root.AddCommand(newCommand(
 		loader,
-		withMigratorFactory(func(sqlx.SqlConf) (Migrator, error) { return fake, nil }),
+		withMigratorFactory(func(sqlx.SqlConf) (migrator.Migrator, error) { return fake, nil }),
 		withNow(func() time.Time { return now }),
 		withMigrationDir(migrationDir),
 	))

@@ -1,5 +1,5 @@
 // Package migrator is a public pzero runtime API for PostgreSQL schema
-// migration execution and service commands backed by pgx.
+// migration execution backed by pgx.
 package migrator
 
 import (
@@ -14,11 +14,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
-)
-
-var (
-	DefaultXMigrationsTable = "schema_migrations"
-	DefaultSource           = "file://desc/sql_migration"
 )
 
 type (
@@ -47,12 +42,6 @@ type (
 		Close() (error, error)
 	}
 
-	Options struct {
-		Source             string
-		SourceAppendDriver bool
-		XMigrationsTable   string
-	}
-
 	defaultMigrator struct {
 		migrate *migrate.Migrate
 	}
@@ -60,32 +49,6 @@ type (
 
 func (d *defaultMigrator) Close() (error, error) {
 	return d.migrate.Close()
-}
-
-func WithSource(source string) opts.Opt[Options] {
-	return func(d *Options) {
-		d.Source = source
-	}
-}
-
-func WithSourceAppendDriver(sourceAppendDriver bool) opts.Opt[Options] {
-	return func(d *Options) {
-		d.SourceAppendDriver = sourceAppendDriver
-	}
-}
-
-func WithXMigrationsTable(xMigrationsTable string) opts.Opt[Options] {
-	return func(u *Options) {
-		u.XMigrationsTable = xMigrationsTable
-	}
-}
-
-func (d Options) DefaultOptions() Options {
-	return Options{
-		Source:             DefaultSource,
-		XMigrationsTable:   DefaultXMigrationsTable,
-		SourceAppendDriver: false,
-	}
 }
 
 func New(sqlConf sqlx.SqlConf, op ...opts.Opt[Options]) (Migrator, error) {
