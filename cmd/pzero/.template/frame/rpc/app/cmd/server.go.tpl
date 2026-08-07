@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"github.com/common-nighthawk/go-figure"
+	"fmt"
+
 	"github.com/spf13/cobra"
     "github.com/zeromicro/go-zero/core/conf"
     "github.com/zeromicro/go-zero/core/logx"
@@ -57,7 +58,7 @@ var serverCmd = &cobra.Command{
 }
 
 func printBanner(serviceName string) {
-	figure.NewColorFigure(serviceName, "starwars", "green", false).Print()
+	fmt.Printf("%s\n", serviceName)
 }
 
 func init() {
