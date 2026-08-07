@@ -68,17 +68,14 @@ When helping with pzero development:
 
 ### Implementing Database Operations
 
-**Local SQL Mode**:
-1. Create or update SQL schema in `desc/sql/*.sql`
-2. Create a migration pair with `<service> migrate create <name>`
-3. Implement both files in `desc/sql_migration/`
+**Recommended workflow**:
+1. Create a migration pair with `<service> migrate create <name>`
+2. Implement both files in `desc/sql_migration/`
+3. Sync `desc/sql/*.sql` schema snapshot if the service maintains one
 4. Apply migrations explicitly with `<service> migrate up --config etc/etc.yaml`
-5. Generate models with `pzero gen --desc desc/sql/users.sql`
+5. Generate models with `pzero gen` (`model-datasource: true` required)
 
-**Remote Datasource Mode**:
-1. Create and implement migration files in `desc/sql_migration/`
-2. Apply migrations explicitly through the generated service binary
-3. Generate models with `pzero gen`
+`desc/sql` is a schema snapshot only—never pass it via `pzero gen --desc`.
 
 Common steps:
 - Use PostgreSQL through the `pgx` driver; service migrations reject other drivers

@@ -13,8 +13,19 @@ For easier usage, pzero automatically generates `internal/model/model.go` to reg
 
 The model generator is PostgreSQL-only:
 * `gen.model-driver` accepts `postgres` (recommended) or `pgx`
-* model generation only supports datasource input
-* SQL DDL input under `desc/sql` is no longer used by `pzero gen` for model generation
+* model generation only supports datasource input (`model-datasource: true`)
+* `desc/sql` is a **schema snapshot** of the current structure; it may coexist with datasource mode and is **not** model gen input
+* When `--desc` / `gen.desc` scopes api/proto generation, model gen is skipped; do not pass `.sql` to `--desc`
+
+## Schema roles
+
+| Path | Role |
+| --- | --- |
+| `desc/sql_migration/` | Formal schema changes (only evolution path) |
+| `desc/sql/` | Current-structure snapshot for review/alignment, not gen input |
+| datasource + `model-datasource-table` | Sole input for model code generation |
+
+`internal/model/model.go` is fully rewritten from `model-datasource-table` (or `*`). Keep that list complete; hand-edited extra registrations are overwritten on the next gen.
 
 ## Features
 
@@ -180,3 +191,11 @@ Generated `internal/model/model.go` stays consistent with the selected PostgreSQ
 * DeleteByCondition: Conditional delete
 
 For detailed usage, see: [condition component](../component/condition.md)
+
+## Migrating from jzero / wownow-micro
+
+1. Keep `desc/sql` snapshots; they no longer block `pzero gen`.
+2. Enable `model-datasource: true` with `model-datasource-url`, and list **every** table that must be registered in `model-datasource-table` (`model.go` is fully rewritten from that list).
+3. Run `migrate up`, then `pzero gen` (without `--desc`) to generate models from the live schema.
+4. Generated API is slim: rename `InsertV2` to `Insert`; `WithTable`, `FindSelectedColumnsByCondition`, and per-index `FindOneBy*` are gone—use `FindOneByCondition` or custom methods.
+5. Imports move to `github.com/polpo-space/pzero/core/stores/{modelx,condition}`.

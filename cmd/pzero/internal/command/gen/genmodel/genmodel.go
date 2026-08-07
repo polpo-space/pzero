@@ -16,12 +16,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
-	pzerodesc "github.com/polpo-space/pzero/cmd/pzero/internal/desc"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console/progress"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/dsn"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/filex"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/osx"
 )
 
 type PzeroModel struct {
@@ -41,7 +39,9 @@ func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error
 		genFiles  []string
 	)
 
-	if !pathx.FileExists(config.C.SqlDir()) && !config.C.Gen.ModelDatasource {
+	// Model gen 仅由 model-datasource 开关驱动。
+	// desc/sql 是 schema snapshot，可与 datasource 共存，不再作为 gen 入口或失败条件。
+	if !config.C.Gen.ModelDatasource {
 		return nil, nil
 	}
 
@@ -51,11 +51,11 @@ func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error
 	}
 	config.C.Gen.ModelDriver = driver
 
-	if !config.C.Gen.ModelDatasource {
-		return nil, errors.New("postgres model only supports datasource mode")
+	if hasExplicitSQLDesc() {
+		return nil, errors.New("postgres model generation only supports datasource input; desc/sql is a schema snapshot and is not accepted via --desc")
 	}
-	if hasSQLInput() {
-		return nil, errors.New("postgres model generation only supports datasource input")
+	if len(config.C.Gen.ModelDatasourceUrl) == 0 {
+		return nil, errors.New("model-datasource-url is required when model-datasource is enabled")
 	}
 
 	for _, v := range config.C.Gen.ModelDatasourceUrl {
@@ -94,6 +94,7 @@ func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error
 
 	goctlHome = tempDir
 
+	// --desc / gen.desc 用于限定 api/proto 生成范围；有 desc 时跳过 model，避免无意义全表 regen。
 	if len(config.C.Gen.Desc) != 0 {
 		return nil, nil
 	}
@@ -141,7 +142,7 @@ func getAllTables(conns []Conn) ([]string, error) {
 	}
 	for _, conn := range conns {
 		var tables []string
-		err := conn.SqlConn.QueryRowsCtx(ctx, &tables, fmt.Sprintf("select tablename from pg_tables where schemaname = '%s'", config.C.Gen.ModelSchema))
+		err := conn.SqlConn.QueryRowsCtx(ctx, &tables, "select tablename from pg_tables where schemaname = $1", config.C.Gen.ModelSchema)
 		if err != nil {
 			return nil, err
 		}
@@ -161,20 +162,25 @@ func normalizeModelDriver(driver string) (string, error) {
 	}
 }
 
-func hasSQLInput() bool {
-	if len(config.C.Gen.Desc) != 0 {
-		for _, v := range config.C.Gen.Desc {
-			if filepath.Ext(v) == ".sql" || osx.IsDir(v) {
-				return true
-			}
+// hasExplicitSQLDesc reports whether gen.desc/--desc explicitly targets SQL snapshot
+// paths. Presence of desc/sql alone is fine and must not block datasource model gen.
+func hasExplicitSQLDesc() bool {
+	if len(config.C.Gen.Desc) == 0 {
+		return false
+	}
+
+	sqlDir := filepath.Clean(config.C.SqlDir())
+	sqlPrefix := sqlDir + string(os.PathSeparator)
+
+	for _, v := range config.C.Gen.Desc {
+		clean := filepath.Clean(v)
+		if filepath.Ext(clean) == ".sql" {
+			return true
+		}
+		if clean == sqlDir || strings.HasPrefix(clean, sqlPrefix) {
+			return true
 		}
 	}
-
-	if pathx.FileExists(config.C.SqlDir()) {
-		sqlFiles, err := pzerodesc.FindSqlFiles(config.C.SqlDir())
-		return err == nil && len(sqlFiles) > 0
-	}
-
 	return false
 }
 

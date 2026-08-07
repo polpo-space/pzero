@@ -190,7 +190,7 @@ CREATE TABLE `user` (
 → Generate Model layer code, CRUD operations, supports complex queries
 
 **Feature Description**:
-- ✅ **Multiple data sources**: Support generating model code based on sql files or remote database connections
+- ✅ **Multiple data sources**: Support generating model code from remote PostgreSQL datasources
 - ✅ **Auto-generate CRUD interfaces**: Automatically generate basic operations like create, read, update, delete
 - ✅ **Complex query support**: Provide powerful chain queries for complex business scenarios
 - ✅ **One code adapts to multiple databases**: Generated code compatible with MySQL, PostgreSQL, Sqlite and other databases, no need to regenerate, easily switch underlying database storage
@@ -266,7 +266,7 @@ skills/
 **Database Operations**:
 - ✅ Automatically create SQL migration files (xx.up.sql & xx.down.sql)
 - ✅ Explicitly execute database migration through the generated service (`go run . migrate up`)
-- ✅ Automatically generate Model code (`pzero gen --desc desc/sql/xxx.sql`)
+- ✅ Automatically generate Model code (`model-datasource: true` + `pzero gen`)
 
 **RPC Service Development**:
 - ✅ Automatically write `.proto` files to define service interfaces

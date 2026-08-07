@@ -13,8 +13,19 @@ pzero 通过 PostgreSQL 数据源生成数据库代码到 `internal/model` 下�
 
 当前 model 生成器已收缩为 PostgreSQL-only：
 * `gen.model-driver` 支持 `postgres`（推荐）或 `pgx`
-* model 生成只支持远程数据源模式
-* `desc/sql` 下的 SQL DDL 文件不再作为 `pzero gen` 的 model 输入
+* model 生成只支持远程数据源模式（`model-datasource: true`）
+* `desc/sql` 是 **schema snapshot**（当前结构镜像），可与 datasource 共存；**不会**、也**不能**作为 `pzero gen` 的 model 输入
+* 通过 `--desc` / `gen.desc` 指定 api/proto 时会跳过 model 生成（限定生成范围）；不要把 `.sql` 传给 `--desc`
+
+## Schema 三分法
+
+| 路径 | 职责 |
+| --- | --- |
+| `desc/sql_migration/` | 正式 schema 变更（唯一演进入口） |
+| `desc/sql/` | 当前结构 snapshot，供评审/对齐，不喂 gen |
+| datasource + `model-datasource-table` | model 代码生成的唯一输入 |
+
+`internal/model/model.go` 由 `model-datasource-table`（或 `*`）全量重写。表列表必须覆盖所有需要注册的表；手维额外注册会在下次 gen 时被覆盖。
 
 ## 特性
 
@@ -141,3 +152,11 @@ pzero gen
 * DeleteByCondition: 条件删除
 
 具体使用请参阅: [condition组件](../component/condition.md)
+
+## 从 jzero / wownow-micro 迁移注意
+
+1. 保留 `desc/sql` snapshot；不要删，也不会再阻塞 `pzero gen`。
+2. 配置 `model-datasource: true` 与 `model-datasource-url`，并把 **全部** 需要注册的表写入 `model-datasource-table`（`model.go` 会按该列表全量重写）。
+3. 先 `migrate up`，再 `pzero gen`（无 `--desc`），从数据库结构生成 model。
+4. 生成 API 已 slim：`InsertV2` 改为 `Insert`；不再生成 `WithTable`、`FindSelectedColumnsByCondition`、按唯一索引的 `FindOneBy*`。业务侧请改用 `FindOneByCondition` 或 custom 方法。
+5. 生成 import 会切到 `github.com/polpo-space/pzero/core/stores/{modelx,condition}`。
