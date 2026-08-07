@@ -18,11 +18,14 @@ pzero gen
 
 ## Common Methods
 
-- `Insert`
 - `InsertV2`
 - `BulkInsert`
 - `FindOne`
 - `FindByCondition`
+- `FindFieldsByCondition`
+- `FindOneByCondition`
+- `FindOneFieldsByCondition`
+- `CountByCondition`
 - `PageByCondition`
 - `Update`
 - `UpdateFieldsByCondition`

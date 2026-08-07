@@ -126,16 +126,14 @@ pzero gen
 
 ## 默认生成如下方法
 
-* WithTable: 指定表名, 用于分表场景
-* Insert: 插入单条数据
-* InsertV2: 插入单条数据(insert v2 版本, 可获取自增主键)
+* InsertV2: 插入单条数据（PostgreSQL 通过 `RETURNING` 回填自增主键）
 * BulkInsert: 批量插入数据
 * Update: 根据主键更新单条数据
 * Delete: 根据主键删除单条数据
 * FindOne: 根据主键查询单条数据
 * FindByCondition: 条件查询
 * FindFieldsByCondition: 条件查询(指定查询字段)
-* FindOneByCondition: 条件查询单条数据
+* FindOneByCondition: 条件查询单条数据（按唯一索引查询请用此方法，不再生成 `FindOneBy*` 系列）
 * FindOneFieldsByCondition: 条件查询单条数据(指定查询字段)
 * CountByCondition: 条件查询总数
 * PageByCondition: 条件分页查询

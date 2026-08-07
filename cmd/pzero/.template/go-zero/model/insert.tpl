@@ -1,31 +1,4 @@
 {{if .withCache}}
-func (m *default{{.upperStartCamelObject}}Model) Insert(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) (sql.Result,error) {
-	{{if .withCache}}{{.keys}}
-	statement, args := sqlbuilder.NewInsertBuilder().
-                InsertInto(m.table).
-                Cols({{.lowerStartCamelObject}}RowsExpectAutoSet).
-                Values({{.expressionValues}}).BuildWithFlavor(m.flavor)
-    return m.cachedConn.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-        if session != nil {
-            return session.ExecCtx(ctx, statement, args...)
-        }
-		return conn.ExecCtx(ctx, statement, args...)
-	}, {{.keyValues}}){{end}}
-}
-{{else}}
-func (m *default{{.upperStartCamelObject}}Model) Insert(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) (sql.Result,error) {
-    statement, args := sqlbuilder.NewInsertBuilder().
-            InsertInto(m.table).
-            Cols({{.lowerStartCamelObject}}RowsExpectAutoSet).
-            Values({{.expressionValues}}).BuildWithFlavor(m.flavor)
-	if session != nil {
-       return session.ExecCtx(ctx, statement, args...)
-	}
-	return m.conn.ExecCtx(ctx, statement, args...)
-}
-{{end}}
-
-{{if .withCache}}
 func (m *default{{.upperStartCamelObject}}Model) InsertV2(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) error {
 	{{if .withCache}}{{.keys}}
 	var statement string
