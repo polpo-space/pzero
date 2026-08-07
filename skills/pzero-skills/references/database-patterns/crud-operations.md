@@ -2,7 +2,7 @@
 
 ## Generated Methods
 
-- `InsertV2`
+- `Insert`
 - `BulkInsert`
 - `FindOne`
 - `FindByCondition`
@@ -18,7 +18,7 @@
 
 ## Guidance
 
-- Use `InsertV2` for single-row inserts on PostgreSQL
+- Use `Insert` for single-row inserts on PostgreSQL
 - Use `FindOneByCondition` with `condition` for unique-index lookups (per-index `FindOneBy*` helpers are not generated)
 - Use `FindFieldsByCondition` instead of the removed `FindSelectedColumnsByCondition`
 - Use `UpdateFieldsByCondition` for partial updates

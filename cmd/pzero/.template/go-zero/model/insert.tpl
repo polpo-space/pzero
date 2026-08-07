@@ -1,5 +1,5 @@
 {{if .withCache}}
-func (m *default{{.upperStartCamelObject}}Model) InsertV2(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) error {
+func (m *default{{.upperStartCamelObject}}Model) Insert(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) error {
 	{{if .withCache}}{{.keys}}
 	var statement string
 	var args []any
@@ -65,7 +65,7 @@ func (m *default{{.upperStartCamelObject}}Model) InsertV2(ctx context.Context, s
 	return nil{{end}}
 }
 {{else}}
-func (m *default{{.upperStartCamelObject}}Model) InsertV2(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) error {
+func (m *default{{.upperStartCamelObject}}Model) Insert(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) error {
     var statement string
     var args []any
     {{if .data.Table.PrimaryKey.AutoIncrement}}if sqlbuilder.DefaultFlavor == sqlbuilder.PostgreSQL || sqlbuilder.DefaultFlavor == sqlbuilder.SQLite {

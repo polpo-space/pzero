@@ -1,1 +1,1 @@
-InsertV2(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) error
+Insert(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) error

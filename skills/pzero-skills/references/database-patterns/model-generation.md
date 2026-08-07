@@ -18,7 +18,7 @@ pzero gen
 
 ## Common Methods
 
-- `InsertV2`
+- `Insert`
 - `BulkInsert`
 - `FindOne`
 - `FindByCondition`

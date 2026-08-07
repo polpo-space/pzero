@@ -165,7 +165,7 @@ Generated `internal/model/model.go` stays consistent with the selected PostgreSQ
 
 ## Default generated methods
 
-* InsertV2: Insert single row (PostgreSQL `RETURNING` populates auto-increment primary key)
+* Insert: Insert single row (PostgreSQL `RETURNING` populates auto-increment primary key)
 * BulkInsert: Batch insert
 * Update: Update single row by primary key
 * Delete: Delete single row by primary key

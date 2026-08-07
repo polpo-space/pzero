@@ -126,7 +126,7 @@ pzero gen
 
 ## 默认生成如下方法
 
-* InsertV2: 插入单条数据（PostgreSQL 通过 `RETURNING` 回填自增主键）
+* Insert: 插入单条数据（PostgreSQL 通过 `RETURNING` 回填自增主键）
 * BulkInsert: 批量插入数据
 * Update: 根据主键更新单条数据
 * Delete: 根据主键删除单条数据
