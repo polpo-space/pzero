@@ -2,8 +2,11 @@
 
 `runtime` contains public runtime APIs that generated pzero services may import
 directly. Each capability uses a direct package path, such as
-`runtime/migrator`. These packages are part of the service compatibility
-boundary and should evolve with backward compatibility in mind.
+`runtime/migrator`. Service CLI helpers that wrap those APIs, such as
+`runtime/migrator/cmd`, stay in a sibling package so cobra and other CLI
+concerns do not pollute the runtime import graph. These packages are part of
+the service compatibility boundary and should evolve with backward
+compatibility in mind.
 
 New service-facing runtime capabilities, such as tracing, authentication,
 middleware, messaging, configuration, and health checks, should prefer this

@@ -3,7 +3,8 @@
 ## Runtime contract
 
 - API and RPC projects generated with the `model` feature include a `migrate` subcommand.
-- The implementation lives in `github.com/polpo-space/pzero/runtime/migrator`.
+- Migration execution lives in `github.com/polpo-space/pzero/runtime/migrator`.
+- The generated service `migrate` cobra command lives in `github.com/polpo-space/pzero/runtime/migrator/cmd`.
 - Migration execution supports PostgreSQL through `pgx` only.
 - Commands load `sqlx.SqlConf` from the service root's inherited `--config` flag.
 - Starting the API or RPC server never applies migrations automatically.
@@ -47,12 +48,14 @@ MySQL, SQLite, and empty driver names are rejected before a migration connection
 
 ## Example
 
+`migrate create` names files with a Unix timestamp version prefix:
+
 ```text
 desc/sql_migration/
-├── 1_create_users_table.up.sql
-├── 1_create_users_table.down.sql
-├── 2_add_email_index.up.sql
-└── 2_add_email_index.down.sql
+├── 1748252730_create_users_table.up.sql
+├── 1748252730_create_users_table.down.sql
+├── 1748256330_add_email_index.up.sql
+└── 1748256330_add_email_index.down.sql
 ```
 
 ## Guidance

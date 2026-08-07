@@ -1,4 +1,4 @@
-package migrator
+package cmd
 
 import (
 	"bytes"
@@ -12,6 +12,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+
+	"github.com/polpo-space/pzero/runtime/migrator"
 )
 
 type fakeMigrator struct {
@@ -283,7 +285,7 @@ func newCommandForTestWithLoader(
 	root.SetErr(out)
 	root.AddCommand(newCommand(
 		loader,
-		withMigratorFactory(func(sqlx.SqlConf) (Migrator, error) { return fake, nil }),
+		withMigratorFactory(func(sqlx.SqlConf) (migrator.Migrator, error) { return fake, nil }),
 		withNow(func() time.Time { return now }),
 		withMigrationDir(migrationDir),
 	))
