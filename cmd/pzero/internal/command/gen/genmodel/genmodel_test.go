@@ -39,6 +39,20 @@ func TestHasExplicitSQLDesc(t *testing.T) {
 			t.Fatal("desc/sql directory via --desc must be detected")
 		}
 	})
+
+	t.Run("sql dir with dot slash", func(t *testing.T) {
+		config.C.Gen.Desc = []string{"./desc/sql"}
+		if !hasExplicitSQLDesc() {
+			t.Fatal("./desc/sql must match desc/sql after Abs")
+		}
+	})
+
+	t.Run("sql backup prefix sibling", func(t *testing.T) {
+		config.C.Gen.Desc = []string{"desc/sql_backup"}
+		if hasExplicitSQLDesc() {
+			t.Fatal("desc/sql_backup must not be treated as desc/sql")
+		}
+	})
 }
 
 func TestNormalizeModelDriver(t *testing.T) {

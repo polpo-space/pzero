@@ -169,15 +169,21 @@ func hasExplicitSQLDesc() bool {
 		return false
 	}
 
-	sqlDir := filepath.Clean(config.C.SqlDir())
-	sqlPrefix := sqlDir + string(os.PathSeparator)
+	sqlDirAbs, err := filepath.Abs(config.C.SqlDir())
+	if err != nil {
+		sqlDirAbs = filepath.Clean(config.C.SqlDir())
+	}
+	sqlPrefix := sqlDirAbs + string(os.PathSeparator)
 
 	for _, v := range config.C.Gen.Desc {
-		clean := filepath.Clean(v)
-		if filepath.Ext(clean) == ".sql" {
+		cleanAbs, err := filepath.Abs(v)
+		if err != nil {
+			cleanAbs = filepath.Clean(v)
+		}
+		if filepath.Ext(cleanAbs) == ".sql" {
 			return true
 		}
-		if clean == sqlDir || strings.HasPrefix(clean, sqlPrefix) {
+		if cleanAbs == sqlDirAbs || strings.HasPrefix(cleanAbs, sqlPrefix) {
 			return true
 		}
 	}
