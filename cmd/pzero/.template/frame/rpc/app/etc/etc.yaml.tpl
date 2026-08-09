@@ -19,13 +19,25 @@ redis:
     pass: "123456"{{ end }}{{ if has "job" .Features }}
 job:
     enable: false
-    workers: 1
     timezone: Asia/Shanghai
+    # 等待运行中任务结束的时间。go-zero 收到退出信号后默认 5.5s 就会强杀进程，
+    # 想留更久必须同时调大 zrpc.shutdown.waitTime。
+    shutdownTimeout: 3s
+    # 调度器全局并发上限，0 表示不限制。
+    # 防止同一个任务重叠请用 jobs.<name>.overlap，不要靠这里。
+    concurrency:
+        limit: 0
+        mode: wait
+    # key 必须与 internal/job/registry.go 里注册的 handler 严格一一对应。
+    # cron 与 every 二选一；cron 支持 5 位、6 位（含秒）和 @every 5s 这类描述符。
     jobs:
         exampleInterval:
             enable: true
-            cron: "@every 5s"
+            every: 5s
+            overlap: skip
         exampleMinute:
             enable: true
             cron: "0 * * * * *"
+            overlap: skip
+            timeout: 30s
 {{ end }}
