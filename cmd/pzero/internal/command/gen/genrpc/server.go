@@ -20,7 +20,7 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
 )
 
-func rewriteGeneratedPBImport(path, goPackage string) error {
+func rewriteGeneratedPBImport(path, goPackage, packageName, generatedQualifier string) error {
 	fset := token.NewFileSet()
 	f, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
 	if err != nil {
@@ -30,13 +30,29 @@ func rewriteGeneratedPBImport(path, goPackage string) error {
 	changed := false
 	for _, imp := range f.Imports {
 		importPath, err := strconv.Unquote(imp.Path.Value)
-		if err != nil || importPath == goPackage {
+		if err != nil {
 			continue
 		}
-		if strings.Contains(importPath, "/pbout/") && strings.HasSuffix(importPath, "/"+goPackage) {
+		aliasedGoPackage := goPackage
+		if packageName != "" {
+			aliasedGoPackage += ";" + packageName
+		}
+		if importPath == aliasedGoPackage || (strings.Contains(importPath, "/pbout/") && (strings.HasSuffix(importPath, "/"+goPackage) || strings.HasSuffix(importPath, "/"+aliasedGoPackage))) {
 			imp.Path.Value = strconv.Quote(goPackage)
+			if packageName != "" {
+				imp.Name = ast.NewIdent(packageName)
+			}
 			changed = true
 		}
+	}
+	if changed && packageName != "" && generatedQualifier != "" && packageName != generatedQualifier {
+		ast.Inspect(f, func(node ast.Node) bool {
+			ident, ok := node.(*ast.Ident)
+			if ok && ident.Name == generatedQualifier {
+				ident.Name = packageName
+			}
+			return true
+		})
 	}
 	if !changed {
 		return nil

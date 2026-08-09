@@ -220,6 +220,11 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 				config.C.Style)
 
 			for _, exp := range excludeThirdPartyProtoFiles {
+				if filepath.Clean(exp) == filepath.Clean(v) {
+					if _, alias := parseGoPackageOption(protoSpecMap[v].GoPackage); alias != "" {
+						continue
+					}
+				}
 				_, expRel, err := relToProtoDir(exp, protoDirs)
 				if err != nil {
 					return nil, err
@@ -240,7 +245,7 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 				}
 
 				goPackage := expFds[0].AsFileDescriptorProto().GetOptions().GetGoPackage()
-				mapped := resolveGoPackageMapping(jr.Module, goPackage)
+				mapped := resolveGoPackageImport(jr.Module, goPackage)
 				if isExternalGoPackage(goPackage) {
 					command += fmt.Sprintf(" --go_opt=M%s=%s --go-grpc_opt=M%s=%s",
 						importName, mapped, importName, mapped)
@@ -258,13 +263,15 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			}
 			if fileExternal {
 				pbImport := resolveGoPackageImport(jr.Module, protoSpecMap[v].GoPackage)
+				pbPackage := goPackageName(protoSpecMap[v].GoPackage, protoSpecMap[v].PbPackage)
+				generatedPBQualifier := protoSpecMap[v].PbPackage
 				for _, file := range allServerFiles {
-					if err := rewriteGeneratedPBImport(file.Path, pbImport); err != nil {
+					if err := rewriteGeneratedPBImport(file.Path, pbImport, pbPackage, generatedPBQualifier); err != nil {
 						return nil, err
 					}
 				}
 				for _, file := range allLogicFiles {
-					if err := rewriteGeneratedPBImport(file.Path, pbImport); err != nil {
+					if err := rewriteGeneratedPBImport(file.Path, pbImport, pbPackage, generatedPBQualifier); err != nil {
 						return nil, err
 					}
 				}
@@ -466,15 +473,6 @@ func resolveGoPackageImport(module, goPackage string) string {
 		return goPackage
 	}
 	return filepath.ToSlash(filepath.Join(module, "internal", strings.TrimPrefix(goPackage, "./")))
-}
-
-func resolveGoPackageMapping(module, goPackage string) string {
-	_, packageName := parseGoPackageOption(goPackage)
-	resolved := resolveGoPackageImport(module, goPackage)
-	if packageName == "" {
-		return resolved
-	}
-	return resolved + ";" + packageName
 }
 
 func parseGoPackageOption(goPackage string) (importPath, packageName string) {

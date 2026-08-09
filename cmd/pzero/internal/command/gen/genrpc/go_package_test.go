@@ -114,9 +114,6 @@ func TestResolveGoPackageImport(t *testing.T) {
 	if got != external {
 		t.Fatalf("aliased external import: got %s want %s", got, external)
 	}
-	if got := resolveGoPackageMapping(module, aliased); got != aliased {
-		t.Fatalf("aliased external mapping: got %s want %s", got, aliased)
-	}
 	if got := goPackageName(aliased, "v1"); got != "userv1" {
 		t.Fatalf("aliased package name: got %s want userv1", got)
 	}
