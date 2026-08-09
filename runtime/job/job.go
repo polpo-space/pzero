@@ -7,6 +7,7 @@ package job
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"sort"
@@ -55,10 +56,6 @@ func New(cfg Config, handlers []NamedHandler, op ...opts.Opt[Options]) (*Server,
 	cfg, location, err := cfg.normalize()
 	if err != nil {
 		return nil, err
-	}
-	if cfg.ShutdownTimeout > graceWindow {
-		logx.Errorf("job: shutdownTimeout %v exceeds the %v go-zero allows before force kill, "+
-			"raise zrpc.shutdown.waitTime as well", cfg.ShutdownTimeout, graceWindow)
 	}
 
 	registry, err := buildRegistry(cfg, handlers)
@@ -224,6 +221,10 @@ func qualify(namespace, name string) string {
 }
 
 func onError(_ uuid.UUID, name string, err error) {
+	if errors.Is(err, context.Canceled) {
+		logx.Infof("job: %s canceled during shutdown", name)
+		return
+	}
 	logx.Errorf("job: %s failed: %v", name, err)
 }
 

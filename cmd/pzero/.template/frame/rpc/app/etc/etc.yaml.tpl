@@ -20,8 +20,7 @@ redis:
 job:
     enable: false
     timezone: Asia/Shanghai
-    # 等待运行中任务结束的时间。go-zero 收到退出信号后默认 5.5s 就会强杀进程，
-    # 想留更久必须同时调大 zrpc.shutdown.waitTime。
+    # 等待运行中任务结束的时间；应小于宿主服务实际留给 Stop 的退出窗口。
     shutdownTimeout: 3s
     # 调度器全局并发上限，0 表示不限制。
     # 防止同一个任务重叠请用 jobs.<name>.overlap，不要靠这里。
@@ -30,6 +29,7 @@ job:
         mode: wait
     # key 必须与 internal/job/registry.go 里注册的 handler 严格一一对应。
     # cron 与 every 二选一；cron 支持 5 位、6 位（含秒）和 @every 5s 这类描述符。
+    # overlap: wait 不能与 concurrency.limit > 0 同时使用。
     jobs:
         exampleInterval:
             enable: true

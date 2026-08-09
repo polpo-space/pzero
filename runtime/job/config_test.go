@@ -78,6 +78,14 @@ func TestConfigNormalizeInvalid(t *testing.T) {
 			cfg:     Config{Jobs: map[string]Spec{"foo": {Cron: "* * * * *", Overlap: "queue"}}},
 			wantErr: ErrInvalidOverlap,
 		},
+		{
+			name: "overlap wait with global concurrency",
+			cfg: Config{
+				Concurrency: ConcurrencyConf{Limit: 2},
+				Jobs:        map[string]Spec{"foo": {Cron: "* * * * *", Overlap: OverlapWait}},
+			},
+			wantErr: ErrOverlapWaitWithConcurrency,
+		},
 	}
 
 	for _, tt := range tests {
@@ -90,8 +98,29 @@ func TestConfigNormalizeInvalid(t *testing.T) {
 
 // 禁用的 job 同样要校验，否则把 enable 翻成 true 才发现配置有问题。
 func TestConfigNormalizeValidatesDisabledJobs(t *testing.T) {
-	_, _, err := Config{Jobs: map[string]Spec{"foo": {Enable: false}}}.normalize()
-	assert.ErrorIs(t, err, ErrScheduleRequired)
+	tests := []struct {
+		name    string
+		spec    Spec
+		wantErr error
+	}{
+		{
+			name:    "missing schedule",
+			spec:    Spec{Enable: false},
+			wantErr: ErrScheduleRequired,
+		},
+		{
+			name:    "invalid cron",
+			spec:    Spec{Enable: false, Cron: "not a cron"},
+			wantErr: ErrInvalidCron,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, _, err := Config{Jobs: map[string]Spec{"foo": tt.spec}}.normalize()
+			assert.ErrorIs(t, err, tt.wantErr)
+		})
+	}
 }
 
 func TestLimitModeTranslation(t *testing.T) {
@@ -132,6 +161,42 @@ func TestSpecDefinitionAcceptsSecondsAndDescriptor(t *testing.T) {
 				Spec{Cron: crontab}.definition(),
 				gocron.NewTask(func() {}),
 			)
+			assert.NoError(t, err)
+		})
+	}
+}
+
+func TestValidateCronMatchesGocronSyntax(t *testing.T) {
+	tests := []struct {
+		name    string
+		cron    string
+		wantErr bool
+	}{
+		{name: "five fields", cron: "*/5 * * * *"},
+		{name: "six fields", cron: "0 */5 * * * *"},
+		{name: "descriptor", cron: "@every 5s"},
+		{name: "explicit timezone", cron: "CRON_TZ=UTC 0 * * * * *"},
+		{name: "invalid", cron: "not a cron", wantErr: true},
+		{name: "no future run", cron: "0 0 0 31 2 *", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validateCron(tt.cron, time.UTC, time.Now())
+
+			scheduler, schedulerErr := gocron.NewScheduler(gocron.WithLocation(time.UTC))
+			require.NoError(t, schedulerErr)
+			t.Cleanup(func() { _ = scheduler.Shutdown() })
+			_, gocronErr := scheduler.NewJob(
+				gocron.CronJob(tt.cron, true),
+				gocron.NewTask(func() {}),
+			)
+			assert.Equal(t, gocronErr != nil, err != nil, "validator must match gocron acceptance")
+
+			if tt.wantErr {
+				assert.ErrorIs(t, err, ErrInvalidCron)
+				return
+			}
 			assert.NoError(t, err)
 		})
 	}

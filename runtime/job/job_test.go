@@ -2,12 +2,15 @@ package job
 
 import (
 	"context"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zeromicro/go-zero/core/logx/logtest"
 	"github.com/zeromicro/go-zero/core/service"
 )
 
@@ -72,11 +75,16 @@ func TestBuildRegistryStrictMatch(t *testing.T) {
 }
 
 func TestNewRejectsInvalidCron(t *testing.T) {
-	_, err := New(
-		Config{Jobs: map[string]Spec{"foo": {Enable: true, Cron: "not a cron"}}},
-		[]NamedHandler{Named("foo", noop)},
-	)
-	assert.ErrorContains(t, err, `job "foo"`)
+	for _, enabled := range []bool{true, false} {
+		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
+			_, err := New(
+				Config{Jobs: map[string]Spec{"foo": {Enable: enabled, Cron: "not a cron"}}},
+				[]NamedHandler{Named("foo", noop)},
+			)
+			assert.ErrorIs(t, err, ErrInvalidCron)
+			assert.ErrorContains(t, err, `job "foo"`)
+		})
+	}
 }
 
 func TestNewNamespacesJobNames(t *testing.T) {
@@ -150,6 +158,22 @@ func TestRunWithoutTimeoutKeepsParentContext(t *testing.T) {
 
 	err := run(ctx, func(ctx context.Context) error { return ctx.Err() }, 0)
 	assert.ErrorIs(t, err, context.Canceled)
+}
+
+func TestOnErrorTreatsCancellationAsLifecycleEvent(t *testing.T) {
+	collector := logtest.NewCollector(t)
+
+	onError(uuid.Nil, "cleanup", context.Canceled)
+	assert.Contains(t, collector.String(), "canceled during shutdown")
+	assert.NotContains(t, collector.String(), `"level":"error"`)
+
+	collector.Reset()
+	onError(uuid.Nil, "cleanup", context.DeadlineExceeded)
+	assert.Contains(t, collector.String(), `"level":"error"`)
+
+	collector.Reset()
+	onError(uuid.Nil, "cleanup", fmt.Errorf("wrapped: %w", context.Canceled))
+	assert.NotContains(t, collector.String(), `"level":"error"`)
 }
 
 // Stop 会取消 job ctx，handler 才能感知进程正在退出。

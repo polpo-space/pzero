@@ -2,9 +2,11 @@ package job
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
+	"github.com/robfig/cron/v3"
 )
 
 // LimitMode 描述调度器整体并发达到上限时的行为。
@@ -32,13 +34,9 @@ const (
 	OverlapWait OverlapPolicy = "wait"
 )
 
-// defaultShutdownTimeout 取 3s，因为 go-zero 收到退出信号后默认只留
-// waitTime(5.5s) - wrapUpTime(1s) = 4.5s 就会强杀进程。
+// defaultShutdownTimeout 使用保守的 3s；调用方应按宿主服务的退出窗口
+// 显式配置更长的等待时间。
 const defaultShutdownTimeout = 3 * time.Second
-
-// graceWindow 是 go-zero 默认留给 Stop 的时间窗口，超过它的
-// ShutdownTimeout 不可能生效，启动时给出告警。
-const graceWindow = 4500 * time.Millisecond
 
 // Config 是 job 调度器的配置，直接对应服务 yaml 中的 job 段。
 type Config struct {
@@ -113,9 +111,12 @@ func (c Config) normalize() (Config, *time.Location, error) {
 
 	jobs := make(map[string]Spec, len(c.Jobs))
 	for name, spec := range c.Jobs {
-		normalized, err := spec.normalize()
+		normalized, err := spec.normalize(location)
 		if err != nil {
 			return Config{}, nil, fmt.Errorf("job %q: %w", name, err)
+		}
+		if c.Concurrency.Limit > 0 && normalized.Overlap == OverlapWait {
+			return Config{}, nil, fmt.Errorf("job %q: %w", name, ErrOverlapWaitWithConcurrency)
 		}
 		jobs[name] = normalized
 	}
@@ -124,7 +125,7 @@ func (c Config) normalize() (Config, *time.Location, error) {
 	return c, location, nil
 }
 
-func (s Spec) normalize() (Spec, error) {
+func (s Spec) normalize(location *time.Location) (Spec, error) {
 	switch {
 	case s.Cron != "" && s.Every != 0:
 		return Spec{}, ErrScheduleConflict
@@ -137,6 +138,11 @@ func (s Spec) normalize() (Spec, error) {
 	if s.Timeout < 0 {
 		return Spec{}, ErrInvalidTimeout
 	}
+	if s.Cron != "" {
+		if err := validateCron(s.Cron, location, time.Now()); err != nil {
+			return Spec{}, err
+		}
+	}
 
 	if s.Overlap == "" {
 		s.Overlap = OverlapSkip
@@ -146,6 +152,26 @@ func (s Spec) normalize() (Spec, error) {
 	}
 
 	return s, nil
+}
+
+func validateCron(crontab string, location *time.Location, now time.Time) error {
+	withLocation := crontab
+	if !strings.HasPrefix(crontab, "TZ=") && !strings.HasPrefix(crontab, "CRON_TZ=") {
+		withLocation = fmt.Sprintf("CRON_TZ=%s %s", location.String(), crontab)
+	}
+
+	parser := cron.NewParser(
+		cron.SecondOptional | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow | cron.Descriptor,
+	)
+	schedule, err := parser.Parse(withLocation)
+	if err != nil {
+		return fmt.Errorf("%w %q: %w", ErrInvalidCron, crontab, err)
+	}
+	if schedule.Next(now).IsZero() {
+		return fmt.Errorf("%w %q: no future run", ErrInvalidCron, crontab)
+	}
+
+	return nil
 }
 
 // definition 把 Spec 翻译成 gocron 的调度定义。

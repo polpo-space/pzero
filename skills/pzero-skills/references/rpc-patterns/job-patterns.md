@@ -61,13 +61,17 @@ job:
 | `job.jobs.<name>.overlap` | 上次未结束时 `skip` 跳过 / `wait` 排队 / `allow` 允许并发，默认 `skip` |
 | `job.jobs.<name>.timeout` | 单次执行超时，留空不限制 |
 
+`overlap: wait` 不能与 `concurrency.limit > 0` 同时使用。gocron 的全局
+limiter 会先于 singleton limiter 接管任务，这个组合无法保证 per-job wait
+队列语义，因此 pzero 会在启动时直接拒绝该配置。
+
 ### 防重叠用 overlap，不要用 concurrency.limit
 
 `concurrency.limit` 是调度器**全局**闸门，limit=1 会让任务之间互相阻塞或互相丢弃。
 防止同一个任务自己重叠，永远用 `overlap: skip`——这是默认值，对账、扫单、
 拆账、backfill、清理这类任务都应该保持默认。
 
-### shutdownTimeout 受 go-zero 限制
+### shutdownTimeout 必须与宿主服务退出窗口对齐
 
 go-zero 收到退出信号后：sleep `wrapUpTime`(默认 1s) → 通知 shutdown listener →
 sleep `waitTime - wrapUpTime`(默认 4.5s) → 强杀进程。所以 `shutdownTimeout`
@@ -82,7 +86,8 @@ job:
   shutdownTimeout: 30s
 ```
 
-超过阈值时 pzero 会在启动日志里报错提示。
+`runtime/job` 不知道宿主进程实际配置的 shutdown window，因此不会拿 go-zero
+默认值做固定阈值判断；生成服务或部署配置必须确保两者匹配。
 
 ## Handler -> Logic
 
@@ -115,6 +120,9 @@ func Registry(svcCtx *svc.ServiceContext) []runtimejob.NamedHandler {
 
 handler 拿到的 `ctx` 会在两种情况下被取消：进程退出（`JobServer.Stop`）、
 配置了 `timeout` 且超时。DB / RPC / HTTP 调用都应该把这个 ctx 透传下去。
+
+进程退出导致的 `context.Canceled` 视为正常 lifecycle 事件，记录为 Info；
+job 自身 timeout 返回的 `context.DeadlineExceeded` 仍按执行失败记录为 Error。
 
 注意 `timeout` 只取消 ctx，不会强杀 goroutine。handler 如果不响应取消，
 会一直占着 singleton 槽位。

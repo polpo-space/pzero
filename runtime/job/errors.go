@@ -24,6 +24,13 @@ var (
 	// ErrInvalidConcurrencyLimit 表示并发上限为负数。
 	ErrInvalidConcurrencyLimit = errors.New("job: concurrency limit must not be negative")
 
+	// ErrOverlapWaitWithConcurrency 表示全局并发限制与 job wait 队列组合使用。
+	// gocron 的全局 limiter 优先于 singleton limiter，这个组合会静默丢失 tick。
+	ErrOverlapWaitWithConcurrency = errors.New("job: overlap wait cannot be combined with a global concurrency limit")
+
+	// ErrInvalidCron 表示 cron 表达式无法解析或没有未来触发时间。
+	ErrInvalidCron = errors.New("job: invalid cron expression")
+
 	// ErrEmptyHandlerName 表示注册了空名字的 handler。
 	ErrEmptyHandlerName = errors.New("job: handler name must not be empty")
 
