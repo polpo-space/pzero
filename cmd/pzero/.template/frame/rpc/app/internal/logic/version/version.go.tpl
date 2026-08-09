@@ -6,9 +6,9 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 
+	"{{.Module}}/internal/buildinfo"
 	"{{.Module}}/internal/svc"
 	"{{.Module}}/internal/types/version"
-	ver "{{.Module}}/version"
 )
 
 type Version struct {
@@ -27,9 +27,9 @@ func NewVersion(ctx context.Context, svcCtx *svc.ServiceContext) *Version {
 
 func (l *Version) Version(in *version.VersionRequest) (*version.VersionResponse, error) {
 	return &version.VersionResponse{
-		Version:   ver.Version,
+		Version:   buildinfo.Version,
 		GoVersion: runtime.Version(),
-		Commit:    ver.Commit,
-		Date:      ver.Date,
+		Commit:    buildinfo.Commit,
+		Date:      buildinfo.Date,
 	}, nil
 }
