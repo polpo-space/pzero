@@ -344,9 +344,6 @@ func (ja *PzeroApi) generateCodeForApiFiles(genCodeApiFiles []string, apiSpecMap
 		if err := format.ApiFormatByPath(apiFile, false); err != nil {
 			return errors.Wrapf(err, "format api file: %s", apiFile)
 		}
-		if err := normalizeAPITrailingNewline(apiFile); err != nil {
-			return errors.Wrapf(err, "normalize api file: %s", apiFile)
-		}
 
 		command := fmt.Sprintf("goctl api go --api %s --dir %s --home %s --style %s", apiFile, ".", templateDir, config.C.Style)
 		if config.C.Debug {
@@ -355,6 +352,9 @@ func (ja *PzeroApi) generateCodeForApiFiles(genCodeApiFiles []string, apiSpecMap
 
 		if _, err := execx.Run(command, config.C.Wd()); err != nil {
 			return errors.Wrapf(err, "api file: %s", apiFile)
+		}
+		if err := normalizeAPITrailingNewline(apiFile); err != nil {
+			return errors.Wrapf(err, "normalize api file: %s", apiFile)
 		}
 
 		if progressChan != nil {
