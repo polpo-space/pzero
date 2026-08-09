@@ -20,6 +20,9 @@ func TestIsExternalGoPackage(t *testing.T) {
 	if !isExternalGoPackage("github.com/example/contracts/gen/user/v1") {
 		t.Fatal("absolute go_package should be external")
 	}
+	if !isExternalGoPackage("github.com/example/contracts/gen/user/v1;userv1") {
+		t.Fatal("absolute go_package with package alias should be external")
+	}
 }
 
 func TestProtoImportNamePrefersBufStylePath(t *testing.T) {
@@ -104,5 +107,17 @@ func TestResolveGoPackageImport(t *testing.T) {
 	got = resolveGoPackageImport(module, external)
 	if got != external {
 		t.Fatalf("external absolute: got %s want %s", got, external)
+	}
+
+	aliased := external + ";userv1"
+	got = resolveGoPackageImport(module, aliased)
+	if got != external {
+		t.Fatalf("aliased external import: got %s want %s", got, external)
+	}
+	if got := resolveGoPackageMapping(module, aliased); got != aliased {
+		t.Fatalf("aliased external mapping: got %s want %s", got, aliased)
+	}
+	if got := goPackageName(aliased, "v1"); got != "userv1" {
+		t.Fatalf("aliased package name: got %s want userv1", got)
 	}
 }

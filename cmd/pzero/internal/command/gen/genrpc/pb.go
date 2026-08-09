@@ -47,7 +47,7 @@ func (jr *PzeroRpc) genNoRpcServiceExcludeThirdPartyProto(protoDirPath string) e
 		if isExternalGoPackage(goPackage) {
 			continue
 		}
-		mapped := resolveGoPackageImport(jr.Module, goPackage)
+		mapped := resolveGoPackageMapping(jr.Module, goPackage)
 
 		command := fmt.Sprintf("protoc %s%s --go_out=%s --go_opt=module=%s --go_opt=M%s=%s --go-grpc_out=%s --go-grpc_opt=module=%s",
 			v,
