@@ -256,6 +256,19 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			if err != nil {
 				return nil, err
 			}
+			if fileExternal {
+				pbImport := resolveGoPackageImport(jr.Module, protoSpecMap[v].GoPackage)
+				for _, file := range allServerFiles {
+					if err := rewriteGeneratedPBImport(file.Path, pbImport); err != nil {
+						return nil, err
+					}
+				}
+				for _, file := range allLogicFiles {
+					if err := rewriteGeneratedPBImport(file.Path, pbImport); err != nil {
+						return nil, err
+					}
+				}
+			}
 
 			// goctl zrpc_out=. 会在已有 cmd/ 脚手架项目里再吐一份入口；清掉以免污染
 			jr.cleanupGoctlFrameArtifacts(v)
