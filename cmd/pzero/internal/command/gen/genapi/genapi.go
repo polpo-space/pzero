@@ -344,6 +344,9 @@ func (ja *PzeroApi) generateCodeForApiFiles(genCodeApiFiles []string, apiSpecMap
 		if err := format.ApiFormatByPath(apiFile, false); err != nil {
 			return errors.Wrapf(err, "format api file: %s", apiFile)
 		}
+		if err := normalizeAPITrailingNewline(apiFile); err != nil {
+			return errors.Wrapf(err, "normalize api file: %s", apiFile)
+		}
 
 		command := fmt.Sprintf("goctl api go --api %s --dir %s --home %s --style %s", apiFile, ".", templateDir, config.C.Style)
 		if config.C.Debug {
@@ -360,6 +363,15 @@ func (ja *PzeroApi) generateCodeForApiFiles(genCodeApiFiles []string, apiSpecMap
 	}
 
 	return nil
+}
+
+func normalizeAPITrailingNewline(path string) error {
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	normalized := strings.TrimRight(string(contents), "\r\n") + "\n"
+	return os.WriteFile(path, []byte(normalized), 0o644)
 }
 
 // patchHandlerAndLogicFiles 并发 patch handler 和 logic 文件
