@@ -94,8 +94,8 @@ package user;
 option go_package = "./types/user";
 
 // 引入 pzero 扩展
-import "jzero/api/http.proto";
-import "jzero/api/zrpc.proto";
+import "pzero/api/http.proto";
+import "pzero/api/zrpc.proto";
 
 import "google/api/annotations.proto";
 
@@ -143,12 +143,12 @@ message GetUserResponse {
 
 service UserService {
   // 为整个 service 添加 HTTP 中间件
-  option (jzero.api.http_group) = {
+  option (pzero.api.http_group) = {
     middleware: "auth,log",
   };
 
   // 为整个 service 添加 RPC 中间件
-  option (jzero.api.zrpc_group) = {
+  option (pzero.api.zrpc_group) = {
     middleware: "trace",
   };
 

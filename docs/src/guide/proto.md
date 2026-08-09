@@ -81,11 +81,11 @@ message GetRequest {
 Add middleware, separate multiple middleware with commas
 
 ```protobuf
-import "jzero/api/http.proto";
-import "jzero/api/zrpc.proto";
+import "pzero/api/http.proto";
+import "pzero/api/zrpc.proto";
 
 service User {
-    option (jzero.api.http_group) = {
+    option (pzero.api.http_group) = {
         middleware: "auth",
     };
 
@@ -94,7 +94,7 @@ service User {
             post: "/api/v1/user/create",
             body: "*"
         };
-        option (jzero.api.zrpc) = {
+        option (pzero.api.zrpc) = {
             middleware: "withValue1",
         };
     };
@@ -108,10 +108,10 @@ service User {
 ```
 
 Detailed explanation:
-* option (jzero.api.http_group) adds http middleware to all methods under this service
-* option (jzero.api.http) only adds http middleware to specific method
-* option (jzero.api.zrpc_group) adds zrpc middleware to all methods under this service
-* option (jzero.api.zrpc) only adds zrpc middleware to specific method
+* option (pzero.api.http_group) adds http middleware to all methods under this service
+* option (pzero.api.http) only adds http middleware to specific method
+* option (pzero.api.zrpc_group) adds zrpc middleware to all methods under this service
+* option (pzero.api.zrpc) only adds zrpc middleware to specific method
 
 After executing `pzero gen`, following files will be generated, using auth as example:
 * internal/middleware/authmiddleware.go

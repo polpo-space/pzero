@@ -13,7 +13,6 @@ require (
 	github.com/iancoleman/orderedmap v0.3.0
 	github.com/jaronnie/genius v0.6.1
 	github.com/jhump/protoreflect v1.18.0
-	github.com/jzero-io/desc v1.2.0
 	github.com/moby/patternmatcher v0.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2

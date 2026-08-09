@@ -81,11 +81,11 @@ message GetRequest {
 添加 middleware, 多个 middleware 使用逗号隔开
 
 ```protobuf
-import "jzero/api/http.proto";
-import "jzero/api/zrpc.proto";
+import "pzero/api/http.proto";
+import "pzero/api/zrpc.proto";
 
 service User {
-    option (jzero.api.http_group) = {
+    option (pzero.api.http_group) = {
         middleware: "auth",
     };
 
@@ -94,7 +94,7 @@ service User {
             post: "/api/v1/user/create",
             body: "*"
         };
-        option (jzero.api.zrpc) = {
+        option (pzero.api.zrpc) = {
             middleware: "withValue1",
         };
     };
@@ -108,10 +108,10 @@ service User {
 ```
 
 详细解释:
-* option (jzero.api.http_group) 即将该 service 下的所有 method 都新增 http 中间件
-* option (jzero.api.http) 只针对某个 method 新增 http 中间件
-* option (jzero.api.zrpc_group) 即将该 service 下的所有 method 都新增 zrpc 中间件
-* option (jzero.api.zrpc) 只针对某个 method 新增 zrpc 中间件
+* option (pzero.api.http_group) 即将该 service 下的所有 method 都新增 http 中间件
+* option (pzero.api.http) 只针对某个 method 新增 http 中间件
+* option (pzero.api.zrpc_group) 即将该 service 下的所有 method 都新增 zrpc 中间件
+* option (pzero.api.zrpc) 只针对某个 method 新增 zrpc 中间件
 
 执行 `pzero gen` 后将会生成一下文件, 以 auth 为例:
 * internal/middleware/authmiddleware.go
