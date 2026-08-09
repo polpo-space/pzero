@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestChangeLogicTypesPreservesCanonicalImportAlias(t *testing.T) {
+func TestChangeLogicTypesNormalizesCanonicalImportAlias(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "request_refund.go")
 	contents := `package paymentservicelogic
@@ -27,8 +27,8 @@ func (l *RequestRefund) RequestRefund(in *paymentv1.OldRequest) (*paymentv1.OldR
 	jr := &PzeroRpc{Module: "github.com/example/payment-svc"}
 	err := jr.changeLogicTypes(LogicFile{
 		Path:             filepath.Join(dir, "request_refund_logic.go"),
-		Package:          "paymentv1",
-		GoPackage:        "github.com/example/contracts/gen/payment/v1;paymentv1",
+		Package:          "payment",
+		GoPackage:        "github.com/example/contracts/gen/payment/v1;payment",
 		Service:          "PaymentService",
 		Rpc:              "RequestRefund",
 		RequestTypeName:  "RequestRefundRequest",
@@ -42,11 +42,11 @@ func (l *RequestRefund) RequestRefund(in *paymentv1.OldRequest) (*paymentv1.OldR
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(got), "*paymentv1.RequestRefundRequest") ||
-		!strings.Contains(string(got), "*paymentv1.RequestRefundResponse") {
-		t.Fatalf("canonical import alias was not preserved:\n%s", got)
+	if !strings.Contains(string(got), "*payment.RequestRefundRequest") ||
+		!strings.Contains(string(got), "*payment.RequestRefundResponse") {
+		t.Fatalf("canonical import alias was not normalized:\n%s", got)
 	}
-	if strings.Contains(string(got), "*v1.RequestRefund") {
-		t.Fatalf("ambiguous protobuf package qualifier leaked into logic signature:\n%s", got)
+	if strings.Contains(string(got), "paymentv1.") {
+		t.Fatalf("stale protobuf package qualifier leaked into logic:\n%s", got)
 	}
 }
