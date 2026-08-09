@@ -166,7 +166,22 @@ func logicPBQualifier(fset *token.FileSet, f *ast.File, importPath, packageName,
 			continue
 		}
 		if imp.Name != nil && imp.Name.Name != "_" && imp.Name.Name != "." {
-			return imp.Name.Name
+			currentQualifier := imp.Name.Name
+			if packageName != "" && currentQualifier != packageName {
+				ast.Inspect(f, func(node ast.Node) bool {
+					selector, ok := node.(*ast.SelectorExpr)
+					if !ok {
+						return true
+					}
+					ident, ok := selector.X.(*ast.Ident)
+					if ok && ident.Name == currentQualifier {
+						ident.Name = packageName
+					}
+					return true
+				})
+				imp.Name = ast.NewIdent(packageName)
+			}
+			return packageName
 		}
 		return packageName
 	}
