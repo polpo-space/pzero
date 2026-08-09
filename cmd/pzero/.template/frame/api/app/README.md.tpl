@@ -16,7 +16,7 @@ go build -ldflags "-X '{{.Module}}/version.Version=v0.1.0' \
   -X '{{.Module}}/version.Date=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" .
 ```
 
-CLI `version`、启动 banner、以及 `/api/version` 均读取 `version` 包，无需再设置环境变量。
+CLI `version`、启动时版本输出、以及 `/api/version` 均读取 `version` 包，无需再设置环境变量。
 
 ## Generate code
 
