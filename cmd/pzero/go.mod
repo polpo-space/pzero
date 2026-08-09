@@ -13,10 +13,9 @@ require (
 	github.com/iancoleman/orderedmap v0.3.0
 	github.com/jaronnie/genius v0.6.1
 	github.com/jhump/protoreflect v1.18.0
-	github.com/jzero-io/desc v1.2.0
-	github.com/jzero-io/go_fmt v0.0.0-20250905015347-1a45352494b7
 	github.com/moby/patternmatcher v0.6.0
 	github.com/pkg/errors v0.9.1
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
 	github.com/polpo-space/pzero v1.4.0
 	github.com/rinchsan/gosimports v0.3.8
 	github.com/samber/lo v1.53.0
@@ -63,7 +62,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gookit/color v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.28.0 // indirect
@@ -88,7 +86,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.3.0 // indirect
 	github.com/petermattis/goid v0.0.0-20260113132338-7c7de50cc741 // indirect
 	github.com/pjbgf/sha1cd v0.6.0 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.66.1 // indirect

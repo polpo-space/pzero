@@ -9,7 +9,7 @@ pzero supports HTTP and RPC middleware at both service level and method level.
 Service-level HTTP middleware:
 
 ```protobuf
-option (jzero.api.http_group) = {
+option (pzero.api.http_group) = {
   middleware: "auth,logging",
 };
 ```
@@ -17,7 +17,7 @@ option (jzero.api.http_group) = {
 Method-level HTTP middleware:
 
 ```protobuf
-option (jzero.api.http) = {
+option (pzero.api.http) = {
   middleware: "adminCheck",
 };
 ```
@@ -25,7 +25,7 @@ option (jzero.api.http) = {
 Service-level RPC middleware:
 
 ```protobuf
-option (jzero.api.zrpc_group) = {
+option (pzero.api.zrpc_group) = {
   middleware: "trace",
 };
 ```

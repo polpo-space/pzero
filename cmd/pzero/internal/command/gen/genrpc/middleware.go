@@ -9,7 +9,7 @@ import (
 	"github.com/iancoleman/orderedmap"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
-	pzeroapi "github.com/jzero-io/desc/proto/api"
+	pzeroapi "github.com/polpo-space/pzero/proto/api"
 	"github.com/rinchsan/gosimports"
 	"github.com/samber/lo"
 	"github.com/zeromicro/go-zero/tools/goctl/util/format"

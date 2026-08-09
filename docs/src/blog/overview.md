@@ -94,8 +94,8 @@ package user;
 option go_package = "./types/user";
 
 // Import pzero extensions
-import "jzero/api/http.proto";
-import "jzero/api/zrpc.proto";
+import "pzero/api/http.proto";
+import "pzero/api/zrpc.proto";
 
 import "google/api/annotations.proto";
 
@@ -143,12 +143,12 @@ message GetUserResponse {
 
 service UserService {
   // Add HTTP middleware for entire service
-  option (jzero.api.http_group) = {
+  option (pzero.api.http_group) = {
     middleware: "auth,log",
   };
 
   // Add RPC middleware for entire service
-  option (jzero.api.zrpc_group) = {
+  option (pzero.api.zrpc_group) = {
     middleware: "trace",
   };
 
