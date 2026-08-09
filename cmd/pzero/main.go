@@ -45,7 +45,7 @@ var (
 )
 
 var (
-	version = "v1.4.0"
+	version = "v1.9.4"
 	commit  string
 	date    string
 )
