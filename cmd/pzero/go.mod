@@ -2,8 +2,6 @@ module github.com/polpo-space/pzero/cmd/pzero
 
 go 1.25.0
 
-replace github.com/polpo-space/pzero => ../..
-
 require (
 	github.com/a8m/envsubst v1.4.3
 	github.com/dave/dst v0.27.3
@@ -16,7 +14,7 @@ require (
 	github.com/moby/patternmatcher v0.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
-	github.com/polpo-space/pzero v1.4.0
+	github.com/polpo-space/pzero v1.9.6
 	github.com/rinchsan/gosimports v0.3.8
 	github.com/samber/lo v1.53.0
 	github.com/spf13/cast v1.10.0
