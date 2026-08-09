@@ -408,41 +408,32 @@ func buildProtocIncludeArgs(protoDirs []string) string {
 
 func relToProtoDir(file string, protoDirs []string) (protoRoot, rel string, err error) {
 	file = filepath.Clean(file)
-	for _, dir := range protoDirs {
-		dir = filepath.Clean(dir)
-		rel, err = filepath.Rel(dir, file)
-		if err != nil {
+	var best string
+	for _, root := range buildProtoImportPaths(protoDirs) {
+		candidate, relErr := filepath.Rel(root, file)
+		if relErr != nil {
 			continue
 		}
-		if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
+		if candidate == ".." || strings.HasPrefix(candidate, ".."+string(os.PathSeparator)) {
 			continue
 		}
-		return dir, rel, nil
+
+		candidate = filepath.ToSlash(candidate)
+		if best == "" || len(candidate) > len(best) {
+			protoRoot = root
+			best = candidate
+		}
 	}
-	return "", "", fmt.Errorf("proto file %s is not under configured proto-dir %v", file, protoDirs)
+	if best != "" {
+		return protoRoot, best, nil
+	}
+	return "", "", fmt.Errorf("proto file %s is not under configured proto-dir or include paths %v", file, protoDirs)
 }
 
 // protoImportName 返回用于 protoc M 选项 / import 的路径：在所有 -I 根中取最长 rel（通常对应 buf module 根）。
 func protoImportName(file string, protoDirs []string) (string, error) {
-	file = filepath.Clean(file)
-	var best string
-	for _, root := range buildProtoImportPaths(protoDirs) {
-		rel, err := filepath.Rel(root, file)
-		if err != nil {
-			continue
-		}
-		if rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
-			continue
-		}
-		rel = filepath.ToSlash(rel)
-		if best == "" || len(rel) > len(best) {
-			best = rel
-		}
-	}
-	if best == "" {
-		return "", fmt.Errorf("proto file %s is not under any import path for proto-dir %v", file, protoDirs)
-	}
-	return best, nil
+	_, name, err := relToProtoDir(file, protoDirs)
+	return name, err
 }
 
 func resolveGoPackageImport(module, goPackage string) string {
