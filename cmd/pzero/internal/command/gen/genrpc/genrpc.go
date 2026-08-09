@@ -220,6 +220,11 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 				config.C.Style)
 
 			for _, exp := range excludeThirdPartyProtoFiles {
+				if filepath.Clean(exp) == filepath.Clean(v) {
+					if _, alias := parseGoPackageOption(protoSpecMap[v].GoPackage); alias != "" {
+						continue
+					}
+				}
 				_, expRel, err := relToProtoDir(exp, protoDirs)
 				if err != nil {
 					return nil, err
@@ -258,13 +263,15 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			}
 			if fileExternal {
 				pbImport := resolveGoPackageImport(jr.Module, protoSpecMap[v].GoPackage)
+				pbPackage := goPackageName(protoSpecMap[v].GoPackage, protoSpecMap[v].PbPackage)
+				generatedPBQualifier := protoSpecMap[v].PbPackage
 				for _, file := range allServerFiles {
-					if err := rewriteGeneratedPBImport(file.Path, pbImport); err != nil {
+					if err := rewriteGeneratedPBImport(file.Path, pbImport, pbPackage, generatedPBQualifier); err != nil {
 						return nil, err
 					}
 				}
 				for _, file := range allLogicFiles {
-					if err := rewriteGeneratedPBImport(file.Path, pbImport); err != nil {
+					if err := rewriteGeneratedPBImport(file.Path, pbImport, pbPackage, generatedPBQualifier); err != nil {
 						return nil, err
 					}
 				}
@@ -330,10 +337,15 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 
 		for _, s := range protoSpecMap[v].Service {
 			serverImports = append(serverImports, fmt.Sprintf(`%ssvr "%s/internal/server/%s"`, strings.ToLower(s.Name), jr.Module, strings.ToLower(s.Name)))
-			pbPkgName := filepath.Base(strings.TrimPrefix(protoSpecMap[v].GoPackage, "./"))
+			pbPkgName := goPackageName(protoSpecMap[v].GoPackage, protoSpecMap[v].PbPackage)
 			registerServers = append(registerServers, fmt.Sprintf("%s.Register%sServer(grpcServer, %ssvr.New%s(ctx))", pbPkgName, stringx.FirstUpper(s.Name), strings.ToLower(s.Name), stringx.FirstUpper(stringx.ToCamel(s.Name))))
 		}
-		pbImports = append(pbImports, fmt.Sprintf(`"%s"`, resolveGoPackageImport(jr.Module, protoSpecMap[v].GoPackage)))
+		pbImport := resolveGoPackageImport(jr.Module, protoSpecMap[v].GoPackage)
+		if _, alias := parseGoPackageOption(protoSpecMap[v].GoPackage); alias != "" {
+			pbImports = append(pbImports, fmt.Sprintf(`%s "%s"`, alias, pbImport))
+		} else {
+			pbImports = append(pbImports, fmt.Sprintf(`"%s"`, pbImport))
+		}
 	}
 
 	// 同 go_package 多 proto/service 时去重 import
@@ -450,7 +462,7 @@ func protoImportName(file string, protoDirs []string) (string, error) {
 }
 
 func resolveGoPackageImport(module, goPackage string) string {
-	goPackage = strings.TrimSpace(goPackage)
+	goPackage, _ = parseGoPackageOption(goPackage)
 	if goPackage == "" {
 		return filepath.ToSlash(filepath.Join(module, "internal", "types"))
 	}
@@ -463,9 +475,29 @@ func resolveGoPackageImport(module, goPackage string) string {
 	return filepath.ToSlash(filepath.Join(module, "internal", strings.TrimPrefix(goPackage, "./")))
 }
 
+func parseGoPackageOption(goPackage string) (importPath, packageName string) {
+	parts := strings.SplitN(strings.TrimSpace(goPackage), ";", 2)
+	importPath = strings.TrimSpace(parts[0])
+	if len(parts) == 2 {
+		packageName = strings.TrimSpace(parts[1])
+	}
+	return importPath, packageName
+}
+
+func goPackageName(goPackage, fallback string) string {
+	importPath, packageName := parseGoPackageOption(goPackage)
+	if packageName != "" {
+		return packageName
+	}
+	if importPath != "" {
+		return filepath.Base(strings.TrimPrefix(importPath, "./"))
+	}
+	return fallback
+}
+
 // isExternalGoPackage：绝对 go_package（非 ./ 相对路径）表示 PB 由外部管线生成，pzero 只出 stub。
 func isExternalGoPackage(goPackage string) bool {
-	goPackage = strings.TrimSpace(goPackage)
+	goPackage, _ = parseGoPackageOption(goPackage)
 	return goPackage != "" && !strings.HasPrefix(goPackage, ".")
 }
 

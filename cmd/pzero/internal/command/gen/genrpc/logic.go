@@ -26,6 +26,7 @@ import (
 
 type LogicFile struct {
 	Package          string
+	GoPackage        string
 	Service          string
 	Rpc              string
 	Path             string
@@ -50,7 +51,8 @@ func (jr *PzeroRpc) GetAllLogicFiles(descFilepath string, protoSpec *rpcparser.P
 			f := LogicFile{
 				Path:             fp,
 				DescFilepath:     descFilepath,
-				Package:          protoSpec.PbPackage,
+				Package:          goPackageName(protoSpec.GoPackage, protoSpec.PbPackage),
+				GoPackage:        protoSpec.GoPackage,
 				Rpc:              rpc.Name,
 				Service:          service.Name,
 				ClientStream:     rpc.StreamsRequest,
@@ -79,6 +81,7 @@ func (jr *PzeroRpc) changeLogicTypes(file LogicFile) error {
 	if err != nil {
 		return err
 	}
+	pbQualifier := logicPBQualifier(fset, f, resolveGoPackageImport(jr.Module, file.GoPackage), file.Package, file.Service)
 
 	ast.Inspect(f, func(node ast.Node) bool {
 		if fn, ok := node.(*ast.FuncDecl); ok && fn.Recv != nil {
@@ -88,12 +91,12 @@ func (jr *PzeroRpc) changeLogicTypes(file LogicFile) error {
 					fn.Type.Params.List = []*ast.Field{
 						{
 							Names: []*ast.Ident{ast.NewIdent("in")},
-							Type:  &ast.StarExpr{X: ast.NewIdent(fmt.Sprintf("%s.%s", file.Package, util.Title(file.RequestTypeName)))},
+							Type:  &ast.StarExpr{X: ast.NewIdent(fmt.Sprintf("%s.%s", pbQualifier, util.Title(file.RequestTypeName)))},
 						},
 					}
 					fn.Type.Results.List = []*ast.Field{
 						{
-							Type: &ast.StarExpr{X: ast.NewIdent(fmt.Sprintf("%s.%s", file.Package, util.Title(file.ResponseTypeName)))},
+							Type: &ast.StarExpr{X: ast.NewIdent(fmt.Sprintf("%s.%s", pbQualifier, util.Title(file.ResponseTypeName)))},
 						},
 						{
 							Type: ast.NewIdent("error"),
@@ -106,11 +109,11 @@ func (jr *PzeroRpc) changeLogicTypes(file LogicFile) error {
 					fn.Type.Params.List = []*ast.Field{
 						{
 							Names: []*ast.Ident{ast.NewIdent("in")},
-							Type:  &ast.StarExpr{X: ast.NewIdent(fmt.Sprintf("%s.%s", file.Package, util.Title(file.RequestTypeName)))},
+							Type:  &ast.StarExpr{X: ast.NewIdent(fmt.Sprintf("%s.%s", pbQualifier, util.Title(file.RequestTypeName)))},
 						},
 						{
 							Names: []*ast.Ident{ast.NewIdent("stream")},
-							Type:  ast.NewIdent(fmt.Sprintf("%s.%s_%sServer", file.Package, util.Title(file.Service), util.Title(file.Rpc))),
+							Type:  ast.NewIdent(fmt.Sprintf("%s.%s_%sServer", pbQualifier, util.Title(file.Service), util.Title(file.Rpc))),
 						},
 					}
 					fn.Type.Results.List = []*ast.Field{
@@ -125,7 +128,7 @@ func (jr *PzeroRpc) changeLogicTypes(file LogicFile) error {
 					fn.Type.Params.List = []*ast.Field{
 						{
 							Names: []*ast.Ident{ast.NewIdent("stream")},
-							Type:  ast.NewIdent(fmt.Sprintf("%s.%s_%sServer", file.Package, util.Title(file.Service), util.Title(file.Rpc))),
+							Type:  ast.NewIdent(fmt.Sprintf("%s.%s_%sServer", pbQualifier, util.Title(file.Service), util.Title(file.Rpc))),
 						},
 					}
 
@@ -154,6 +157,23 @@ func (jr *PzeroRpc) changeLogicTypes(file LogicFile) error {
 	}
 
 	return nil
+}
+
+func logicPBQualifier(fset *token.FileSet, f *ast.File, importPath, packageName, serviceName string) string {
+	for _, imp := range f.Imports {
+		path, err := strconv.Unquote(imp.Path.Value)
+		if err != nil || path != importPath {
+			continue
+		}
+		if imp.Name != nil && imp.Name.Name != "_" && imp.Name.Name != "." {
+			return imp.Name.Name
+		}
+		return packageName
+	}
+
+	alias := strings.ToLower(serviceName) + "pb"
+	astutil.AddNamedImport(fset, f, alias, importPath)
+	return alias
 }
 
 func UpdateImportedModule(filepath, workDir, module string) error {
