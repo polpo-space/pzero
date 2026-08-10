@@ -81,6 +81,10 @@ func (jr *PzeroRpc) genServer(serverImports, pbImports ImportLines, registerServ
 	if err != nil {
 		return err
 	}
+	serverFile, err = goformat.Source(serverFile)
+	if err != nil {
+		return err
+	}
 	err = os.WriteFile(filepath.Join(config.C.Wd(), "internal", "server", "server.go"), serverFile, 0o644)
 	if err != nil {
 		return err
