@@ -88,6 +88,9 @@ func (ja *PzeroApi) patchLogic(file LogicFile, genCodeApiSpecMap map[string]*spe
 		return err
 	} else if existingPath != "" {
 		_ = os.Remove(file.Path)
+		if !file.RewriteHandler {
+			return nil
+		}
 		file.Path = existingPath
 		outputPath = existingPath
 	}

@@ -419,11 +419,15 @@ func (ja *PzeroApi) changeLogicTypes(f *ast.File, fset *token.FileSet, file Logi
 	ast.Inspect(f, func(node ast.Node) bool {
 		if fn, ok := node.(*ast.FuncDecl); ok && fn.Recv != nil {
 			if fn.Name.Name == methodFunc {
-				resultNames := func(index int) []*ast.Ident {
-					if fn.Type.Results == nil || index >= len(fn.Type.Results.List) {
+				var existingResults []*ast.Field
+				if fn.Type.Results != nil {
+					existingResults = fn.Type.Results.List
+				}
+				resultNames := func(index, resultArity int) []*ast.Ident {
+					if len(existingResults) != resultArity || index >= len(existingResults) {
 						return nil
 					}
-					return fn.Type.Results.List[index].Names
+					return existingResults[index].Names
 				}
 
 				if requestType != nil {
@@ -445,22 +449,22 @@ func (ja *PzeroApi) changeLogicTypes(f *ast.File, fset *token.FileSet, file Logi
 					case spec.PrimitiveType:
 						fn.Type.Results.List = []*ast.Field{
 							{
-								Names: resultNames(0),
+								Names: resultNames(0, 2),
 								Type:  ast.NewIdent(responseType.Name()),
 							},
 							{
-								Names: resultNames(1),
+								Names: resultNames(1, 2),
 								Type:  ast.NewIdent("error"),
 							},
 						}
 					case spec.DefineStruct:
 						fn.Type.Results.List = []*ast.Field{
 							{
-								Names: resultNames(0),
+								Names: resultNames(0, 2),
 								Type:  &ast.StarExpr{X: ast.NewIdent("types." + responseType.Name())},
 							},
 							{
-								Names: resultNames(1),
+								Names: resultNames(1, 2),
 								Type:  ast.NewIdent("error"),
 							},
 						}
@@ -468,7 +472,8 @@ func (ja *PzeroApi) changeLogicTypes(f *ast.File, fset *token.FileSet, file Logi
 				} else {
 					fn.Type.Results.List = []*ast.Field{
 						{
-							Type: ast.NewIdent("error"),
+							Names: resultNames(0, 1),
+							Type:  ast.NewIdent("error"),
 						},
 					}
 				}

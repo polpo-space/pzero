@@ -2,6 +2,8 @@ package genapi
 
 import (
 	"errors"
+	goparser "go/parser"
+	"go/token"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -376,5 +378,120 @@ func (l *OrderMarkShipped) OrderMarkShipped(req *types.OldRequest) (*types.OldRe
 	}
 	if _, err := os.Stat(filepath.Join(logicDir, "order_mark_shipped.go")); !errors.Is(err, fs.ErrNotExist) {
 		t.Fatalf("patchLogic() should not create a duplicate method-level logic file, stat err = %v", err)
+	}
+}
+
+func TestPatchLogicKeepsDifferentlyNamedLogicWhenRewriteHandlerFalse(t *testing.T) {
+	tmpDir := withTempWorkDir(t)
+
+	logicDir := filepath.Join(tmpDir, "internal", "logic", "order")
+	if err := os.MkdirAll(logicDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+
+	existingPath := filepath.Join(logicDir, "order_shipping.go")
+	existingContent := []byte(`package order
+
+type OrderMarkShipped struct{}
+
+func (l *OrderMarkShipped) OrderMarkShipped() error {return nil}
+`)
+	if err := os.WriteFile(existingPath, existingContent, 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	generatedPath := filepath.Join(logicDir, "order_mark_shipped_logic.go")
+	if err := os.WriteFile(generatedPath, []byte("package order\n\ntype OrderMarkShippedLogic struct{}\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	ja := &PzeroApi{}
+	if err := ja.patchLogic(LogicFile{
+		Path:           generatedPath,
+		Handler:        "OrderMarkShipped",
+		RewriteHandler: false,
+	}, nil); err != nil {
+		t.Fatalf("patchLogic() error = %v", err)
+	}
+
+	data, err := os.ReadFile(existingPath)
+	if err != nil {
+		t.Fatalf("ReadFile() error = %v", err)
+	}
+	if string(data) != string(existingContent) {
+		t.Fatalf("patchLogic() should keep differently named custom logic byte-for-byte unchanged, got:\n%s", data)
+	}
+	if _, err := os.Stat(generatedPath); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("patchLogic() should remove generated logic, stat err = %v", err)
+	}
+}
+
+func TestPatchLogicDropsResultNamesWhenResultArityChanges(t *testing.T) {
+	tmpDir := withTempWorkDir(t)
+	setTypesDir(t, defaultTypesDir)
+
+	logicDir := filepath.Join(tmpDir, "internal", "logic", "user")
+	if err := os.MkdirAll(logicDir, 0o755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+
+	existingPath := filepath.Join(logicDir, "get.go")
+	existingContent := []byte(`package user
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/zeromicro/go-zero/core/logx"
+	"example.com/app/internal/svc"
+)
+
+type Get struct {
+	logx.Logger
+	ctx context.Context
+	svcCtx *svc.ServiceContext
+	r *http.Request
+}
+
+func NewGet(ctx context.Context, svcCtx *svc.ServiceContext, r *http.Request) *Get {
+	return &Get{Logger: logx.WithContext(ctx), ctx: ctx, svcCtx: svcCtx, r: r}
+}
+
+func (l *Get) Get() (err error) {
+	return nil
+}
+`)
+	if err := os.WriteFile(existingPath, existingContent, 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	generatedPath := filepath.Join(logicDir, "get_logic.go")
+	if err := os.WriteFile(generatedPath, []byte("package user\n\ntype GetLogic struct{}\n"), 0o644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	apiFile := filepath.Join("desc", "api", "user.api")
+	ja := &PzeroApi{Module: "example.com/app"}
+	if err := ja.patchLogic(LogicFile{
+		Package:        "user",
+		Path:           generatedPath,
+		DescFilepath:   apiFile,
+		Handler:        "Get",
+		RewriteHandler: true,
+		ResponseType:   spec.DefineStruct{RawName: "GetResponse"},
+	}, map[string]*spec.ApiSpec{apiFile: {}}); err != nil {
+		t.Fatalf("patchLogic() error = %v", err)
+	}
+
+	data, err := os.ReadFile(existingPath)
+	if err != nil {
+		t.Fatalf("ReadFile() error = %v", err)
+	}
+	got := string(data)
+	if !strings.Contains(got, "Get() (*types.GetResponse, error)") {
+		t.Fatalf("patchLogic() should use unnamed results when arity changes:\n%s", got)
+	}
+	if _, err := goparser.ParseFile(token.NewFileSet(), existingPath, data, 0); err != nil {
+		t.Fatalf("generated logic is not valid Go: %v\n%s", err, got)
 	}
 }
