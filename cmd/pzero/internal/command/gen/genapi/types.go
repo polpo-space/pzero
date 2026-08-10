@@ -358,7 +358,7 @@ func (ja *PzeroApi) cleanupLegacyTypesDir() error {
 			return nil
 		}
 
-		generated, err := isGeneratedTypesFile(path)
+		generated, err := isGeneratedGoFile(path)
 		if err != nil {
 			return err
 		}
@@ -393,7 +393,7 @@ func (ja *PzeroApi) cleanupLegacyTypesDir() error {
 	return nil
 }
 
-func isGeneratedTypesFile(path string) (bool, error) {
+func isGeneratedGoFile(path string) (bool, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -419,6 +419,13 @@ func (ja *PzeroApi) changeLogicTypes(f *ast.File, fset *token.FileSet, file Logi
 	ast.Inspect(f, func(node ast.Node) bool {
 		if fn, ok := node.(*ast.FuncDecl); ok && fn.Recv != nil {
 			if fn.Name.Name == methodFunc {
+				resultNames := func(index int) []*ast.Ident {
+					if fn.Type.Results == nil || index >= len(fn.Type.Results.List) {
+						return nil
+					}
+					return fn.Type.Results.List[index].Names
+				}
+
 				if requestType != nil {
 					switch requestType.(type) {
 					case spec.DefineStruct:
@@ -438,22 +445,22 @@ func (ja *PzeroApi) changeLogicTypes(f *ast.File, fset *token.FileSet, file Logi
 					case spec.PrimitiveType:
 						fn.Type.Results.List = []*ast.Field{
 							{
-								Names: []*ast.Ident{ast.NewIdent("resp")},
+								Names: resultNames(0),
 								Type:  ast.NewIdent(responseType.Name()),
 							},
 							{
-								Names: []*ast.Ident{ast.NewIdent("err")},
+								Names: resultNames(1),
 								Type:  ast.NewIdent("error"),
 							},
 						}
 					case spec.DefineStruct:
 						fn.Type.Results.List = []*ast.Field{
 							{
-								Names: []*ast.Ident{ast.NewIdent("resp")},
+								Names: resultNames(0),
 								Type:  &ast.StarExpr{X: ast.NewIdent("types." + responseType.Name())},
 							},
 							{
-								Names: []*ast.Ident{ast.NewIdent("err")},
+								Names: resultNames(1),
 								Type:  ast.NewIdent("error"),
 							},
 						}
