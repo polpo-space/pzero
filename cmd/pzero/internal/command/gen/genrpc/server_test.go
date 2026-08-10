@@ -5,7 +5,63 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 )
+
+func TestGenServerFormatsRegisterLinesForEachScope(t *testing.T) {
+	origConfig := config.C
+	origTemplateHome := embeded.Home
+	origWd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	templateHome, err := filepath.Abs(filepath.Join("..", "..", "..", "..", ".template"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		config.C = origConfig
+		embeded.Home = origTemplateHome
+		_ = os.Chdir(origWd)
+	})
+
+	tmpDir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(tmpDir, "internal", "server"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatal(err)
+	}
+	config.C = config.Config{}
+	embeded.Home = templateHome
+
+	jr := PzeroRpc{Module: "example.com/service"}
+	registerLine := "device.RegisterDeviceServiceServer(grpcServer, devicesvr.NewDeviceService(ctx))"
+	if err := jr.genServer(
+		ImportLines{`devicesvr "example.com/service/internal/server/device"`},
+		ImportLines{`device "example.com/contracts/device"`},
+		RegisterLines{registerLine},
+	); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := os.ReadFile(filepath.Join(tmpDir, "internal", "server", "server.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	contents := string(got)
+	if !strings.Contains(contents, "\t\t"+registerLine+"\n") {
+		t.Fatalf("RegisterZrpc callback registration is not formatted with two tabs:\n%s", contents)
+	}
+	if !strings.Contains(contents, "\t"+registerLine+"\n}") {
+		t.Fatalf("RegisterZrpcServer registration is not formatted with one tab:\n%s", contents)
+	}
+	if strings.Contains(contents, "func RegisterZrpcServer(grpcServer *grpc.Server, ctx *svc.ServiceContext) {\n\t\t"+registerLine) {
+		t.Fatalf("RegisterZrpcServer retained generator indentation noise:\n%s", contents)
+	}
+}
 
 func TestRewriteGeneratedPBImport(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "device_service_server.go")
