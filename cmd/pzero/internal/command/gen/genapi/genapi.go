@@ -246,7 +246,14 @@ func (ja *PzeroApi) cleanHandlersDir(genCodeApiFiles []string, genCodeApiSpecMap
 					if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 						continue
 					}
-					_ = os.Remove(filepath.Join(handlerDir, entry.Name()))
+					path := filepath.Join(handlerDir, entry.Name())
+					generated, err := isGeneratedGoFile(path)
+					if err != nil {
+						return err
+					}
+					if generated {
+						_ = os.Remove(path)
+					}
 				}
 				return nil
 			})
