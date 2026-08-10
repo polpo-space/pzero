@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -14,7 +13,7 @@ import (
 )
 
 var (
-	migrationFilePattern = regexp.MustCompile(`^([0-9]+)_(.*)\.(up|down)\.sql$`)
+	migrationFilePattern = regexp.MustCompile(`^([0-9]+)_[a-z0-9_]+\.(up|down)\.sql$`)
 	migrationNamePattern = regexp.MustCompile(`[\s_-]+`)
 	validMigrationName   = regexp.MustCompile(`^[a-z0-9_]+$`)
 )
@@ -57,7 +56,7 @@ func createMigrationFiles(dir, rawName string, now time.Time) ([]string, error) 
 		return nil, err
 	}
 
-	version := strconv.FormatInt(now.UTC().Unix(), 10)
+	version := now.UTC().Format("20060102150405")
 	versions := make(map[string]struct{})
 	for _, entry := range entries {
 		if entry.IsDir() || filepath.Ext(entry.Name()) != ".sql" {
@@ -65,7 +64,7 @@ func createMigrationFiles(dir, rawName string, now time.Time) ([]string, error) 
 		}
 		matches := migrationFilePattern.FindStringSubmatch(entry.Name())
 		if len(matches) == 0 {
-			continue
+			return nil, fmt.Errorf("migration file has unrecognized format: %s", entry.Name())
 		}
 		versions[matches[1]] = struct{}{}
 	}
