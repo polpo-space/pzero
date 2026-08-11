@@ -5,6 +5,8 @@ import { enSidebarConfig, zhSidebarConfig } from "./sidebar/index.js";
 
 // @ts-ignore
 export default hopeTheme({
+  hostname: "https://polpo-space.github.io",
+
   author: {
     name: "jaronnie",
     url: "https://github.com/jaronnie",
