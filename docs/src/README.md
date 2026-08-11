@@ -20,8 +20,6 @@ Key features include:
 * Supports generating code based on **git-changed files** or specific descriptor files, or ignoring specific descriptor files, improving code generation efficiency for large projects
 * Built-in common development templates with enhanced template features, supports **custom templates** to build proprietary enterprise code templates, significantly reducing development costs
 
-For more details, please visit: [https://docs.jzero.io](https://docs.jzero.io)
-
 ## Design Philosophy
 
 * **Developer Experience**: Provides a simple, easy-to-use, one-stop production-ready solution that enhances the development experience

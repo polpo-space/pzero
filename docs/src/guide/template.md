@@ -167,9 +167,9 @@ pzero template build --name myapi
 pzero new mysimpleapi --local myapi
 
 # But you find this template only allows local use, for universal effect
-# You can create a templates repository in remote repository like github (assume https://github.com/jzero-io/templates)
+# You can create a templates repository on a remote host such as GitHub
 # Then put content from $HOME/.pzero/templates/local/myapi into repository, and upload to myapi branch
-pzero new project_name --remote https://github.com/jzero-io/templates --branch myapi
+pzero new project_name --remote https://github.com/your-org/templates --branch myapi
 ```
 
 Template structure:
