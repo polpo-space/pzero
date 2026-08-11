@@ -37,8 +37,6 @@ If you have these concerns, today's article is a must-read!
 
 GitHub: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
 
-Docs: [https://docs.jzero.io](https://docs.jzero.io)
-
 ## Basic Framework Code Generation
 
 Automatically generate basic framework code based on describable files:

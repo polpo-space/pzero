@@ -33,8 +33,6 @@ pzero provides a rich collection of **official templates** and **third-party tem
 **🌍 Third-party Templates**:
 - Contributions welcome! Share your own template to help more developers start projects quickly!
 
-Visit **[pzero Template Market](https://templates.jzero.io/)** for more template information and usage guides.
-
 ![](https://oss.jaronnie.com/image-20260409190255415.png)
 
 ---
@@ -722,8 +720,6 @@ This project demonstrates best practices for the pzero CLI template and serves a
 ## Related Resources
 
 - **pzero GitHub**: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
-- **pzero Documentation**: [https://docs.jzero.io](https://docs.jzero.io)
-- **CLI Template**: [https://templates.jzero.io/external/cli/](https://templates.jzero.io/external/cli/)
 - **Cobra Documentation**: [https://github.com/spf13/cobra](https://github.com/spf13/cobra)
 - **Viper Documentation**: [https://github.com/spf13/viper](https://github.com/spf13/viper)
 

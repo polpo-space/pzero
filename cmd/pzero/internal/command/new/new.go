@@ -343,7 +343,7 @@ func GetCommand() *cobra.Command {
 	newCmd.Flags().StringP("module", "m", "", "set go module")
 	newCmd.Flags().StringP("output", "o", "", "set output dir with project name")
 	newCmd.Flags().StringP("frame", "", "", "set frame such as api/rpc")
-	newCmd.Flags().StringP("remote", "r", "https://github.com/jzero-io/templates", "remote templates repo")
+	newCmd.Flags().StringP("remote", "r", "", "remote templates repo")
 	newCmd.Flags().IntP("remote-timeout", "", 30, "remote templates repo timeout")
 	newCmd.Flags().StringP("remote-auth-username", "", "", "remote templates repo auth username")
 	newCmd.Flags().StringP("remote-auth-password", "", "", "remote templates repo auth password")
@@ -369,6 +369,10 @@ func resolveTemplateBase(home string, stage *newConsoleStage) (string, error) {
 	case config.C.New.Local != "":
 		embeded.Home = filepath.Join(home, ".pzero", "templates", "local", config.C.New.Local)
 		return filepath.Join("app"), nil
+	case config.C.New.Remote == "" && config.C.New.Branch != "":
+		return "", errors.New("remote template branch requires --remote")
+	case config.C.New.Remote != "" && config.C.New.Branch == "":
+		return "", errors.New("remote template repository requires --branch")
 	// 使用远程仓库模板
 	case config.C.New.Remote != "" && config.C.New.Branch != "":
 		fp := filepath.Join(home, ".pzero", "templates", "remote", config.C.New.Branch)

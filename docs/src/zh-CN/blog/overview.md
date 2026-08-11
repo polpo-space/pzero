@@ -37,8 +37,6 @@ icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 
 github 地址: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
 
-文档地址: [https://docs.jzero.io](https://docs.jzero.io)
-
 ## 基础框架代码生成
 
 基于可描述文件自动生成基础框架代码：

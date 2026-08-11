@@ -21,32 +21,16 @@ pzero 提供了以下几种类型模板, 满足各种场景:
 
 具体使用请参阅: [模板指南](../guide/template.md)
 
-## 模板市场
+## 远程模板
 
-如果内置的 `api`、`rpc`、`gateway` 等框架模板无法满足需求，可以访问 [pzero 模板市场](https://templates.jzero.io)。
-
-模板市场是发现内置模板、官方外置模板以及第三方模板的统一入口。你可以在这里快速找到模板对应的源码仓库、使用说明以及推荐的初始化命令。
-
-对于官方外置模板，`pzero new` 通常只需要传入 `--branch`，因为默认远程仓库已经指向 `https://github.com/jzero-io/templates`。
-
-快捷跳转：
-
-* [模板市场首页](https://templates.jzero.io)
-* [CLI 模板](https://templates.jzero.io/external/cli/)
-* [Vercel API 模板分支](https://github.com/jzero-io/templates/tree/api-vercel)
+如果内置模板无法满足需求，可以同时传入 `--remote` 和 `--branch`，从远程模板仓库初始化项目。pzero 不再默认选择外部模板仓库。
 
 ```shell
-# 官方 CLI 模板
-pzero new mycli --branch cli
-
-# 官方 Vercel API 模板
-pzero new myvercel --branch api-vercel
-
-# 第三方或企业私有模板
+# 公共或企业私有模板仓库
 pzero new your_project --remote <template-repo> --branch <template-branch>
 ```
 
-更多模板说明和示例请参阅 [pzero 模板市场](https://templates.jzero.io) 与 [模板指南](../guide/template.md)。
+更多说明请参阅 [模板指南](../guide/template.md)。
 
 ## 初始化 api 项目
 

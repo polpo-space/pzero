@@ -151,7 +151,5 @@ myproject/
 
 ## Resources
 
-- [Upstream documentation](https://docs.jzero.io)
 - [GitHub repository](https://github.com/polpo-space/pzero)
-- [Examples](https://github.com/jzero-io/examples)
 - [Base framework](https://github.com/zeromicro/go-zero)
