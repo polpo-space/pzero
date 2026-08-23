@@ -24,13 +24,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *int", "exceed range")
 				return
 			}
-			*((**int)(ptr)) = lo.ToPtr(int(val))
+			*(**int)(ptr) = lo.ToPtr(int(val))
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**int)(ptr)) = lo.ToPtr(iter.ReadInt())
+				*(**int)(ptr) = lo.ToPtr(iter.ReadInt())
 			}
 		}
 	}})
@@ -42,13 +42,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *uint", "exceed range")
 				return
 			}
-			*((**uint)(ptr)) = lo.ToPtr(uint(val))
+			*(**uint)(ptr) = lo.ToPtr(uint(val))
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**uint)(ptr)) = lo.ToPtr(iter.ReadUint())
+				*(**uint)(ptr) = lo.ToPtr(iter.ReadUint())
 			}
 		}
 	}})
@@ -59,13 +59,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *int8", "exceed range")
 				return
 			}
-			*((**int8)(ptr)) = lo.ToPtr(int8(val))
+			*(**int8)(ptr) = lo.ToPtr(int8(val))
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**int8)(ptr)) = lo.ToPtr(iter.ReadInt8())
+				*(**int8)(ptr) = lo.ToPtr(iter.ReadInt8())
 			}
 		}
 	}})
@@ -76,13 +76,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *uint8", "exceed range")
 				return
 			}
-			*((*uint8)(ptr)) = uint8(val)
+			*(*uint8)(ptr) = uint8(val)
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**uint8)(ptr)) = lo.ToPtr(iter.ReadUint8())
+				*(**uint8)(ptr) = lo.ToPtr(iter.ReadUint8())
 			}
 		}
 	}})
@@ -93,13 +93,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *int16", "exceed range")
 				return
 			}
-			*((**uint16)(ptr)) = lo.ToPtr(uint16(val))
+			*(**uint16)(ptr) = lo.ToPtr(uint16(val))
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**int16)(ptr)) = lo.ToPtr(iter.ReadInt16())
+				*(**int16)(ptr) = lo.ToPtr(iter.ReadInt16())
 			}
 		}
 	}})
@@ -110,13 +110,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *uint16", "exceed range")
 				return
 			}
-			*((**uint16)(ptr)) = lo.ToPtr(uint16(val))
+			*(**uint16)(ptr) = lo.ToPtr(uint16(val))
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**uint16)(ptr)) = lo.ToPtr(iter.ReadUint16())
+				*(**uint16)(ptr) = lo.ToPtr(iter.ReadUint16())
 			}
 		}
 	}})
@@ -127,13 +127,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *int32", "exceed range")
 				return
 			}
-			*((**int32)(ptr)) = lo.ToPtr(int32(val))
+			*(**int32)(ptr) = lo.ToPtr(int32(val))
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**int32)(ptr)) = lo.ToPtr(iter.ReadInt32())
+				*(**int32)(ptr) = lo.ToPtr(iter.ReadInt32())
 			}
 		}
 	}})
@@ -144,13 +144,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *uint32", "exceed range")
 				return
 			}
-			*((**uint32)(ptr)) = lo.ToPtr(uint32(val))
+			*(**uint32)(ptr) = lo.ToPtr(uint32(val))
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**uint32)(ptr)) = lo.ToPtr(iter.ReadUint32())
+				*(**uint32)(ptr) = lo.ToPtr(iter.ReadUint32())
 			}
 		}
 	}})
@@ -161,13 +161,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *int64", "exceed range")
 				return
 			}
-			*((**int64)(ptr)) = lo.ToPtr(int64(val))
+			*(**int64)(ptr) = lo.ToPtr(int64(val))
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**int64)(ptr)) = lo.ToPtr(iter.ReadInt64())
+				*(**int64)(ptr) = lo.ToPtr(iter.ReadInt64())
 			}
 		}
 	}})
@@ -178,13 +178,13 @@ func RegisterPointerFuzzyDecoders() {
 				iter.ReportError("fuzzy decode *uint64", "exceed range")
 				return
 			}
-			*((**uint64)(ptr)) = lo.ToPtr(uint64(val))
+			*(**uint64)(ptr) = lo.ToPtr(uint64(val))
 		} else {
 			token := iter.WhatIsNext()
 			if token == jsoniter.NilValue {
-				*((*any)(ptr)) = nil
+				*(*any)(ptr) = nil
 			} else {
-				*((**uint64)(ptr)) = lo.ToPtr(iter.ReadUint64())
+				*(**uint64)(ptr) = lo.ToPtr(iter.ReadUint64())
 			}
 		}
 	}})
@@ -198,28 +198,28 @@ func (f fuzzyPointerBoolDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Itera
 	valueType := iter.WhatIsNext()
 	switch valueType {
 	case jsoniter.BoolValue:
-		*((**bool)(ptr)) = lo.ToPtr(iter.ReadBool())
+		*(**bool)(ptr) = lo.ToPtr(iter.ReadBool())
 	case jsoniter.NumberValue:
 		var number json.Number
 		iter.ReadVal(&number)
 		if number == "1" {
-			*((**bool)(ptr)) = lo.ToPtr(true)
+			*(**bool)(ptr) = lo.ToPtr(true)
 		} else {
-			*((**bool)(ptr)) = lo.ToPtr(false)
+			*(**bool)(ptr) = lo.ToPtr(false)
 		}
 	case jsoniter.StringValue:
 		value := iter.ReadString()
 		switch value {
 		case "1", "true":
-			*((**bool)(ptr)) = lo.ToPtr(true)
+			*(**bool)(ptr) = lo.ToPtr(true)
 		case "0", "false":
-			*((**bool)(ptr)) = lo.ToPtr(false)
+			*(**bool)(ptr) = lo.ToPtr(false)
 		default:
 			iter.ReportError("fuzzyPointerBoolDecoder", "not bool")
 		}
 	case jsoniter.NilValue:
 		iter.Skip()
-		*((**bool)(ptr)) = nil
+		*(**bool)(ptr) = nil
 	default:
 		iter.ReportError("fuzzyPointerBoolDecoder", "not number or string")
 	}
@@ -229,28 +229,28 @@ func (f fuzzyBoolDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
 	valueType := iter.WhatIsNext()
 	switch valueType {
 	case jsoniter.BoolValue:
-		*((*bool)(ptr)) = iter.ReadBool()
+		*(*bool)(ptr) = iter.ReadBool()
 	case jsoniter.NumberValue:
 		var number json.Number
 		iter.ReadVal(&number)
 		if number == "1" {
-			*((*bool)(ptr)) = true
+			*(*bool)(ptr) = true
 		} else {
-			*((*bool)(ptr)) = false
+			*(*bool)(ptr) = false
 		}
 	case jsoniter.StringValue:
 		value := iter.ReadString()
 		switch value {
 		case "1", "true":
-			*((*bool)(ptr)) = true
+			*(*bool)(ptr) = true
 		case "0", "false":
-			*((*bool)(ptr)) = false
+			*(*bool)(ptr) = false
 		default:
 			iter.ReportError("fuzzyBoolDecoder", "not bool")
 		}
 	case jsoniter.NilValue:
 		iter.Skip()
-		*((*bool)(ptr)) = false
+		*(*bool)(ptr) = false
 	default:
 		iter.ReportError("fuzzyBoolDecoder", "not number or string")
 	}
@@ -264,16 +264,16 @@ func (decoder *fuzzyPointerStringDecoder) Decode(ptr unsafe.Pointer, iter *jsoni
 	case jsoniter.NumberValue:
 		var number json.Number
 		iter.ReadVal(&number)
-		*((**string)(ptr)) = lo.ToPtr(string(number))
+		*(**string)(ptr) = lo.ToPtr(string(number))
 	case jsoniter.StringValue:
 		if EnableXssProtection {
-			*((**string)(ptr)) = lo.ToPtr(BlueMondayPolicy.Sanitize(iter.ReadString()))
+			*(**string)(ptr) = lo.ToPtr(BlueMondayPolicy.Sanitize(iter.ReadString()))
 		} else {
-			*((**string)(ptr)) = lo.ToPtr(iter.ReadString())
+			*(**string)(ptr) = lo.ToPtr(iter.ReadString())
 		}
 	case jsoniter.NilValue:
 		iter.Skip()
-		*((**string)(ptr)) = nil
+		*(**string)(ptr) = nil
 	default:
 		iter.ReportError("fuzzyStringDecoder", "not number or string")
 	}
@@ -325,25 +325,25 @@ func (decoder *fuzzyPointerFloat32Decoder) Decode(ptr unsafe.Pointer, iter *json
 	var str string
 	switch valueType {
 	case jsoniter.NumberValue:
-		*((**float32)(ptr)) = lo.ToPtr(iter.ReadFloat32())
+		*(**float32)(ptr) = lo.ToPtr(iter.ReadFloat32())
 	case jsoniter.StringValue:
 		str = iter.ReadString()
 		newIter := iter.Pool().BorrowIterator([]byte(str))
 		defer iter.Pool().ReturnIterator(newIter)
-		*((**float32)(ptr)) = lo.ToPtr(newIter.ReadFloat32())
+		*(**float32)(ptr) = lo.ToPtr(newIter.ReadFloat32())
 		if newIter.Error != nil && newIter.Error != io.EOF {
 			iter.Error = newIter.Error
 		}
 	case jsoniter.BoolValue:
 		// support bool to float32
 		if iter.ReadBool() {
-			*((**float32)(ptr)) = lo.ToPtr(float32(1))
+			*(**float32)(ptr) = lo.ToPtr(float32(1))
 		} else {
-			*((**float32)(ptr)) = lo.ToPtr(float32(0))
+			*(**float32)(ptr) = lo.ToPtr(float32(0))
 		}
 	case jsoniter.NilValue:
 		iter.Skip()
-		*((**float32)(ptr)) = nil
+		*(**float32)(ptr) = nil
 	default:
 		iter.ReportError("fuzzyPointerFloat32Decoder", "not number or string")
 	}
@@ -356,25 +356,25 @@ func (decoder *fuzzyPointerFloat64Decoder) Decode(ptr unsafe.Pointer, iter *json
 	var str string
 	switch valueType {
 	case jsoniter.NumberValue:
-		*((**float64)(ptr)) = lo.ToPtr(iter.ReadFloat64())
+		*(**float64)(ptr) = lo.ToPtr(iter.ReadFloat64())
 	case jsoniter.StringValue:
 		str = iter.ReadString()
 		newIter := iter.Pool().BorrowIterator([]byte(str))
 		defer iter.Pool().ReturnIterator(newIter)
-		*((**float64)(ptr)) = lo.ToPtr(newIter.ReadFloat64())
+		*(**float64)(ptr) = lo.ToPtr(newIter.ReadFloat64())
 		if newIter.Error != nil && newIter.Error != io.EOF {
 			iter.Error = newIter.Error
 		}
 	case jsoniter.BoolValue:
 		// support bool to float64
 		if iter.ReadBool() {
-			*((**float64)(ptr)) = lo.ToPtr(float64(1))
+			*(**float64)(ptr) = lo.ToPtr(float64(1))
 		} else {
-			*((**float64)(ptr)) = lo.ToPtr(float64(0))
+			*(**float64)(ptr) = lo.ToPtr(float64(0))
 		}
 	case jsoniter.NilValue:
 		iter.Skip()
-		*((**float64)(ptr)) = nil
+		*(**float64)(ptr) = nil
 	default:
 		iter.ReportError("fuzzyFloat64Decoder", "not number or string")
 	}

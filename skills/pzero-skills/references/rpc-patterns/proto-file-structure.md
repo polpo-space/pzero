@@ -20,22 +20,25 @@ relative (`./types/...`) → generate local pb; absolute (`github.com/.../contra
 ```protobuf
 syntax = "proto3";
 
-package version;
+package user;
 
 import "google/api/annotations.proto";
 
-option go_package = "./types/version";
+option go_package = "./types/user";
 
-message VersionRequest {}
-
-message VersionResponse {
-  string version = 1;
+message GetUserRequest {
+  int64 id = 1;
 }
 
-service Version {
-  rpc Version(VersionRequest) returns(VersionResponse) {
+message GetUserResponse {
+  int64 id = 1;
+  string name = 2;
+}
+
+service User {
+  rpc GetUser(GetUserRequest) returns(GetUserResponse) {
     option (google.api.http) = {
-      get: "/version"
+      get: "/api/v1/users/{id}"
     };
   };
 }
@@ -50,14 +53,14 @@ style: go_zero
 gen:
   proto-dir:
     - ../../../contracts/proto/nfc      # absolute go_package → contracts/gen
-    - ../../../contracts/proto/version  # relative go_package → local internal/types
+    - ../../../contracts/proto/user     # relative go_package → local internal/types
 ```
 
 ```bash
 # repo root: generate shared pb
 make proto
 
-# service: generate server/logic stubs (and local version pb if needed)
+# service: generate server/logic stubs (and local user pb if needed)
 cd apps/service/nfc-svc
 pzero gen
 ```
@@ -70,5 +73,5 @@ Optional `gen.proto-include` adds extra `-I` paths; parent of each `proto-dir` i
 ```bash
 pzero gen --desc desc/proto/user.proto
 pzero gen
-pzero gen --proto-dir ../../../contracts/proto/nfc --proto-dir ../../../contracts/proto/version
+pzero gen --proto-dir ../../../contracts/proto/nfc --proto-dir ../../../contracts/proto/user
 ```

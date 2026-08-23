@@ -17,26 +17,26 @@ order: 1
 ```protobuf
 syntax = "proto3";
 
-package version;
+package user;
 
 import "google/api/annotations.proto";
 import "grpc-gateway/protoc-gen-openapiv2/options/annotations.proto";
 
-option go_package = "./types/version";
+option go_package = "./types/user";
 
-message VersionRequest {}
-
-message VersionResponse {
-  string version = 1;
-  string goVersion = 2;
-  string commit = 3;
-  string date = 4;
+message GetUserRequest {
+  int64 id = 1;
 }
 
-service Version {
-  rpc Version(VersionRequest) returns(VersionResponse) {
+message GetUserResponse {
+  int64 id = 1;
+  string name = 2;
+}
+
+service User {
+  rpc GetUser(GetUserRequest) returns(GetUserResponse) {
     option (google.api.http) = {
-      get: "/version"
+      get: "/api/v1/users/{id}"
     };
   };
 }
