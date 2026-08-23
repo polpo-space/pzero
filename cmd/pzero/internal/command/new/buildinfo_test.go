@@ -43,15 +43,35 @@ func TestRunGeneratesInternalBuildInfo(t *testing.T) {
 			assert.FileExists(t, filepath.Join(projectDir, "internal", "buildinfo", "buildinfo.go"))
 			assert.NoFileExists(t, filepath.Join(projectDir, "version", "version.go"))
 
-			for _, path := range []string{
+			paths := []string{
 				filepath.Join("cmd", "version.go"),
-				filepath.Join("internal", "logic", "version", "version.go"),
 				"README.md",
-			} {
+			}
+			if frame == "api" {
+				paths = append(paths, filepath.Join("internal", "logic", "version", "version.go"))
+			} else {
+				assert.NoFileExists(t, filepath.Join(projectDir, "desc", "proto", "version.proto"))
+				assert.NoFileExists(t, filepath.Join(projectDir, "internal", "logic", "version", "version.go"))
+			}
+
+			for _, path := range paths {
 				content, err := os.ReadFile(filepath.Join(projectDir, path))
 				require.NoError(t, err)
 				assert.Contains(t, string(content), module+"/internal/buildinfo")
 				assert.NotContains(t, string(content), module+"/version")
+			}
+
+			if frame == "rpc" {
+				versionCommand, err := os.ReadFile(filepath.Join(projectDir, "cmd", "version.go"))
+				require.NoError(t, err)
+				for _, expected := range []string{
+					"buildinfo.Version",
+					"runtime.Version()",
+					"buildinfo.Commit",
+					"buildinfo.Date",
+				} {
+					assert.Contains(t, string(versionCommand), expected)
+				}
 			}
 		})
 	}

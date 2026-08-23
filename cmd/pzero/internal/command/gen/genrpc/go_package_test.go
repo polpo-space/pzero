@@ -11,7 +11,7 @@ import (
 )
 
 func TestIsExternalGoPackage(t *testing.T) {
-	if isExternalGoPackage("./types/version") {
+	if isExternalGoPackage("./types/user") {
 		t.Fatal("relative go_package should be local")
 	}
 	if isExternalGoPackage("") {
@@ -97,8 +97,8 @@ service RegionService { rpc Get(RegionRequest) returns (RegionResponse); }
 func TestResolveGoPackageImport(t *testing.T) {
 	module := "github.com/example/svc"
 
-	got := resolveGoPackageImport(module, "./types/version")
-	want := "github.com/example/svc/internal/types/version"
+	got := resolveGoPackageImport(module, "./types/user")
+	want := "github.com/example/svc/internal/types/user"
 	if got != want {
 		t.Fatalf("local relative: got %s want %s", got, want)
 	}
