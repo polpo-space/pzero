@@ -12,7 +12,7 @@ require (
 	github.com/hashicorp/go-version v1.9.0
 	github.com/iancoleman/orderedmap v0.3.0
 	github.com/jaronnie/genius v0.6.1
-	github.com/jhump/protoreflect v1.18.0
+	github.com/jhump/protoreflect v1.18.1
 	github.com/moby/patternmatcher v0.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2
@@ -30,7 +30,7 @@ require (
 	golang.org/x/sync v0.22.0
 	golang.org/x/tools v0.48.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
 )
 
