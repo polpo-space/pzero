@@ -6,7 +6,7 @@ replace github.com/polpo-space/pzero => ../..
 
 require (
 	github.com/a8m/envsubst v1.4.3
-	github.com/dave/dst v0.27.3
+	github.com/dave/dst v0.27.4
 	github.com/go-git/go-git/v5 v5.19.1
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/hashicorp/go-version v1.9.0
