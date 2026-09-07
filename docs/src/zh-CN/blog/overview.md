@@ -21,14 +21,14 @@ icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 
 🏗️ **通过模板生成基础框架代码**：基于描述文件自动生成框架代码（api → api 框架代码、proto → proto 框架代码、sql/远程数据库地址 → model 代码）
 
-🤖 **通过 Agent Skills 生成业务代码**：内置 pzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
+🤖 **通过 Agent Skills 生成业务代码**：结合项目自维护的 Agent Skills，让 AI 生成符合团队架构和工程规范的业务逻辑代码
 
 **核心价值与设计理念**：
 
-- ✅ **开发体验优先**：提供简单好用的一站式生产可用解决方案，一键初始化 api/rpc/gateway 项目，极简指令生成基础框架代码
-- ✅ **AI 赋能**：内置 pzero-skills，让 AI 生成符合最佳实践的业务逻辑代码
+- ✅ **开发体验优先**：提供简单好用的一站式生产可用解决方案，一键初始化 api/rpc 项目，极简指令生成基础框架代码
+- ✅ **AI 赋能**：项目自维护的 Agent Skills 让 AI 生成更贴合工程规范的业务逻辑代码
 - ✅ **模板驱动**：默认生成即最佳实践，支持自定义模板，可基于远程模板仓库打造企业专属底座
-- ✅ **插件化架构**：模块分层、插件设计，团队协作更顺畅
+- ✅ **清晰分层**：模块结构明确，团队协作边界更清楚
 - ✅ **内置开发组件**：包含缓存(cache)、数据库迁移(migrate)、数据库查询(condition)等常用工具
 - ✅ **生态兼容**：不修改 go-zero，保持生态兼容，解决已有痛点问题并扩展新功能
 - ✅ **接口灵活**：不依赖特定数据库/缓存/配置中心，可根据实际需求自由选择
@@ -36,8 +36,6 @@ icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 ---
 
 github 地址: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
-
-文档地址: [https://docs.jzero.io](https://docs.jzero.io)
 
 ## 基础框架代码生成
 
@@ -94,8 +92,8 @@ package user;
 option go_package = "./types/user";
 
 // 引入 pzero 扩展
-import "jzero/api/http.proto";
-import "jzero/api/zrpc.proto";
+import "pzero/api/http.proto";
+import "pzero/api/zrpc.proto";
 
 import "google/api/annotations.proto";
 
@@ -143,12 +141,12 @@ message GetUserResponse {
 
 service UserService {
   // 为整个 service 添加 HTTP 中间件
-  option (jzero.api.http_group) = {
+  option (pzero.api.http_group) = {
     middleware: "auth,log",
   };
 
   // 为整个 service 添加 RPC 中间件
-  option (jzero.api.zrpc_group) = {
+  option (pzero.api.zrpc_group) = {
     middleware: "trace",
   };
 
@@ -167,12 +165,11 @@ service UserService {
 }
 ```
 
-→ 生成 RPC 服务端代码、客户端代码、HTTP Gateway、中间件
+→ 生成 RPC 服务端代码、HTTP Gateway、中间件
 
 **特性说明**：
 - ✅ **支持多 proto 文件**：可在项目中定义多个 proto 文件（如 user.proto、order.proto、product.proto）
 - ✅ 支持**引入公共 proto** 文件
-- ✅ **一键生成 RPC 客户端**：生成独立的 RPC 客户端代码，脱离服务端依赖，解耦服务端和客户端
 - ✅ **内置字段验证**：基于 `buf.validate` 实现自动参数校验，支持 CEL 表达式
 - ✅ **灵活中间件配置**：支持为整个 service 或单个 method 配置 HTTP/RPC 中间件
  
@@ -191,7 +188,7 @@ CREATE TABLE `user` (
 → 生成 Model 层代码、CRUD 操作，支持复杂查询
 
 **特性说明**：
-- ✅ **多种数据源**：支持基于 sql 文件或远程数据库连接生成 model 代码
+- ✅ **多种数据源**：支持基于远程 PostgreSQL 数据源生成 model 代码
 - ✅ **自动生成 CRUD 接口**：自动生成增删改查等基础操作
 - ✅ **复杂查询支持**：提供强大的链式查询处理复杂业务场景
 - ✅ **一套代码适配多数据库**：生成的代码兼容 MySQL、PostgreSQL、Sqlite 等多种数据库，无需重新生成，轻松切换数据库底层存储
@@ -248,16 +245,13 @@ gen:
 
 ## 通过 Agent Skills 生成业务代码
 
-基于 pzero-skills，让 AI 自动生成符合最佳实践的业务代码：
+结合仓库 `skills/` 目录中维护的 Agent Skills，让 AI 自动生成符合团队最佳实践的业务代码：
 
 ```bash
-# 输出 AI Skills 配置到 Claude（默认 ~/.claude/skills）
-pzero skills init
+# 在项目仓库中维护 skills，例如：
+skills/
 
-# 输出到当前项目
-pzero skills init --output .claude/skills
-
-# 在 Claude 中用自然语言描述需求, 推荐使用 pzero-skills 开头
+# 然后直接在 AI 工具中用自然语言描述需求
 ```
 
 **AI 能帮你做什么**：
@@ -269,12 +263,12 @@ pzero skills init --output .claude/skills
 
 **数据库操作**：
 - ✅ 自动创建 SQL 迁移文件（xx.up.sql & xx.down.sql）
-- ✅ 自动执行数据库迁移（`pzero migrate up`）
-- ✅ 自动生成 Model 代码（`pzero gen --desc desc/sql/xxx.sql`）
+- ✅ 通过生成的服务显式执行数据库迁移（`go run . migrate up`）
+- ✅ 自动生成 Model 代码（`model-datasource: true` + `pzero gen`）
 
 **RPC 服务开发**：
 - ✅ 自动编写 `.proto` 文件定义服务接口
-- ✅ 自动生成 RPC 服务端和客户端代码
+- ✅ 自动生成 RPC 服务端代码
 - ✅ 自动实现服务端业务逻辑，遵循 Handler → Logic → Model 三层架构
 
 ---
@@ -284,39 +278,6 @@ pzero skills init --output .claude/skills
 </video>
 
 
-## 插件化架构
-
-支持**插件化开发**，将功能模块作为独立插件加载：
-
-```bash
-# 创建 helloworld api 服务
-pzero new helloword --frame api
-
-cd helloworld
-
-# 增加 api 插件
-pzero new plugin_name --frame api --serverless
-
-# 增加 api 插件(mono类型，即使用 helloworld 的 go module)
-pzero new plugin_name_mono --frame api --serverless --mono
-
-# 编译并加载所有插件
-pzero serverless build
-
-# 卸载所有插件
-pzero serverless delete
-
-# 卸载指定插件
-pzero serverless delete --plugin plugin_name
-```
-
-**完美支持**：
-
-- 📦 功能模块解耦，独立开发和测试
-- 👥 团队协作，不同团队负责不同插件
-- 🔄 按需加载，灵活组装功能
-
----
 
 ## 快速体验，5 分钟上手
 
@@ -332,9 +293,6 @@ pzero check
 pzero new helloworld --frame api
 # rpc 项目
 pzero new helloworld --frame rpc
-# gateway 项目
-pzero new helloworld --frame gateway
-
 cd helloworld
 
 # 下载依赖

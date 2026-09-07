@@ -29,6 +29,7 @@ type LogicFile struct {
 	New            bool // 是否是新生成的 logic 文件
 	Compact        bool // 是否合并 logic 文件
 	RewriteHandler bool
+	SSE            bool
 	Path           string
 	DescFilepath   string
 	RequestType    spec.Type
@@ -53,6 +54,7 @@ func (ja *PzeroApi) getAllLogicFiles(apiFilepath string, apiSpec *spec.ApiSpec) 
 				New:            !pathx.FileExists(fp),
 				Compact:        cast.ToBool(group.GetAnnotation("compact_logic")),
 				RewriteHandler: shouldRewriteHandler(group),
+				SSE:            cast.ToBool(group.GetAnnotation("sse")),
 				Handler:        route.Handler,
 				RequestType:    route.RequestType,
 				ResponseType:   route.ResponseType,
@@ -74,6 +76,7 @@ func (ja *PzeroApi) patchLogic(file LogicFile, genCodeApiSpecMap map[string]*spe
 	newFilePath = strings.TrimSuffix(newFilePath, "_")
 	newFilePath = strings.TrimSuffix(newFilePath, "-")
 	newFilePath += ".go"
+	outputPath := newFilePath
 
 	if pathx.FileExists(newFilePath) {
 		_ = os.Remove(file.Path)
@@ -81,6 +84,15 @@ func (ja *PzeroApi) patchLogic(file LogicFile, genCodeApiSpecMap map[string]*spe
 			return nil
 		}
 		file.Path = newFilePath
+	} else if existingPath, err := findExistingLogicFile(filepath.Dir(file.Path), file.Handler, file.Path); err != nil {
+		return err
+	} else if existingPath != "" {
+		_ = os.Remove(file.Path)
+		if !file.RewriteHandler {
+			return nil
+		}
+		file.Path = existingPath
+		outputPath = existingPath
 	}
 
 	fset := token.NewFileSet()
@@ -100,7 +112,7 @@ func (ja *PzeroApi) patchLogic(file LogicFile, genCodeApiSpecMap map[string]*spe
 	}
 
 	// change logic types
-	if _, ok := genCodeApiSpecMap[file.DescFilepath]; ok {
+	if _, ok := genCodeApiSpecMap[file.DescFilepath]; ok && !file.SSE {
 		if err = ja.changeLogicTypes(f, fset, file); err != nil {
 			console.Warning("[warning]: rewrite %s meet error %v", file.Path, err)
 		}
@@ -126,13 +138,58 @@ func (ja *PzeroApi) patchLogic(file LogicFile, genCodeApiSpecMap map[string]*spe
 		return err
 	}
 
-	if err = os.Rename(file.Path, newFilePath); err != nil {
-		return err
+	if file.Path != outputPath {
+		if err = os.Rename(file.Path, outputPath); err != nil {
+			return err
+		}
 	}
 
-	file.Path = newFilePath
+	file.Path = outputPath
 
 	return nil
+}
+
+func findExistingLogicFile(dir, handler, generatedPath string) (string, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
+
+	typeNames := map[string]struct{}{
+		util.Title(strings.TrimSuffix(handler, "Handler")):           {},
+		util.Title(strings.TrimSuffix(handler, "Handler")) + "Logic": {},
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".go" || strings.HasSuffix(entry.Name(), "_test.go") {
+			continue
+		}
+		path := filepath.Join(dir, entry.Name())
+		if path == generatedPath {
+			continue
+		}
+
+		f, err := goparser.ParseFile(token.NewFileSet(), path, nil, 0)
+		if err != nil {
+			return "", err
+		}
+		for _, decl := range f.Decls {
+			genDecl, ok := decl.(*ast.GenDecl)
+			if !ok || genDecl.Tok != token.TYPE {
+				continue
+			}
+			for _, item := range genDecl.Specs {
+				typeSpec, ok := item.(*ast.TypeSpec)
+				if !ok {
+					continue
+				}
+				if _, ok := typeNames[typeSpec.Name.Name]; ok {
+					return path, nil
+				}
+			}
+		}
+	}
+
+	return "", nil
 }
 
 func (ja *PzeroApi) removeLogicSuffix(f *ast.File) error {
@@ -169,7 +226,9 @@ func (ja *PzeroApi) removeLogicSuffix(f *ast.File) error {
 		if fn, ok := node.(*ast.GenDecl); ok && fn.Tok == token.TYPE {
 			for _, s := range fn.Specs {
 				if ts, ok := s.(*ast.TypeSpec); ok {
-					ts.Name.Name = strings.TrimSuffix(ts.Name.Name, "Logic")
+					if strings.HasSuffix(ts.Name.Name, "Logic") {
+						ts.Name.Name = strings.TrimSuffix(ts.Name.Name, "Logic")
+					}
 				}
 			}
 		}
@@ -181,7 +240,9 @@ func (ja *PzeroApi) removeLogicSuffix(f *ast.File) error {
 			for _, list := range fn.Recv.List {
 				if starExpr, ok := list.Type.(*ast.StarExpr); ok {
 					if ident, ok := starExpr.X.(*ast.Ident); ok {
-						ident.Name = util.Title(strings.TrimSuffix(ident.Name, "Logic"))
+						if strings.HasSuffix(ident.Name, "Logic") {
+							ident.Name = util.Title(strings.TrimSuffix(ident.Name, "Logic"))
+						}
 					}
 				}
 			}

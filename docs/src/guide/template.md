@@ -70,10 +70,8 @@ When `pzero new` runs, pzero injects the following built-in variables into the t
 | `GoVersion` | `string` | Current Go version |
 | `GoArch` | `string` | Current architecture such as `amd64` or `arm64` |
 | `DirName` | `string` | Output directory name |
-| `Style` | `string` | File naming style, default is `gozero` |
+| `Style` | `string` | File naming style, default is `go_zero` |
 | `Features` | `[]string` | Feature list passed by `pzero new --features` |
-| `Serverless` | `bool` | Whether the project is created in serverless mode |
-
 Example:
 
 ```text
@@ -83,9 +81,6 @@ module {{ .Module }}
 // enable model feature
 {{ end }}
 
-{{ if .Serverless }}
-// serverless mode
-{{ end }}
 ```
 
 :::tip
@@ -172,9 +167,9 @@ pzero template build --name myapi
 pzero new mysimpleapi --local myapi
 
 # But you find this template only allows local use, for universal effect
-# You can create a templates repository in remote repository like github (assume https://github.com/jzero-io/templates)
+# You can create a templates repository on a remote host such as GitHub
 # Then put content from $HOME/.pzero/templates/local/myapi into repository, and upload to myapi branch
-pzero new project_name --remote https://github.com/jzero-io/templates --branch myapi
+pzero new project_name --remote https://github.com/your-org/templates --branch myapi
 ```
 
 Template structure:
@@ -182,7 +177,6 @@ Template structure:
 ```bash
 $ tree ~/.pzero/templates/local/myapi
 └── app
-    ├── Dockerfile.tpl
     ├── README.md.tpl
     ├── cmd
     │   ├── root.go.tpl
@@ -202,8 +196,6 @@ $ tree ~/.pzero/templates/local/myapi
     ├── internal
     │   ├── config
     │   │   └── config.go.tpl
-    │   ├── custom
-    │   │   └── custom.go.tpl
     │   ├── handler
     │   │   ├── helloworld
     │   │   │   └── helloworld_compact.go.tpl
@@ -220,7 +212,6 @@ $ tree ~/.pzero/templates/local/myapi
     │   │   ├── response.go.tpl
     │   │   └── validator.go.tpl
     │   ├── svc
-    │   │   ├── config.go.tpl
     │   │   ├── middleware.go.tpl
     │   │   └── servicecontext.go.tpl
     │   └── types

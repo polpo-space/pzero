@@ -56,23 +56,6 @@ pzero new myproject --frame rpc
 - 📡 服务发现
 - 🔐 内置重试和熔断
 
-#### 3️⃣ Gateway 项目（API 网关）
-
-```bash
-pzero new myproject --frame gateway
-```
-
-**适用场景**：
-- ✅ 统一入口管理
-- ✅ 多服务聚合
-- ✅ 需要同时支持 HTTP 和 gRPC
-
-**特点**：
-- 🌐 同时支持 HTTP 和 gRPC
-- 🔄 智能路由转发
-- ⚖️ 负载均衡
-- 🛡️ 统一认证鉴权
-
 ### 启动服务
 
 ```bash
@@ -134,11 +117,11 @@ pzero new myproject --template https://github.com/your-org/pzero-template --bran
 
 ### 场景：开发用户注册功能
 
-**使用 pzero + AI Skills**：
+**使用 pzero + 项目自维护的 Agent Skills**：
 
 ```bash
 # 只需要一句话
-"用 pzero-skills 创建用户注册功能，支持用户名、邮箱、密码，需要验证和去重"
+"创建一个用户注册功能，支持用户名、邮箱、密码，需要验证和去重，并遵循项目里的 Agent Skills 和现有架构约束"
 ```
 
 **AI 自动完成**：

@@ -15,8 +15,6 @@ import (
 	"strconv"
 	"time"
 
-	goversion "github.com/hashicorp/go-version"
-	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
@@ -28,8 +26,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/gen"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/migrate"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/new"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/command/serverless"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/command/skills"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/template"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/upgrade"
 	versioncmd "github.com/polpo-space/pzero/cmd/pzero/internal/command/version"
@@ -38,7 +34,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/hooks"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/plugin"
 )
 
 var WorkingDir string
@@ -66,31 +61,9 @@ func main() {
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use: "pzero",
-	Short: `Used to create project by templates and generate server/client code by api/proto/sql file.
-`,
+	Use:   "pzero",
+	Short: `Used to create project by templates and generate server/client code by api/proto descriptors and PostgreSQL datasources.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// Display logo
-		if os.Getenv("PZERO_HOOK_TRIGGERED") != "true" && os.Getenv("PZERO_FORKED") != "true" && !config.C.Quiet {
-			console.DisplayLogo(version, lo.If(config.C.Debug, func() []string {
-				var toolVersion []string
-				tv := config.C.ToolVersion()
-
-				toolVersion = appendToolVersion(toolVersion, "goctl", tv.GoctlVersion)
-
-				frameType, err := desc.GetFrameType()
-				cobra.CheckErr(err)
-
-				if frameType == "rpc" || frameType == "gateway" {
-					toolVersion = appendToolVersion(toolVersion, "protoc", tv.ProtocVersion)
-					toolVersion = appendToolVersion(toolVersion, "protoc-gen-go", tv.ProtocGenGoVersion)
-					toolVersion = appendToolVersion(toolVersion, "protoc-gen-go-grpc", tv.ProtocGenGoGrpcVersion)
-					toolVersion = appendToolVersion(toolVersion, "protoc-gen-openapiv2", tv.ProtocGenOpenapiv2Version)
-				}
-				return toolVersion
-			}()).Else(nil))
-		}
-
 		// Run environment check first
 		if cmd.Name() != check.GetCommand().Use && cmd.Name() != versioncmd.GetCommand().Use {
 			frameType, err := desc.GetFrameType()
@@ -146,19 +119,6 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	// Initialize plugin handler
-	pluginHandler := plugin.NewDefaultHandler([]string{"pzero"})
-	if len(os.Args) > 1 {
-		cmdPathPieces := os.Args[1:]
-
-		// only look for suitable extension executables if
-		// the specified command does not already exist
-		if _, _, err := rootCmd.Find(cmdPathPieces); err != nil {
-			if err := plugin.HandlePluginCommand(pluginHandler, cmdPathPieces); err != nil {
-				cobra.CheckErr(err)
-			}
-		}
-	}
 	if err := rootCmd.Execute(); err != nil {
 		if console.IsRenderedError(err) {
 			os.Exit(1)
@@ -167,18 +127,10 @@ func Execute() {
 	}
 }
 
-func appendToolVersion(items []string, name string, v *goversion.Version) []string {
-	if v == nil {
-		return items
-	}
-
-	return append(items, fmt.Sprintf("%s v%s", name, v.String()))
-}
-
 func init() {
 	cobra.OnInitialize(InitConfig)
 
-	rootCmd.PersistentFlags().StringP("style", "", "gozero", "The file naming format, see [https://github.com/zeromicro/go-zero/blob/master/tools/goctl/config/readme.md]")
+	rootCmd.PersistentFlags().StringP("style", "", config.DefaultStyle, "The file naming format, see [https://github.com/zeromicro/go-zero/blob/master/tools/goctl/config/readme.md]")
 	rootCmd.PersistentFlags().StringP("home", "", ".template", "set template home")
 	rootCmd.PersistentFlags().StringVarP(&config.CfgFile, "config", "f", ".pzero.yaml", "set config file")
 	rootCmd.PersistentFlags().StringVarP(&config.CfgEnvFile, "config-env", "", ".pzero.env.yaml", "set config env file")
@@ -196,8 +148,6 @@ func init() {
 	rootCmd.AddCommand(gen.GetCommand())
 	rootCmd.AddCommand(migrate.GetCommand())
 	rootCmd.AddCommand(new.GetCommand())
-	rootCmd.AddCommand(serverless.GetCommand())
-	rootCmd.AddCommand(skills.GetCommand())
 	rootCmd.AddCommand(template.GetCommand())
 	rootCmd.AddCommand(upgrade.GetCommand())
 	rootCmd.AddCommand(versioncmd.GetCommand())

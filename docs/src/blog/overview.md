@@ -21,14 +21,14 @@ If you have these concerns, today's article is a must-read!
 
 🏗️ **Generate basic framework code through templates**: Automatically generate framework code (api → api framework code, proto → proto framework code, sql/remote database address → model code) based on descriptor files
 
-🤖 **Generate business code through Agent Skills**: Built-in pzero-skills enables AI to generate business logic code that follows best practices
+🤖 **Generate business code through Agent Skills**: Combine project-maintained Agent Skills so AI can generate business logic code that follows your architecture and engineering conventions
 
 **Core Value and Design Philosophy**:
 
-- ✅ **Developer Experience First**: Provides a simple, easy-to-use, one-stop production-ready solution, one-click initialize api/rpc/gateway projects, minimal commands to generate basic framework code
-- ✅ **AI Empowered**: Built-in pzero-skills enables AI to generate business logic code that follows best practices
+- ✅ **Developer Experience First**: Provides a simple, easy-to-use, one-stop production-ready solution, one-click initialize api/rpc projects, minimal commands to generate basic framework code
+- ✅ **AI Empowered**: Project-maintained Agent Skills let AI generate business logic code that better matches engineering conventions
 - ✅ **Template-Driven**: Default generation follows best practices, supports custom templates, can build enterprise-specific foundation based on remote template repositories
-- ✅ **Plugin Architecture**: Module layering, plugin design, smoother team collaboration
+- ✅ **Clear Layering**: Modular structure and clearer collaboration boundaries for teams
 - ✅ **Built-in Components**: Includes common tools like cache, migrate, and condition
 - ✅ **Ecosystem Compatible**: Doesn't modify go-zero, maintains ecosystem compatibility while addressing existing pain points and extending new features
 - ✅ **Flexible Interface**: Doesn't depend on specific database/cache/config center, free choice based on actual needs
@@ -36,8 +36,6 @@ If you have these concerns, today's article is a must-read!
 ---
 
 GitHub: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
-
-Docs: [https://docs.jzero.io](https://docs.jzero.io)
 
 ## Basic Framework Code Generation
 
@@ -94,8 +92,8 @@ package user;
 option go_package = "./types/user";
 
 // Import pzero extensions
-import "jzero/api/http.proto";
-import "jzero/api/zrpc.proto";
+import "pzero/api/http.proto";
+import "pzero/api/zrpc.proto";
 
 import "google/api/annotations.proto";
 
@@ -143,12 +141,12 @@ message GetUserResponse {
 
 service UserService {
   // Add HTTP middleware for entire service
-  option (jzero.api.http_group) = {
+  option (pzero.api.http_group) = {
     middleware: "auth,log",
   };
 
   // Add RPC middleware for entire service
-  option (jzero.api.zrpc_group) = {
+  option (pzero.api.zrpc_group) = {
     middleware: "trace",
   };
 
@@ -167,12 +165,11 @@ service UserService {
 }
 ```
 
-→ Generate RPC server code, client code, HTTP Gateway, middleware
+→ Generate RPC server code, HTTP Gateway, middleware
 
 **Feature Description**:
 - ✅ **Support multiple proto files**: Can define multiple proto files in project (e.g., user.proto, order.proto, product.proto)
 - ✅ Support **importing common proto** files
-- ✅ **One-click generate RPC client**: Generate independent RPC client code, decouple from server, separate server and client
 - ✅ **Built-in field validation**: Automatic parameter validation based on `buf.validate`, supports CEL expressions
 - ✅ **Flexible middleware configuration**: Support configuring HTTP/RPC middleware for entire service or single method
 
@@ -191,7 +188,7 @@ CREATE TABLE `user` (
 → Generate Model layer code, CRUD operations, supports complex queries
 
 **Feature Description**:
-- ✅ **Multiple data sources**: Support generating model code based on sql files or remote database connections
+- ✅ **Multiple data sources**: Support generating model code from remote PostgreSQL datasources
 - ✅ **Auto-generate CRUD interfaces**: Automatically generate basic operations like create, read, update, delete
 - ✅ **Complex query support**: Provide powerful chain queries for complex business scenarios
 - ✅ **One code adapts to multiple databases**: Generated code compatible with MySQL, PostgreSQL, Sqlite and other databases, no need to regenerate, easily switch underlying database storage
@@ -248,16 +245,13 @@ gen:
 
 ## Generate Business Code Through Agent Skills
 
-Based on pzero-skills, let AI automatically generate business code that follows best practices:
+Use Agent Skills maintained in the repository `skills/` directory to let AI automatically generate business code that follows your team's best practices:
 
 ```bash
-# Output AI Skills configuration to Claude (default ~/.claude/skills)
-pzero skills init
+# Maintain skills in the project repository, such as:
+skills/
 
-# Output to current project
-pzero skills init --output .claude/skills
-
-# In Claude, describe requirements in natural language, recommend starting with pzero-skills
+# Then describe requirements in natural language directly in your AI tool
 ```
 
 **What can AI do for you**:
@@ -269,12 +263,12 @@ pzero skills init --output .claude/skills
 
 **Database Operations**:
 - ✅ Automatically create SQL migration files (xx.up.sql & xx.down.sql)
-- ✅ Automatically execute database migration (`pzero migrate up`)
-- ✅ Automatically generate Model code (`pzero gen --desc desc/sql/xxx.sql`)
+- ✅ Explicitly execute database migration through the generated service (`go run . migrate up`)
+- ✅ Automatically generate Model code (`model-datasource: true` + `pzero gen`)
 
 **RPC Service Development**:
 - ✅ Automatically write `.proto` files to define service interfaces
-- ✅ Automatically generate RPC server and client code
+- ✅ Automatically generate RPC server code
 - ✅ Automatically implement server business logic, following Handler → Logic → Model three-layer architecture
 
 ---
@@ -284,39 +278,6 @@ pzero skills init --output .claude/skills
 </video>
 
 
-## Plugin Architecture
-
-Support **plugin development**, loading functional modules as independent plugins:
-
-```bash
-# Create helloworld api service
-pzero new helloword --frame api
-
-cd helloworld
-
-# Add api plugin
-pzero new plugin_name --frame api --serverless
-
-# Add api plugin (mono type, use helloworld's go module)
-pzero new plugin_name_mono --frame api --serverless --mono
-
-# Build and load all plugins
-pzero serverless build
-
-# Unload all plugins
-pzero serverless delete
-
-# Unload specific plugin
-pzero serverless delete --plugin plugin_name
-```
-
-**Perfectly supports**:
-
-- 📦 Functional module decoupling, independent development and testing
-- 👥 Team collaboration, different teams responsible for different plugins
-- 🔄 Load on demand, flexible assembly of functions
-
----
 
 ## Quick Experience, Get Started in 5 Minutes
 
@@ -332,9 +293,6 @@ pzero check
 pzero new helloworld --frame api
 # rpc project
 pzero new helloworld --frame rpc
-# gateway project
-pzero new helloworld --frame gateway
-
 cd helloworld
 
 # Download dependencies

@@ -246,7 +246,14 @@ func (ja *PzeroApi) cleanHandlersDir(genCodeApiFiles []string, genCodeApiSpecMap
 					if entry.IsDir() || strings.HasSuffix(entry.Name(), "_test.go") {
 						continue
 					}
-					_ = os.Remove(filepath.Join(handlerDir, entry.Name()))
+					path := filepath.Join(handlerDir, entry.Name())
+					generated, err := isGeneratedGoFile(path)
+					if err != nil {
+						return err
+					}
+					if generated {
+						_ = os.Remove(path)
+					}
 				}
 				return nil
 			})
@@ -353,6 +360,9 @@ func (ja *PzeroApi) generateCodeForApiFiles(genCodeApiFiles []string, apiSpecMap
 		if _, err := execx.Run(command, config.C.Wd()); err != nil {
 			return errors.Wrapf(err, "api file: %s", apiFile)
 		}
+		if err := normalizeAPITrailingNewline(apiFile); err != nil {
+			return errors.Wrapf(err, "normalize api file: %s", apiFile)
+		}
 
 		if progressChan != nil {
 			progressChan <- progress.NewFile(apiFile)
@@ -360,6 +370,15 @@ func (ja *PzeroApi) generateCodeForApiFiles(genCodeApiFiles []string, apiSpecMap
 	}
 
 	return nil
+}
+
+func normalizeAPITrailingNewline(path string) error {
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	normalized := strings.TrimRight(string(contents), "\r\n") + "\n"
+	return os.WriteFile(path, []byte(normalized), 0o644)
 }
 
 // patchHandlerAndLogicFiles 并发 patch handler 和 logic 文件
@@ -434,6 +453,8 @@ func (ja *PzeroApi) generateRoutesGoFile(apiFiles []string, apiSpecMap map[strin
 			"Routes":         allRoutesGoBody,
 			"Module":         ja.Module,
 			"HandlerImports": lo.Uniq(handlerImports),
+			"UseHTTP":        strings.Contains(allRoutesGoBody, "http."),
+			"UseTime":        strings.Contains(allRoutesGoBody, "time."),
 		},
 		embeded.ReadTemplateFile(filepath.Join("api", "routes.go.tpl")),
 	)

@@ -23,6 +23,8 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/hooks"
 )
 
+const DefaultStyle = "go_zero"
+
 // C global command flags
 var C Config
 
@@ -58,17 +60,11 @@ type Config struct {
 	// gen command
 	Gen GenConfig `mapstructure:"gen"`
 
-	// skills command
-	Skills SkillsConfig `mapstructure:"skills"`
-
 	// template command
 	Template TemplateConfig `mapstructure:"template"`
 
 	// upgrade command
 	Upgrade UpgradeConfig `mapstructure:"upgrade"`
-
-	// serverless command
-	Serverless ServerlessConfig `mapstructure:"serverless"`
 
 	// migrate command
 	Migrate MigrateConfig `mapstructure:"migrate"`
@@ -81,7 +77,6 @@ type NewConfig struct {
 	Name                 string   `mapstructure:"name"`                  // 新建项目名称
 	Module               string   `mapstructure:"module"`                // 新建的项目的 go module
 	Mono                 bool     `mapstructure:"mono"`                  // 是否是 mono 项目(即在一个mod项目之下, 但该项目本身无 go.mod 文件)
-	Serverless           bool     `mapstructure:"serverless"`            // 是否是 serverless 插件
 	Output               string   `mapstructure:"output"`                // 输出到的目录
 	Remote               string   `mapstructure:"remote"`                // 远程仓库地址
 	RemoteTimeout        int      `mapstructure:"remote-timeout"`        // 远程仓库超时时间, 单位秒
@@ -101,16 +96,12 @@ type NewConfig struct {
 type GenConfig struct {
 	Hooks HooksConfig `mapstructure:"hooks"`
 
-	// gen persistent flags
-	// Style: code style
-	// Deprecated
-	Style string `mapstructure:"style"`
-
 	Desc                    []string `mapstructure:"desc"`
 	DescIgnore              []string `mapstructure:"desc-ignore"`
 	GitChange               bool     `mapstructure:"git-change"`
 	ApiTypesDir             string   `mapstructure:"api-types-dir"`
 	Route2Code              bool
+	ProtoDirs               []string `mapstructure:"proto-dir"` // RPC proto 扫描根，空则回落 desc/proto
 	ProtoInclude            []string `mapstructure:"proto-include"`
 	RpcClient               bool     `mapstructure:"rpc-client"`
 	ModelDriver             string   `mapstructure:"model-driver"`
@@ -135,16 +126,6 @@ type GenConfig struct {
 
 	// Gen Sub Command
 	Swagger GenSwaggerConfig `mapstructure:"swagger"`
-
-	Zrpcclient GenZrpcclientConfig `mapstructure:"zrpcclient"`
-}
-
-type SkillsConfig struct {
-	Init SkillsInitConfig `mapstructure:"init"`
-}
-
-type SkillsInitConfig struct {
-	Output string `mapstructure:"output"`
 }
 
 type GenSwaggerConfig struct {
@@ -153,18 +134,6 @@ type GenSwaggerConfig struct {
 	Output     string   `mapstructure:"output"`
 	Route2Code bool     `mapstructure:"route2code"`
 	Merge      bool     `mapstructure:"merge"`
-}
-
-type GenZrpcclientConfig struct {
-	Hooks HooksConfig `mapstructure:"hooks"`
-
-	Desc         []string `mapstructure:"desc"`
-	DescIgnore   []string `mapstructure:"desc-ignore"`
-	ProtoInclude []string `mapstructure:"proto-include"`
-	Output       string   `mapstructure:"output"`
-	GoVersion    string   `mapstructure:"goVersion"`
-	GoModule     string   `mapstructure:"goModule"`
-	GoPackage    string   `mapstructure:"goPackage"`
 }
 
 type TemplateConfig struct {
@@ -187,14 +156,6 @@ type TemplateBuildConfig struct {
 
 type UpgradeConfig struct {
 	Channel string `mapstructure:"channel"`
-}
-
-type ServerlessConfig struct {
-	Delete ServerlessDeleteConfig `mapstructure:"delete"`
-}
-
-type ServerlessDeleteConfig struct {
-	Plugin []string `mapstructure:"plugin"`
 }
 
 type MigrateConfig struct {
@@ -238,7 +199,25 @@ func (c *Config) Wd() string {
 }
 
 func (c *Config) ProtoDir() string {
-	return filepath.Join("desc", "proto")
+	dirs := c.ProtoDirs()
+	return dirs[0]
+}
+
+// ProtoDirs 返回 RPC proto 扫描根列表。未配置时回落 desc/proto，保持旧行为。
+func (c *Config) ProtoDirs() []string {
+	if len(c.Gen.ProtoDirs) > 0 {
+		dirs := make([]string, 0, len(c.Gen.ProtoDirs))
+		for _, d := range c.Gen.ProtoDirs {
+			d = filepath.Clean(d)
+			if d != "" && d != "." {
+				dirs = append(dirs, d)
+			}
+		}
+		if len(dirs) > 0 {
+			return dirs
+		}
+	}
+	return []string{filepath.Join("desc", "proto")}
 }
 
 func (c *Config) ApiDir() string {

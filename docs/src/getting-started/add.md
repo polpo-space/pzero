@@ -4,15 +4,17 @@ icon: /icons/proicons-tag-add.svg
 order: 3.1
 ---
 
-pzero generates code based on descriptor files (desc):
+pzero generates code from descriptor files (desc) and config:
 
 * desc/api: api descriptor language, generate http server/client code. [User guide](../guide/api.md)
 * desc/proto: proto descriptor language, generate grpc server/client code. [User guide](../guide/proto.md)
-* desc/sql: sql descriptor language, generate database code. [User guide](../guide/model.md)
+* desc/sql: schema snapshot of the current structure; **not** used for model generation. [User guide](../guide/model.md)
 
-Can also generate model code based on configuration:
+Model code is generated from a remote datasource:
 
-* model datasource: Generate database code through remote datasource. [User guide](../guide/model.md)
+* model datasource: `model-datasource: true` + `model-datasource-url`. [User guide](../guide/model.md)
+
+Schema changes belong in `desc/sql_migration/` via the service binary `migrate create` / `migrate up`.
 
 ## Add api file
 
@@ -36,9 +38,10 @@ pzero add proto test
 pzero add proto test/test1
 ```
 
-## Add sql file
+## Add sql snapshot
 
-Will add sql file under desc/sql folder
+Creates a PostgreSQL schema snapshot placeholder under `desc/sql`.  
+This is not model input; enable datasource and run `pzero gen` to generate models.
 
 ```shell
 # table name is test

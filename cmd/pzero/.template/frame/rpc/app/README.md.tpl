@@ -8,6 +8,18 @@ go install github.com/polpo-space/pzero/cmd/pzero@latest
 pzero check
 ```
 
+## Build with version info
+
+```shell
+go build -ldflags "-X '{{.Module}}/internal/buildinfo.Version=v0.1.0' \
+  -X '{{.Module}}/internal/buildinfo.Commit=$(git rev-parse --short HEAD)' \
+  -X '{{.Module}}/internal/buildinfo.Date=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" .
+```
+
+CLI `version` 和启动时版本输出均读取 `internal/buildinfo` 包，无需再设置环境变量。
+
+RPC 项目默认不暴露版本服务；请在 `desc/proto/` 中定义业务 RPC 契约后运行 `pzero gen`。
+
 ## Generate code
 
 ### Generate server code
@@ -16,16 +28,22 @@ pzero check
 pzero gen
 ```
 
-## Build docker image
+{{ if has "model" .Features }}## Database migrations
+
+Service migrations support PostgreSQL through the `pgx` driver only.
+
+Create a migration file pair:
 
 ```shell
-# add a builder first
-docker buildx create --use --name=mybuilder --driver docker-container --driver-opt image=dockerpracticesig/buildkit:master
-
-# build and load
-docker buildx build --platform linux/{{ .GoArch }} --progress=plain -t {{ .APP }}:latest . --load
+go run . migrate create add_example
 ```
 
-## Documents
+Apply pending migrations explicitly before starting the server:
 
-https://docs.jzero.io
+```shell
+go run . migrate up --config etc/etc.yaml
+```
+
+Run `go run . migrate --help` for rollback, version, goto, and force commands.
+
+{{ end }}

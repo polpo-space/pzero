@@ -6,6 +6,7 @@ Copyright © 2024 jaronnie <jaron@jaronnie.com>
 package template
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 
@@ -30,6 +31,9 @@ var templateInitCmd = &cobra.Command{
 	PreRun: func(_ *cobra.Command, _ []string) {},
 
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if err := validateRemoteTemplate(config.C.Template.Init.Remote, config.C.Template.Init.Branch); err != nil {
+			return err
+		}
 		if config.C.Template.Init.Output == "" {
 			home, _ := os.UserHomeDir()
 			if config.C.Template.Init.Remote != "" && config.C.Template.Init.Branch != "" {
@@ -69,10 +73,20 @@ func GetCommand() *cobra.Command {
 	{
 		templateCmd.AddCommand(templateInitCmd)
 
-		templateInitCmd.Flags().StringP("remote", "r", "https://github.com/jzero-io/templates", "remote templates repo")
+		templateInitCmd.Flags().StringP("remote", "r", "", "remote templates repo")
 		templateInitCmd.Flags().StringP("branch", "b", "", "remote template repo branch. If not set, init the embedded templates.")
 		templateInitCmd.Flags().StringP("output", "o", "", "template output dir")
 	}
 
 	return templateCmd
+}
+
+func validateRemoteTemplate(remote, branch string) error {
+	if remote == "" && branch != "" {
+		return errors.New("remote template branch requires --remote")
+	}
+	if remote != "" && branch == "" {
+		return errors.New("remote template repository requires --branch")
+	}
+	return nil
 }

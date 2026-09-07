@@ -56,23 +56,6 @@ pzero new myproject --frame rpc
 - 📡 Service discovery
 - 🔐 Built-in retry and circuit breaking
 
-#### 3️⃣ Gateway Project (API Gateway)
-
-```bash
-pzero new myproject --frame gateway
-```
-
-**Use Cases**:
-- ✅ Unified entry point management
-- ✅ Multi-service aggregation
-- ✅ Need to support both HTTP and gRPC
-
-**Features**:
-- 🌐 Support both HTTP and gRPC
-- 🔄 Smart routing and forwarding
-- ⚖️ Load balancing
-- 🛡️ Unified authentication and authorization
-
 ### Start Service
 
 ```bash
@@ -128,11 +111,11 @@ With the AI base project, you only need to focus on business logic development. 
 
 ### Scenario: Develop User Registration Feature
 
-**Using pzero + AI Skills**:
+**Using pzero + project-maintained Agent Skills**:
 
 ```bash
 # Just one sentence
-"Use pzero-skills to create user registration feature, supporting username, email, password with validation and deduplication"
+"Create a user registration feature, supporting username, email, password with validation and deduplication. Follow the project's Agent Skills and existing architecture."
 ```
 
 **AI Automatically Completes**:

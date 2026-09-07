@@ -7,6 +7,7 @@ import (
     {{ if has "redis" .Features }}"github.com/zeromicro/go-zero/core/stores/redis"{{ end }}
     {{ if has "cache" .Features }}"github.com/zeromicro/go-zero/core/stores/cache"
     "github.com/zeromicro/go-zero/core/stores/redis"{{ end }}
+    {{ if has "job" .Features }}runtimejob "github.com/polpo-space/pzero/runtime/job"{{ end }}
 )
 
 type Config struct {
@@ -15,6 +16,7 @@ type Config struct {
 	{{ if has "model" .Features }}Sqlx SqlxConf{{ end }}
     {{ if has "redis" .Features }}Redis RedisConf{{ end }}
     {{ if has "cache" .Features }}Cache CacheConf{{ end }}
+	{{ if has "job" .Features }}Job runtimejob.Config{{ end }}
 }
 
 type ZrpcConf struct {

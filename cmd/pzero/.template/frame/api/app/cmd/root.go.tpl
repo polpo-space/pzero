@@ -26,5 +26,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().String("config", "etc/etc.yaml", "config file (default is project root dir etc/etc.yaml")
+	rootCmd.PersistentFlags().String("config", "etc/etc.yaml", "config file (default is project root dir etc/etc.yaml)")
 }

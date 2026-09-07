@@ -70,10 +70,8 @@ internal/{{ .APP | lower }}/{{ FormatStyle .Style "service_context.go.tpl" }}
 | `GoVersion` | `string` | 当前 Go 版本 |
 | `GoArch` | `string` | 当前架构，如 `amd64`、`arm64` |
 | `DirName` | `string` | 输出目录名 |
-| `Style` | `string` | 文件命名风格，默认 `gozero` |
+| `Style` | `string` | 文件命名风格，默认 `go_zero` |
 | `Features` | `[]string` | `pzero new --features` 传入的特性列表 |
-| `Serverless` | `bool` | 是否以 serverless 模式创建项目 |
-
 例如：
 
 ```text
@@ -83,9 +81,6 @@ module {{ .Module }}
 // enable model feature
 {{ end }}
 
-{{ if .Serverless }}
-// serverless mode
-{{ end }}
 ```
 
 :::tip
@@ -172,9 +167,9 @@ pzero template build --name myapi
 pzero new mysimpleapi --local myapi
 
 # 但是你发现该模板仅允许本地使用, 为了达到通用的效果
-# 你可以在远程仓库如 github 创建一个 templates 仓库(假设为 https://github.com/jzero-io/templates)
+# 你可以在 GitHub 等远程托管平台创建一个 templates 仓库
 # 然后将 $HOME/.pzero/templates/local/myapi 下的内容放到仓库中, 并上传到 myapi 分支
-pzero new project_name --remote https://github.com/jzero-io/templates --branch myapi
+pzero new project_name --remote https://github.com/your-org/templates --branch myapi
 ```
 
 模板结构如下:
@@ -182,7 +177,6 @@ pzero new project_name --remote https://github.com/jzero-io/templates --branch m
 ```bash
 $ tree ~/.pzero/templates/local/myapi
 └── app
-    ├── Dockerfile.tpl
     ├── README.md.tpl
     ├── cmd
     │   ├── root.go.tpl
@@ -202,8 +196,6 @@ $ tree ~/.pzero/templates/local/myapi
     ├── internal
     │   ├── config
     │   │   └── config.go.tpl
-    │   ├── custom
-    │   │   └── custom.go.tpl
     │   ├── handler
     │   │   ├── helloworld
     │   │   │   └── helloworld_compact.go.tpl
@@ -220,7 +212,6 @@ $ tree ~/.pzero/templates/local/myapi
     │   │   ├── response.go.tpl
     │   │   └── validator.go.tpl
     │   ├── svc
-    │   │   ├── config.go.tpl
     │   │   ├── middleware.go.tpl
     │   │   └── servicecontext.go.tpl
     │   └── types

@@ -9,7 +9,6 @@ order: 1
 
 - ✅ **支持多 proto 文件**：可在项目中定义多个 proto 文件（如 user.proto、order.proto、product.proto）
 - ✅ 支持**引入公共 proto** 文件
-- ✅ **一键生成 RPC 客户端**：生成独立的 RPC 客户端代码，脱离服务端依赖，解耦服务端和客户端
 - ✅ **内置字段验证**：基于 `buf.validate` 实现自动参数校验
 - ✅ **灵活中间件配置**：支持为整个 service 或单个 method 配置 HTTP/RPC 中间件
 
@@ -18,26 +17,26 @@ order: 1
 ```protobuf
 syntax = "proto3";
 
-package version;
+package user;
 
 import "google/api/annotations.proto";
 import "grpc-gateway/protoc-gen-openapiv2/options/annotations.proto";
 
-option go_package = "./types/version";
+option go_package = "./types/user";
 
-message VersionRequest {}
-
-message VersionResponse {
-  string version = 1;
-  string goVersion = 2;
-  string commit = 3;
-  string date = 4;
+message GetUserRequest {
+  int64 id = 1;
 }
 
-service Version {
-  rpc Version(VersionRequest) returns(VersionResponse) {
+message GetUserResponse {
+  int64 id = 1;
+  string name = 2;
+}
+
+service User {
+  rpc GetUser(GetUserRequest) returns(GetUserResponse) {
     option (google.api.http) = {
-      get: "/version"
+      get: "/api/v1/users/{id}"
     };
   };
 }
@@ -82,11 +81,11 @@ message GetRequest {
 添加 middleware, 多个 middleware 使用逗号隔开
 
 ```protobuf
-import "jzero/api/http.proto";
-import "jzero/api/zrpc.proto";
+import "pzero/api/http.proto";
+import "pzero/api/zrpc.proto";
 
 service User {
-    option (jzero.api.http_group) = {
+    option (pzero.api.http_group) = {
         middleware: "auth",
     };
 
@@ -95,7 +94,7 @@ service User {
             post: "/api/v1/user/create",
             body: "*"
         };
-        option (jzero.api.zrpc) = {
+        option (pzero.api.zrpc) = {
             middleware: "withValue1",
         };
     };
@@ -109,10 +108,10 @@ service User {
 ```
 
 详细解释:
-* option (jzero.api.http_group) 即将该 service 下的所有 method 都新增 http 中间件
-* option (jzero.api.http) 只针对某个 method 新增 http 中间件
-* option (jzero.api.zrpc_group) 即将该 service 下的所有 method 都新增 zrpc 中间件
-* option (jzero.api.zrpc) 只针对某个 method 新增 zrpc 中间件
+* option (pzero.api.http_group) 即将该 service 下的所有 method 都新增 http 中间件
+* option (pzero.api.http) 只针对某个 method 新增 http 中间件
+* option (pzero.api.zrpc_group) 即将该 service 下的所有 method 都新增 zrpc 中间件
+* option (pzero.api.zrpc) 只针对某个 method 新增 zrpc 中间件
 
 执行 `pzero gen` 后将会生成一下文件, 以 auth 为例:
 * internal/middleware/authmiddleware.go

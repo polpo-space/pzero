@@ -37,8 +37,6 @@ func {{.HandlerName}}(svcCtx *svc.ServiceContext) http.HandlerFunc {
                 err := l.{{.Call}}(&req)
                 if err != nil {
                         httpx.ErrorCtx(r.Context(), w, err)
-                } else {
-                        httpx.Ok(w)
                 }
         } {{else if and (not .HasRequest) .HasResp}}return func(w http.ResponseWriter, r *http.Request) {
                 l := {{.LogicName}}.New{{.LogicType}}(r.Context(), svcCtx, r)
@@ -53,8 +51,6 @@ func {{.HandlerName}}(svcCtx *svc.ServiceContext) http.HandlerFunc {
                 err := l.{{.Call}}()
                 if err != nil {
                         httpx.ErrorCtx(r.Context(), w, err)
-                } else {
-                        httpx.Ok(w)
                 }
         }{{end}}
 }

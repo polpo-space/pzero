@@ -9,7 +9,6 @@ order: 1
 
 - ✅ **Support multiple proto files**: Can define multiple proto files in project (e.g., user.proto, order.proto, product.proto)
 - ✅ Support **importing common proto** files
-- ✅ **One-click generate RPC client**: Generate independent RPC client code, decouple from server dependency
 - ✅ **Built-in field validation**: Automatic parameter validation based on `buf.validate`
 - ✅ **Flexible middleware configuration**: Support configuring HTTP/RPC middleware for entire service or single method
 
@@ -18,26 +17,26 @@ order: 1
 ```protobuf
 syntax = "proto3";
 
-package version;
+package user;
 
 import "google/api/annotations.proto";
 import "grpc-gateway/protoc-gen-openapiv2/options/annotations.proto";
 
-option go_package = "./types/version";
+option go_package = "./types/user";
 
-message VersionRequest {}
-
-message VersionResponse {
-  string version = 1;
-  string goVersion = 2;
-  string commit = 3;
-  string date = 4;
+message GetUserRequest {
+  int64 id = 1;
 }
 
-service Version {
-  rpc Version(VersionRequest) returns(VersionResponse) {
+message GetUserResponse {
+  int64 id = 1;
+  string name = 2;
+}
+
+service User {
+  rpc GetUser(GetUserRequest) returns(GetUserResponse) {
     option (google.api.http) = {
-      get: "/version"
+      get: "/api/v1/users/{id}"
     };
   };
 }
@@ -82,11 +81,11 @@ message GetRequest {
 Add middleware, separate multiple middleware with commas
 
 ```protobuf
-import "jzero/api/http.proto";
-import "jzero/api/zrpc.proto";
+import "pzero/api/http.proto";
+import "pzero/api/zrpc.proto";
 
 service User {
-    option (jzero.api.http_group) = {
+    option (pzero.api.http_group) = {
         middleware: "auth",
     };
 
@@ -95,7 +94,7 @@ service User {
             post: "/api/v1/user/create",
             body: "*"
         };
-        option (jzero.api.zrpc) = {
+        option (pzero.api.zrpc) = {
             middleware: "withValue1",
         };
     };
@@ -109,10 +108,10 @@ service User {
 ```
 
 Detailed explanation:
-* option (jzero.api.http_group) adds http middleware to all methods under this service
-* option (jzero.api.http) only adds http middleware to specific method
-* option (jzero.api.zrpc_group) adds zrpc middleware to all methods under this service
-* option (jzero.api.zrpc) only adds zrpc middleware to specific method
+* option (pzero.api.http_group) adds http middleware to all methods under this service
+* option (pzero.api.http) only adds http middleware to specific method
+* option (pzero.api.zrpc_group) adds zrpc middleware to all methods under this service
+* option (pzero.api.zrpc) only adds zrpc middleware to specific method
 
 After executing `pzero gen`, following files will be generated, using auth as example:
 * internal/middleware/authmiddleware.go
