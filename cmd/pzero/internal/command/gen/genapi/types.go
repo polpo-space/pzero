@@ -358,7 +358,7 @@ func (ja *PzeroApi) cleanupLegacyTypesDir() error {
 			return nil
 		}
 
-		generated, err := isGeneratedTypesFile(path)
+		generated, err := isGeneratedGoFile(path)
 		if err != nil {
 			return err
 		}
@@ -393,7 +393,7 @@ func (ja *PzeroApi) cleanupLegacyTypesDir() error {
 	return nil
 }
 
-func isGeneratedTypesFile(path string) (bool, error) {
+func isGeneratedGoFile(path string) (bool, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -419,6 +419,17 @@ func (ja *PzeroApi) changeLogicTypes(f *ast.File, fset *token.FileSet, file Logi
 	ast.Inspect(f, func(node ast.Node) bool {
 		if fn, ok := node.(*ast.FuncDecl); ok && fn.Recv != nil {
 			if fn.Name.Name == methodFunc {
+				var existingResults []*ast.Field
+				if fn.Type.Results != nil {
+					existingResults = fn.Type.Results.List
+				}
+				resultNames := func(index, resultArity int) []*ast.Ident {
+					if len(existingResults) != resultArity || index >= len(existingResults) {
+						return nil
+					}
+					return existingResults[index].Names
+				}
+
 				if requestType != nil {
 					switch requestType.(type) {
 					case spec.DefineStruct:
@@ -438,22 +449,22 @@ func (ja *PzeroApi) changeLogicTypes(f *ast.File, fset *token.FileSet, file Logi
 					case spec.PrimitiveType:
 						fn.Type.Results.List = []*ast.Field{
 							{
-								Names: []*ast.Ident{ast.NewIdent("resp")},
+								Names: resultNames(0, 2),
 								Type:  ast.NewIdent(responseType.Name()),
 							},
 							{
-								Names: []*ast.Ident{ast.NewIdent("err")},
+								Names: resultNames(1, 2),
 								Type:  ast.NewIdent("error"),
 							},
 						}
 					case spec.DefineStruct:
 						fn.Type.Results.List = []*ast.Field{
 							{
-								Names: []*ast.Ident{ast.NewIdent("resp")},
+								Names: resultNames(0, 2),
 								Type:  &ast.StarExpr{X: ast.NewIdent("types." + responseType.Name())},
 							},
 							{
-								Names: []*ast.Ident{ast.NewIdent("err")},
+								Names: resultNames(1, 2),
 								Type:  ast.NewIdent("error"),
 							},
 						}
@@ -461,7 +472,8 @@ func (ja *PzeroApi) changeLogicTypes(f *ast.File, fset *token.FileSet, file Logi
 				} else {
 					fn.Type.Results.List = []*ast.Field{
 						{
-							Type: ast.NewIdent("error"),
+							Names: resultNames(0, 1),
+							Type:  ast.NewIdent("error"),
 						},
 					}
 				}

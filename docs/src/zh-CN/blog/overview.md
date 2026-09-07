@@ -37,8 +37,6 @@ icon: /icons/streamline-ultimate-blog-blogger-logo.svg
 
 github 地址: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
 
-文档地址: [https://docs.jzero.io](https://docs.jzero.io)
-
 ## 基础框架代码生成
 
 基于可描述文件自动生成基础框架代码：
@@ -94,8 +92,8 @@ package user;
 option go_package = "./types/user";
 
 // 引入 pzero 扩展
-import "jzero/api/http.proto";
-import "jzero/api/zrpc.proto";
+import "pzero/api/http.proto";
+import "pzero/api/zrpc.proto";
 
 import "google/api/annotations.proto";
 
@@ -143,12 +141,12 @@ message GetUserResponse {
 
 service UserService {
   // 为整个 service 添加 HTTP 中间件
-  option (jzero.api.http_group) = {
+  option (pzero.api.http_group) = {
     middleware: "auth,log",
   };
 
   // 为整个 service 添加 RPC 中间件
-  option (jzero.api.zrpc_group) = {
+  option (pzero.api.zrpc_group) = {
     middleware: "trace",
   };
 
@@ -190,7 +188,7 @@ CREATE TABLE `user` (
 → 生成 Model 层代码、CRUD 操作，支持复杂查询
 
 **特性说明**：
-- ✅ **多种数据源**：支持基于 sql 文件或远程数据库连接生成 model 代码
+- ✅ **多种数据源**：支持基于远程 PostgreSQL 数据源生成 model 代码
 - ✅ **自动生成 CRUD 接口**：自动生成增删改查等基础操作
 - ✅ **复杂查询支持**：提供强大的链式查询处理复杂业务场景
 - ✅ **一套代码适配多数据库**：生成的代码兼容 MySQL、PostgreSQL、Sqlite 等多种数据库，无需重新生成，轻松切换数据库底层存储
@@ -266,7 +264,7 @@ skills/
 **数据库操作**：
 - ✅ 自动创建 SQL 迁移文件（xx.up.sql & xx.down.sql）
 - ✅ 通过生成的服务显式执行数据库迁移（`go run . migrate up`）
-- ✅ 自动生成 Model 代码（`pzero gen --desc desc/sql/xxx.sql`）
+- ✅ 自动生成 Model 代码（`model-datasource: true` + `pzero gen`）
 
 **RPC 服务开发**：
 - ✅ 自动编写 `.proto` 文件定义服务接口

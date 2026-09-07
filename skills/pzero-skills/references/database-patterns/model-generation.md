@@ -2,27 +2,39 @@
 
 ## Overview
 
-pzero can generate models from local SQL files or remote datasources.
+pzero generates models from a PostgreSQL remote datasource only.
 
-## Local SQL Mode
+`desc/sql` is a schema snapshot for review/alignment. It may coexist with datasource mode and is never model gen input.
 
-```bash
-pzero gen --desc desc/sql/users.sql
+## Datasource Mode
+
+```yaml
+gen:
+  model-driver: postgres
+  model-datasource: true
+  model-datasource-url:
+    - "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
+  model-datasource-table:
+    - users
 ```
 
-## Remote Datasource Mode
-
 ```bash
+# migrate first, then generate models from the live schema
 pzero gen
 ```
+
+`--desc` scopes api/proto only and skips model generation. Do not pass `.sql` to `--desc`.
 
 ## Common Methods
 
 - `Insert`
-- `InsertV2`
 - `BulkInsert`
 - `FindOne`
 - `FindByCondition`
+- `FindFieldsByCondition`
+- `FindOneByCondition`
+- `FindOneFieldsByCondition`
+- `CountByCondition`
 - `PageByCondition`
 - `Update`
 - `UpdateFieldsByCondition`
@@ -31,6 +43,7 @@ pzero gen
 
 ## Guidance
 
-- Regenerate models after schema changes
-- Pair generation with migration discipline
-- Use local SQL mode for code-first workflows
+- Regenerate models after applying migrations
+- Keep `model-datasource-table` complete: `internal/model/model.go` is fully rewritten from that list
+- Pair generation with migration discipline (`desc/sql_migration/`)
+- Keep `desc/sql` snapshots in sync for review, not for gen

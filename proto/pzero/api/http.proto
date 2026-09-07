@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package pzero.api;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/polpo-space/pzero/proto/api";
+
+message HttpRule {
+  string middleware = 1;
+}
+
+extend google.protobuf.MethodOptions {
+  HttpRule http = 10000;
+}
+
+extend google.protobuf.ServiceOptions {
+  HttpRule http_group = 10001;
+}

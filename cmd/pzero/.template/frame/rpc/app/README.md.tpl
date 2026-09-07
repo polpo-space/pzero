@@ -11,12 +11,14 @@ pzero check
 ## Build with version info
 
 ```shell
-go build -ldflags "-X '{{.Module}}/version.Version=v0.1.0' \
-  -X '{{.Module}}/version.Commit=$(git rev-parse --short HEAD)' \
-  -X '{{.Module}}/version.Date=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" .
+go build -ldflags "-X '{{.Module}}/internal/buildinfo.Version=v0.1.0' \
+  -X '{{.Module}}/internal/buildinfo.Commit=$(git rev-parse --short HEAD)' \
+  -X '{{.Module}}/internal/buildinfo.Date=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" .
 ```
 
-CLI `version`、启动 banner、以及 Version RPC 均读取 `version` 包，无需再设置环境变量。
+CLI `version` 和启动时版本输出均读取 `internal/buildinfo` 包，无需再设置环境变量。
+
+RPC 项目默认不暴露版本服务；请在 `desc/proto/` 中定义业务 RPC 契约后运行 `pzero gen`。
 
 ## Generate code
 

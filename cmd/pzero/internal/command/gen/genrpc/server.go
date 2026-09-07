@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	rpcparser "github.com/zeromicro/go-zero/tools/goctl/rpc/parser"
@@ -18,6 +19,51 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
 )
+
+func rewriteGeneratedPBImport(path, goPackage, packageName, generatedQualifier string) error {
+	fset := token.NewFileSet()
+	f, err := goparser.ParseFile(fset, path, nil, goparser.ParseComments)
+	if err != nil {
+		return err
+	}
+
+	changed := false
+	for _, imp := range f.Imports {
+		importPath, err := strconv.Unquote(imp.Path.Value)
+		if err != nil {
+			continue
+		}
+		aliasedGoPackage := goPackage
+		if packageName != "" {
+			aliasedGoPackage += ";" + packageName
+		}
+		if importPath == aliasedGoPackage || (strings.Contains(importPath, "/pbout/") && (strings.HasSuffix(importPath, "/"+goPackage) || strings.HasSuffix(importPath, "/"+aliasedGoPackage))) {
+			imp.Path.Value = strconv.Quote(goPackage)
+			if packageName != "" {
+				imp.Name = ast.NewIdent(packageName)
+			}
+			changed = true
+		}
+	}
+	if changed && packageName != "" && generatedQualifier != "" && packageName != generatedQualifier {
+		ast.Inspect(f, func(node ast.Node) bool {
+			ident, ok := node.(*ast.Ident)
+			if ok && ident.Name == generatedQualifier {
+				ident.Name = packageName
+			}
+			return true
+		})
+	}
+	if !changed {
+		return nil
+	}
+
+	buf := bytes.NewBuffer(nil)
+	if err := goformat.Node(buf, fset, f); err != nil {
+		return err
+	}
+	return os.WriteFile(path, buf.Bytes(), 0o644)
+}
 
 type ServerFile struct {
 	DescFilepath string
@@ -32,6 +78,10 @@ func (jr *PzeroRpc) genServer(serverImports, pbImports ImportLines, registerServ
 		"PbImports":       pbImports,
 		"RegisterServers": registerServers,
 	}, embeded.ReadTemplateFile(filepath.Join("rpc", "server.go.tpl")))
+	if err != nil {
+		return err
+	}
+	serverFile, err = goformat.Source(serverFile)
 	if err != nil {
 		return err
 	}

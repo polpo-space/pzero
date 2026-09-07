@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/common-nighthawk/go-figure"
 	"github.com/spf13/cobra"
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -25,9 +24,6 @@ var serverCmd = &cobra.Command{
 		// set up logger
 		logx.Must(logx.SetUp(c.Log.LogConf))
 
-		// print banner
-		printBanner(c.Rest.Name)
-		// print version
 		printVersion()
 
 		// create service context
@@ -47,10 +43,6 @@ var serverCmd = &cobra.Command{
         logx.Infof("Starting rest server at %s:%d...", c.Rest.Host, c.Rest.Port)
 		group.Start()
 	},
-}
-
-func printBanner(serviceName string) {
-	figure.NewColorFigure(serviceName, "starwars", "green", false).Print()
 }
 
 func init() {

@@ -284,10 +284,6 @@ func FindApiFiles(dir string) ([]string, error) {
 	return findDescFiles(dir, ".api")
 }
 
-func FindSqlFiles(dir string) ([]string, error) {
-	return findDescFiles(dir, ".sql")
-}
-
 func FindRouteApiFiles(dir string) ([]string, error) {
 	var routeFiles []string
 	files, err := findDescFiles(dir, ".api")

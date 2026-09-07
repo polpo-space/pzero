@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package pzero.api;
+
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/polpo-space/pzero/proto/api";
+
+message ZrpcRule {
+  string middleware = 1;
+}
+
+extend google.protobuf.MethodOptions {
+  ZrpcRule zrpc = 10002;
+}
+
+extend google.protobuf.ServiceOptions {
+  ZrpcRule zrpc_group = 10003;
+}

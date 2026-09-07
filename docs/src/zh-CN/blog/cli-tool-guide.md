@@ -34,8 +34,6 @@ pzero 提供了丰富的**官方模板**和**第三方模板**，帮助你快速
 **🌍 第三方模板**：
 - 欢迎贡献你自己的模板，帮助更多开发者快速启动项目！
 
-访问 **[pzero 模板市场](https://templates.jzero.io/)** 了解更多模板信息和使用指南。
-
 ![](https://oss.jaronnie.com/image-20260409190255415.png)
 
 ---
@@ -714,8 +712,6 @@ cd your-cli
 ## 相关资源
 
 - **pzero GitHub**: [https://github.com/polpo-space/pzero](https://github.com/polpo-space/pzero)
-- **pzero 文档**: [https://docs.jzero.io](https://docs.jzero.io)
-- **CLI 模板**: [https://templates.jzero.io/external/cli/](https://templates.jzero.io/external/cli/)
 - **Cobra 文档**: [https://github.com/spf13/cobra](https://github.com/spf13/cobra)
 - **Viper 文档**: [https://github.com/spf13/viper](https://github.com/spf13/viper)
 

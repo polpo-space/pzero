@@ -36,4 +36,4 @@ updateData := map[string]any{
 - Use generated field constants
 - Do not add redundant nil checks after `FindOne`
 - Create migrations for every schema change
-- Use `InsertV2` when you need inserted IDs
+- Use `Insert` when you need inserted IDs (PostgreSQL `RETURNING`)

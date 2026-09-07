@@ -1,17 +1,18 @@
-package migrator
+package cmd
 
 import (
 	"bytes"
 	"errors"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
+
+	"github.com/polpo-space/pzero/runtime/migrator"
 )
 
 type fakeMigrator struct {
@@ -175,10 +176,9 @@ func TestMigrateCreateWritesTimestampedPairWithoutLoadingConfig(t *testing.T) {
 	if loaded {
 		t.Fatal("create must not load database config")
 	}
-	version := strconv.FormatInt(fixedTime().Unix(), 10)
 	for _, name := range []string{
-		version + "_add_local_check.up.sql",
-		version + "_add_local_check.down.sql",
+		"20260526094530_add_local_check.up.sql",
+		"20260526094530_add_local_check.down.sql",
 	} {
 		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
 			t.Fatalf("expected migration file %s: %v", name, err)
@@ -190,7 +190,7 @@ func TestMigrateCreateRejectsDuplicateVersion(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	existing := strconv.FormatInt(fixedTime().Unix(), 10) + "_existing.up.sql"
+	existing := "20260526094530_existing.up.sql"
 	if err := os.WriteFile(filepath.Join(dir, existing), []byte("-- existing\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -201,28 +201,18 @@ func TestMigrateCreateRejectsDuplicateVersion(t *testing.T) {
 	}
 }
 
-func TestMigrateCreateIgnoresUnrelatedSQLAndAcceptsUpstreamNames(t *testing.T) {
+func TestMigrateCreateRejectsUnrecognizedSQLFiles(t *testing.T) {
 	t.Parallel()
 
 	dir := t.TempDir()
-	for _, existing := range []string{"notes.sql", "20260101_Add-Index.up.sql"} {
-		if err := os.WriteFile(filepath.Join(dir, existing), []byte("-- existing\n"), 0o644); err != nil {
-			t.Fatal(err)
-		}
+	if err := os.WriteFile(filepath.Join(dir, "notes.sql"), []byte("-- unrelated\n"), 0o644); err != nil {
+		t.Fatal(err)
 	}
 	cmd, _ := newCommandForTest(t, &fakeMigrator{}, fixedTime(), dir)
 	cmd.SetArgs([]string{"migrate", "create", "add local check"})
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("create should ignore unrelated SQL and accept upstream-compatible names: %v", err)
-	}
-}
-
-func TestGeneratedVersionFits32BitMigrateRange(t *testing.T) {
-	t.Parallel()
-
-	version := fixedTime().Unix()
-	if version > int64(^uint32(0)>>1) {
-		t.Fatalf("generated version %d does not fit a 32-bit int", version)
+	err := cmd.Execute()
+	if err == nil || !strings.Contains(err.Error(), "unrecognized format") {
+		t.Fatalf("expected unrecognized migration file error, got %v", err)
 	}
 }
 
@@ -283,7 +273,7 @@ func newCommandForTestWithLoader(
 	root.SetErr(out)
 	root.AddCommand(newCommand(
 		loader,
-		withMigratorFactory(func(sqlx.SqlConf) (Migrator, error) { return fake, nil }),
+		withMigratorFactory(func(sqlx.SqlConf) (migrator.Migrator, error) { return fake, nil }),
 		withNow(func() time.Time { return now }),
 		withMigrationDir(migrationDir),
 	))

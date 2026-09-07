@@ -167,9 +167,9 @@ pzero template build --name myapi
 pzero new mysimpleapi --local myapi
 
 # 但是你发现该模板仅允许本地使用, 为了达到通用的效果
-# 你可以在远程仓库如 github 创建一个 templates 仓库(假设为 https://github.com/jzero-io/templates)
+# 你可以在 GitHub 等远程托管平台创建一个 templates 仓库
 # 然后将 $HOME/.pzero/templates/local/myapi 下的内容放到仓库中, 并上传到 myapi 分支
-pzero new project_name --remote https://github.com/jzero-io/templates --branch myapi
+pzero new project_name --remote https://github.com/your-org/templates --branch myapi
 ```
 
 模板结构如下:

@@ -1,5 +1,5 @@
 rest:
-    name: {{ .APP }}-api
+    name: {{ .APP }}
     host: 0.0.0.0
     port: 8001
 

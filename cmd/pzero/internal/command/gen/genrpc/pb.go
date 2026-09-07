@@ -3,7 +3,6 @@ package genrpc
 import (
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/jhump/protoreflect/desc/protoparse"
 	"github.com/zeromicro/go-zero/tools/goctl/rpc/execx"
@@ -17,50 +16,48 @@ func (jr *PzeroRpc) genNoRpcServiceExcludeThirdPartyProto(protoDirPath string) e
 	if err != nil {
 		return err
 	}
+	if len(excludeThirdPartyProtoFiles) == 0 {
+		return nil
+	}
 
-	// 获取 proto 的 go_package
+	protoDirs := config.C.ProtoDirs()
 	var protoParser protoparse.Parser
 	protoParser.InferImportPaths = false
-
-	protoDir := filepath.Join("desc", "proto")
-	thirdPartyProtoDir := filepath.Join("desc", "proto", "third_party")
-	protoParser.ImportPaths = []string{protoDir, thirdPartyProtoDir}
+	protoParser.ImportPaths = buildProtoImportPaths(protoDirs)
 	protoParser.IncludeSourceCodeInfo = true
 
 	for _, v := range excludeThirdPartyProtoFiles {
-		rel, err := filepath.Rel(protoDir, v)
+		_, rel, err := relToProtoDir(v, protoDirs)
 		if err != nil {
-			return err
+			rel, err = filepath.Rel(protoDirPath, v)
+			if err != nil {
+				return err
+			}
 		}
 
 		fds, err := protoParser.ParseFiles(rel)
 		if err != nil {
 			return err
 		}
-
 		if len(fds) == 0 {
 			continue
 		}
 
 		goPackage := fds[0].AsFileDescriptorProto().GetOptions().GetGoPackage()
+		if isExternalGoPackage(goPackage) {
+			continue
+		}
+		mapped := resolveGoPackageImport(jr.Module, goPackage)
 
-		command := fmt.Sprintf("protoc %s -I%s -I%s --go_out=%s --go_opt=module=%s --go_opt=M%s=%s --go-grpc_out=%s --go-grpc_opt=module=%s",
+		command := fmt.Sprintf("protoc %s%s --go_out=%s --go_opt=module=%s --go_opt=M%s=%s --go-grpc_out=%s --go-grpc_opt=module=%s",
 			v,
-			config.C.ProtoDir(),
-			filepath.Join(config.C.ProtoDir(), "third_party"),
+			buildProtocIncludeArgs(protoDirs),
 			filepath.Join("."),
 			jr.Module,
 			rel,
-			func() string {
-				if strings.HasPrefix(goPackage, jr.Module) {
-					return goPackage
-				}
-				return filepath.ToSlash(filepath.Join(jr.Module, "internal", goPackage))
-			}(),
+			mapped,
 			filepath.Join("."),
 			jr.Module)
-
-		// Debug removed(command)
 
 		_, err = execx.Run(command, config.C.Wd())
 		if err != nil {

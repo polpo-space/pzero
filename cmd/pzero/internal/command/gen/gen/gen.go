@@ -59,7 +59,7 @@ func Run() error {
 		return console.Green("Gen") + " " + console.Yellow(modelTitle)
 	}
 
-	modelHeaderShown := config.C.Gen.GitChange && !config.C.Quiet && pathx.FileExists(config.C.SqlDir())
+	modelHeaderShown := config.C.Gen.GitChange && !config.C.Quiet && config.C.Gen.ModelDatasource
 
 	// Show box header immediately for git-change mode only if sql dir exists
 	if modelHeaderShown {

@@ -48,12 +48,12 @@ func NewModel(conn sqlx.SqlConn, op ...opts.Opt[modelx.ModelOpts]) Model {
 	{{$v.Name | ToCamel}}CacheOpts := opts.DefaultApply(op...).CacheOpts
 	{{if $v.HasCacheExpiry}}
 	if expiry, ok := ModelExpiryTable["{{$v.Name}}"]; ok {
-		{{$v.Name | ToCamel}}CacheOpts = append({{$v.Name | ToCamel}}CacheOpts, cache.WithExpiry(time.Duration(expiry)*time.Millisecond))
+		{{$v.Name | ToCamel}}CacheOpts = append({{$v.Name | ToCamel}}CacheOpts, cache.WithExpiry(time.Duration(expiry)*time.Second))
 	}
 	{{end}}
 	{{if $v.HasNotFoundExpiry}}
 	if notFoundExpiry, ok := ModelNotFoundExpiryTable["{{$v.Name}}"]; ok {
-		{{$v.Name | ToCamel}}CacheOpts = append({{$v.Name | ToCamel}}CacheOpts, cache.WithNotFoundExpiry(time.Duration(notFoundExpiry)*time.Millisecond))
+		{{$v.Name | ToCamel}}CacheOpts = append({{$v.Name | ToCamel}}CacheOpts, cache.WithNotFoundExpiry(time.Duration(notFoundExpiry)*time.Second))
 	}{{end}}{{end}}{{end}}return Model{
          {{range $v := .TableInfos}}{{if and $.ModelCache (or $v.HasCacheExpiry $v.HasNotFoundExpiry)}}{{$v.Name | FirstUpper | ToCamel}}: {{$v.Name}}.New{{ $v.Name | FirstUpper | ToCamel }}Model(conn, append(op, modelx.WithCacheOpts({{$v.Name | ToCamel}}CacheOpts...))...),{{else}}{{$v.Name | FirstUpper | ToCamel}}: {{$v.Name}}.New{{ $v.Name | FirstUpper | ToCamel }}Model(conn, op...),{{end}}
          {{end}}
@@ -66,12 +66,12 @@ func NewModel(conn sqlx.SqlConn, op ...opts.Opt[modelx.ModelOpts]) Model {
 	{{$vv.Name | ToCamel}}CacheOpts := opts.DefaultApply(op...).CacheOpts
 	{{if $vv.HasCacheExpiry}}
 	if expiry, ok := ModelExpiryTable["{{$vv.FullName}}"]; ok {
-		{{$vv.Name | ToCamel}}CacheOpts = append({{$vv.Name | ToCamel}}CacheOpts, cache.WithExpiry(time.Duration(expiry)*time.Millisecond))
+		{{$vv.Name | ToCamel}}CacheOpts = append({{$vv.Name | ToCamel}}CacheOpts, cache.WithExpiry(time.Duration(expiry)*time.Second))
 	}
 	{{end}}
 	{{if $vv.HasNotFoundExpiry}}
 	if notFoundExpiry, ok := ModelNotFoundExpiryTable["{{$vv.FullName}}"]; ok {
-		{{$vv.Name | ToCamel}}CacheOpts = append({{$vv.Name | ToCamel}}CacheOpts, cache.WithNotFoundExpiry(time.Duration(notFoundExpiry)*time.Millisecond))
+		{{$vv.Name | ToCamel}}CacheOpts = append({{$vv.Name | ToCamel}}CacheOpts, cache.WithNotFoundExpiry(time.Duration(notFoundExpiry)*time.Second))
 	}
 	{{end}}
 	{{end}}

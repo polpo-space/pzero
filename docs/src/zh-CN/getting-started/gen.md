@@ -27,6 +27,8 @@ docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen
 ```
 :::
 
+Model 生成需要在配置中开启 `model-datasource: true` 并提供 `model-datasource-url`。`desc/sql` 仅为 schema snapshot，不会触发 model 生成。
+
 ## 基于 git 变动生成代码
 
 ::: tip 基于 git status -su 获取新增/改动的可描述文件
@@ -38,10 +40,11 @@ pzero gen --git-change
 
 ## 指定 desc 生成代码
 
+`--desc` 用于限定 **api/proto** 生成范围；指定后会跳过 model 生成。
+
 ```shell
 pzero gen --desc desc/api/xx.api
 pzero gen --desc desc/proto/xx.proto
-pzero gen --desc desc/sql/xx.sql
 ```
 
 ## 忽略指定 desc 生成代码
@@ -49,7 +52,6 @@ pzero gen --desc desc/sql/xx.sql
 ```shell
 pzero gen --desc-ignore desc/api/xx.api
 pzero gen --desc-ignore desc/proto/xx.proto
-pzero gen --desc-ignore desc/sql/xx.sql
 ```
 
 更多用法请参阅: [pzero 指南](../guide/pzero.md)
