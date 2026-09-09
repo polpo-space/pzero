@@ -42,3 +42,12 @@ jobs:
       - name: Test CLI
         working-directory: cmd/pzero
         run: go test ./...
+
+      - name: Test RPC toolchain compatibility
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          go build -o "$RUNNER_TEMP/goctl" github.com/zeromicro/go-zero/tools/goctl
+          go install google.golang.org/protobuf/cmd/protoc-gen-go
+          go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.1
+          GOCTL="$RUNNER_TEMP/goctl" go test ./cmd/pzero/internal/command/gen/genrpc -run TestGoctlCrossProtoServices -count=1

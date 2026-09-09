@@ -166,6 +166,10 @@ func (ja *PzeroApi) Gen(progressChan chan<- progress.Message) (map[string]*spec.
 		return apiSpecMap, nil
 	}
 
+	if err := validateAPITypes(apiFiles, apiSpecMap); err != nil {
+		return nil, err
+	}
+
 	err = ja.generateApiCode(apiFiles, apiSpecMap, genCodeApiFiles, genCodeApiSpecMap, currentRoutesMap, importedFiles, progressChan)
 	if err != nil {
 		return nil, err
@@ -381,10 +385,8 @@ func normalizeAPITrailingNewline(path string) error {
 	return os.WriteFile(path, []byte(normalized), 0o644)
 }
 
-// patchHandlerAndLogicFiles 并发 patch handler 和 logic 文件
+// patchHandlerAndLogicFiles patches files in order because compact handlers can share an output file.
 func (ja *PzeroApi) patchHandlerAndLogicFiles(genCodeApiFiles []string, apiSpecMap map[string]*spec.ApiSpec, genCodeApiSpecMap map[string]*spec.ApiSpec) error {
-	var eg errgroup.Group
-
 	for _, apiFile := range genCodeApiFiles {
 		if len(apiSpecMap[apiFile].Service.Routes()) == 0 {
 			continue
@@ -392,40 +394,36 @@ func (ja *PzeroApi) patchHandlerAndLogicFiles(genCodeApiFiles []string, apiSpecM
 
 		currentFile := apiFile
 
-		eg.Go(func() error {
-			logicFiles, err := ja.getAllLogicFiles(currentFile, apiSpecMap[currentFile])
-			if err != nil {
-				return err
-			}
+		logicFiles, err := ja.getAllLogicFiles(currentFile, apiSpecMap[currentFile])
+		if err != nil {
+			return err
+		}
 
-			handlerFiles, err := ja.getAllHandlerFiles(currentFile, apiSpecMap[currentFile])
-			if err != nil {
-				return err
-			}
+		handlerFiles, err := ja.getAllHandlerFiles(currentFile, apiSpecMap[currentFile])
+		if err != nil {
+			return err
+		}
 
-			// Patch handler files
-			for _, file := range handlerFiles {
-				if _, ok := genCodeApiSpecMap[file.ApiFilepath]; ok {
-					if err = ja.patchHandler(file, genCodeApiSpecMap); err != nil {
-						return errors.Wrapf(err, "rewrite %s", file.Path)
-					}
+		// Patch handler files
+		for _, file := range handlerFiles {
+			if _, ok := genCodeApiSpecMap[file.ApiFilepath]; ok {
+				if err = ja.patchHandler(file, genCodeApiSpecMap); err != nil {
+					return errors.Wrapf(err, "rewrite %s", file.Path)
 				}
 			}
+		}
 
-			// Patch logic files
-			for _, file := range logicFiles {
-				if _, ok := genCodeApiSpecMap[file.DescFilepath]; ok {
-					if err = ja.patchLogic(file, genCodeApiSpecMap); err != nil {
-						return errors.Wrapf(err, "rewrite %s", file.Path)
-					}
+		// Patch logic files
+		for _, file := range logicFiles {
+			if _, ok := genCodeApiSpecMap[file.DescFilepath]; ok {
+				if err = ja.patchLogic(file, genCodeApiSpecMap); err != nil {
+					return errors.Wrapf(err, "rewrite %s", file.Path)
 				}
 			}
-
-			return nil
-		})
+		}
 	}
 
-	return eg.Wait()
+	return nil
 }
 
 // generateRoutesGoFile 生成 routes.go 文件
