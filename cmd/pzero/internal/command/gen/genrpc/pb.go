@@ -27,12 +27,13 @@ func (jr *PzeroRpc) genNoRpcServiceExcludeThirdPartyProto(protoDirPath string) e
 	protoParser.IncludeSourceCodeInfo = true
 
 	for _, v := range excludeThirdPartyProtoFiles {
-		_, rel, err := relToProtoDir(v, protoDirs)
+		protoRoot, rel, err := relToProtoDir(v, protoDirs)
 		if err != nil {
 			rel, err = filepath.Rel(protoDirPath, v)
 			if err != nil {
 				return err
 			}
+			protoRoot = protoDirPath
 		}
 
 		fds, err := protoParser.ParseFiles(rel)
@@ -51,7 +52,7 @@ func (jr *PzeroRpc) genNoRpcServiceExcludeThirdPartyProto(protoDirPath string) e
 
 		command := fmt.Sprintf("protoc %s%s --go_out=%s --go_opt=module=%s --go_opt=M%s=%s --go-grpc_out=%s --go-grpc_opt=module=%s",
 			v,
-			buildProtocIncludeArgs(protoDirs),
+			buildProtocIncludeArgs(protoDirs, protoRoot),
 			filepath.Join("."),
 			jr.Module,
 			rel,

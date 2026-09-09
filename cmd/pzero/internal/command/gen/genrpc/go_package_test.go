@@ -3,6 +3,7 @@ package genrpc
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/jhump/protoreflect/desc/protoparse"
@@ -91,6 +92,44 @@ service RegionService { rpc Get(RegionRequest) returns (RegionResponse); }
 	}
 	if _, err := parser.ParseFiles(names...); err != nil {
 		t.Fatalf("parse service protos as %q: %v", names, err)
+	}
+}
+
+func TestBuildProtocIncludeArgsPrefersCanonicalRoot(t *testing.T) {
+	root := t.TempDir()
+	protoRoot := filepath.Join(root, "proto")
+	protoDir := filepath.Join(protoRoot, "device", "v1")
+
+	previousIncludes := config.C.Gen.ProtoInclude
+	config.C.Gen.ProtoInclude = []string{protoRoot}
+	t.Cleanup(func() { config.C.Gen.ProtoInclude = previousIncludes })
+
+	file := filepath.Join(protoDir, "region.proto")
+	preferred, rel, err := relToProtoDir(file, []string{protoDir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if preferred != protoRoot || rel != "device/v1/region.proto" {
+		t.Fatalf("canonical proto = root %q rel %q, want root %q rel device/v1/region.proto", preferred, rel, protoRoot)
+	}
+
+	args := buildProtocIncludeArgs([]string{protoDir}, preferred)
+	wantPrefix := " -I" + protoRoot
+	if !strings.HasPrefix(args, wantPrefix) {
+		t.Fatalf("include args %q must start with canonical root %q", args, protoRoot)
+	}
+	rootArg := "-I" + protoRoot
+	rootCount := 0
+	for _, arg := range strings.Fields(args) {
+		if arg == rootArg {
+			rootCount++
+		}
+	}
+	if rootCount != 1 {
+		t.Fatalf("canonical root occurrence count = %d, want 1 in %q", rootCount, args)
+	}
+	if !strings.Contains(args, " -I"+protoDir) {
+		t.Fatalf("include args %q must retain configured proto-dir %q", args, protoDir)
 	}
 }
 
