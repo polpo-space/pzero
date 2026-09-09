@@ -137,8 +137,8 @@ github.com/jaronnie/genius v0.6.1 h1:Uc5DkO9YuyqcQLEz6jjpWF9dwHX7UKwOFVjZEdtYlHc
 github.com/jaronnie/genius v0.6.1/go.mod h1:FHpApD8c1nRZGJvIoD+1H7VydBvVOoTU95CcdAo38bY=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOlocH6Fxy8MmwDt+yVQYULKfN0RoTN8A=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i6rXxKeerYnT8Nvf0QmHCRC1n8sfWVwXF2Frvo=
-github.com/jhump/protoreflect v1.18.0 h1:TOz0MSR/0JOZ5kECB/0ufGnC2jdsgZ123Rd/k4Z5/2w=
-github.com/jhump/protoreflect v1.18.0/go.mod h1:ezWcltJIVF4zYdIFM+D/sHV4Oh5LNU08ORzCGfwvTz8=
+github.com/jhump/protoreflect v1.18.1 h1:h4odAaLg9wyn7yHxMF7sSkJ7JfLwK1oy37/1Pi212GE=
+github.com/jhump/protoreflect v1.18.1/go.mod h1:I2yar2oJEMf0k4EMryPzfV0tvGwN/SejJziYBOpETQo=
 github.com/jhump/protoreflect/v2 v2.0.0-beta.1 h1:Dw1rslK/VotaUGYsv53XVWITr+5RCPXfvvlGrM/+B6w=
 github.com/jhump/protoreflect/v2 v2.0.0-beta.1/go.mod h1:D9LBEowZyv8/iSu97FU2zmXG3JxVTmNw21mu63niFzU=
 github.com/kevinburke/ssh_config v1.2.0 h1:x584FjTGwHzMwvHx18PXxbBVzfnxogHaAReU4gf13a4=
@@ -339,8 +339,8 @@ google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 h1:
 google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
 google.golang.org/grpc v1.82.1 h1:NnAxzGRA0677vCa4BUkOAnO5+FfQqVl9iUXeD0IqcGE=
 google.golang.org/grpc v1.82.1/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
-google.golang.org/protobuf v1.36.11 h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
-google.golang.org/protobuf v1.36.11/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+google.golang.org/protobuf v1.36.12 h1:pJOKDDOyeXErUroCihFAd5LQuwXBSpVnKGrj5o/fwxc=
+google.golang.org/protobuf v1.36.12/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
