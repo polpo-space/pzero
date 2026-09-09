@@ -52,6 +52,11 @@ type apiFileTypes struct {
 	goPackage string
 }
 
+type apiTypeDefinition struct {
+	source    string
+	canonical string
+}
+
 // collectAndGenerateTypesByPackage 收集并按包生成 types.go 文件
 func (ja *PzeroApi) collectAndGenerateTypesByPackage(apiFiles []string, apiSpecMap map[string]*spec.ApiSpec) (typesWithPackage []apiFileTypes, typesWithoutPackage []spec.Type, err error) {
 	var eg errgroup.Group
@@ -83,11 +88,38 @@ func (ja *PzeroApi) collectAndGenerateTypesByPackage(apiFiles []string, apiSpecM
 
 	results := make([]apiFileTypes, 0, len(apiFiles))
 	typesByPackage := make(map[string][]spec.Type)
+	typeDefinitionsByPackage := make(map[string]map[string]apiTypeDefinition)
 
 	for _, fileTypes := range resultsByFile {
 		if fileTypes.goPackage != "" {
 			results = append(results, fileTypes)
-			typesByPackage[fileTypes.goPackage] = append(typesByPackage[fileTypes.goPackage], fileTypes.types...)
+			definitions := typeDefinitionsByPackage[fileTypes.goPackage]
+			if definitions == nil {
+				definitions = make(map[string]apiTypeDefinition)
+				typeDefinitionsByPackage[fileTypes.goPackage] = definitions
+			}
+
+			for _, currentType := range fileTypes.types {
+				canonical, err := canonicalAPIType(currentType)
+				if err != nil {
+					return nil, nil, fmt.Errorf("render API type %q from %s: %w", currentType.Name(), fileTypes.file, err)
+				}
+				if existing, ok := definitions[currentType.Name()]; ok {
+					if existing.canonical != canonical {
+						return nil, nil, fmt.Errorf(
+							"conflicting API type %q in go_package %q: %s and %s",
+							currentType.Name(), fileTypes.goPackage, existing.source, fileTypes.file,
+						)
+					}
+					continue
+				}
+
+				definitions[currentType.Name()] = apiTypeDefinition{
+					source:    fileTypes.file,
+					canonical: canonical,
+				}
+				typesByPackage[fileTypes.goPackage] = append(typesByPackage[fileTypes.goPackage], currentType)
+			}
 			continue
 		}
 
@@ -115,6 +147,10 @@ func (ja *PzeroApi) collectAndGenerateTypesByPackage(apiFiles []string, apiSpecM
 	}
 
 	return results, typesWithoutPackage, nil
+}
+
+func canonicalAPIType(t spec.Type) (string, error) {
+	return gogen.BuildTypes([]spec.Type{t})
 }
 
 // processApiFileTypes 处理单个 API 文件的类型
