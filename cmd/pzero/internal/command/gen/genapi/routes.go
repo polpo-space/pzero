@@ -13,17 +13,21 @@ import (
 	"github.com/rinchsan/gosimports"
 	"github.com/zeromicro/go-zero/tools/goctl/api/spec"
 	zeroconfig "github.com/zeromicro/go-zero/tools/goctl/config"
-	"github.com/zeromicro/go-zero/tools/goctl/pkg/golang"
 	"github.com/zeromicro/go-zero/tools/goctl/util"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 	jgogen "github.com/polpo-space/pzero/cmd/pzero/internal/pkg/gogen"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/mod"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
 )
 
 func (ja *PzeroApi) getRoutesGoBody(fp string, apiSpecMap map[string]*spec.ApiSpec, currentRoutesMap map[string][]spec.Route) (string, error) {
-	rootPkg, projectPkg, err := golang.GetParentPackageWithModule(config.C.Wd(), ja.Module)
+	rootPkg, err := mod.GetParentPackage(config.C.Wd())
+	if err != nil {
+		return "", err
+	}
+	project, err := mod.GetGoMod(config.C.Wd())
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +76,7 @@ func (ja *PzeroApi) getRoutesGoBody(fp string, apiSpecMap map[string]*spec.ApiSp
 	}
 
 	// 使用过滤后的 ApiSpec 生成路由代码
-	routesGoBody, err := jgogen.GenRoutesString(rootPkg, projectPkg, &zeroconfig.Config{NamingFormat: config.C.Style}, filteredSpec)
+	routesGoBody, err := jgogen.GenRoutesString(rootPkg, project.Path, &zeroconfig.Config{NamingFormat: config.C.Style}, filteredSpec)
 	if err != nil {
 		return "", err
 	}

@@ -17,7 +17,6 @@ import (
 	"github.com/rinchsan/gosimports"
 	"github.com/spf13/cast"
 	"github.com/zeromicro/go-zero/tools/goctl/api/spec"
-	"github.com/zeromicro/go-zero/tools/goctl/pkg/golang"
 	"github.com/zeromicro/go-zero/tools/goctl/util"
 	"github.com/zeromicro/go-zero/tools/goctl/util/format"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
@@ -274,7 +273,7 @@ func UpdateImportedModule(f *ast.File, fset *token.FileSet, workDir, module stri
 			return err
 		}
 		if len(mods) > 1 {
-			rootPkg, _, err := golang.GetParentPackage(workDir)
+			rootPkg, err := mod.GetParentPackage(workDir)
 			if err != nil {
 				return err
 			}

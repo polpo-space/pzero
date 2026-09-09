@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	goformat "go/format"
+	"go/parser"
 	"go/token"
 	"io/fs"
 	"os"
@@ -159,9 +161,6 @@ func (ja *PzeroApi) writeTypesFile(goPackage string, types []spec.Type) error {
 
 // generateDefaultTypesFile 生成默认的 types.go 文件
 func (ja *PzeroApi) generateDefaultTypesFile(allTypes []spec.Type) error {
-	// 去重
-	uniqueTypes := ja.deduplicateTypes(allTypes)
-
 	typesDir, err := ja.typesOutputDir("")
 	if err != nil {
 		return err
@@ -170,7 +169,7 @@ func (ja *PzeroApi) generateDefaultTypesFile(allTypes []spec.Type) error {
 		return err
 	}
 
-	typesGoBytes, err := ja.renderTypesFile(uniqueTypes, "types")
+	typesGoBytes, err := ja.renderTypesFile(allTypes, "types")
 	if err != nil {
 		return err
 	}
@@ -184,7 +183,11 @@ func (ja *PzeroApi) generateDefaultTypesFile(allTypes []spec.Type) error {
 }
 
 func (ja *PzeroApi) renderTypesFile(types []spec.Type, packageName string) ([]byte, error) {
-	typesGoString, err := gogen.BuildTypes(types)
+	unique, err := uniqueAPITypes(types)
+	if err != nil {
+		return nil, err
+	}
+	typesGoString, err := gogen.BuildTypes(unique)
 	if err != nil {
 		return nil, err
 	}
@@ -207,18 +210,55 @@ import "time"
 	return typesGoBytes, nil
 }
 
-// deduplicateTypes 去重类型列表
-func (ja *PzeroApi) deduplicateTypes(types []spec.Type) []spec.Type {
+// uniqueAPITypes compares Go declarations without comments. Preserve first-seen
+// order and documentation; fields, field order, types and tags remain significant.
+func uniqueAPITypes(types []spec.Type) ([]spec.Type, error) {
 	var result []spec.Type
-	exist := make(map[string]struct{})
+	definitions := make(map[string]string)
 	for _, t := range types {
-		if _, ok := exist[t.Name()]; ok {
+		declaration, err := gogen.BuildTypes([]spec.Type{t})
+		if err != nil {
+			return nil, err
+		}
+		fset := token.NewFileSet()
+		node, err := parser.ParseFile(fset, "", "package types\n"+declaration, 0)
+		if err != nil {
+			return nil, err
+		}
+		var canonical bytes.Buffer
+		if err := goformat.Node(&canonical, fset, node); err != nil {
+			return nil, err
+		}
+		if previous, ok := definitions[t.Name()]; ok {
+			if previous != canonical.String() {
+				return nil, fmt.Errorf("conflicting API type %q", t.Name())
+			}
 			continue
 		}
+		definitions[t.Name()] = canonical.String()
 		result = append(result, t)
-		exist[t.Name()] = struct{}{}
 	}
-	return result
+	return result, nil
+}
+
+// validateAPITypes runs before any generation or handler cleanup.
+func validateAPITypes(files []string, specs map[string]*spec.ApiSpec) error {
+	byPackage := make(map[string][]spec.Type)
+	var packages []string
+	for _, file := range files {
+		s := specs[file]
+		pkg := s.Info.Properties["go_package"]
+		if _, ok := byPackage[pkg]; !ok {
+			packages = append(packages, pkg)
+		}
+		byPackage[pkg] = append(byPackage[pkg], s.Types...)
+	}
+	for _, pkg := range packages {
+		if _, err := uniqueAPITypes(byPackage[pkg]); err != nil {
+			return fmt.Errorf("go_package %q: %w", pkg, err)
+		}
+	}
+	return nil
 }
 
 func (ja *PzeroApi) updateHandlerImportedTypesPath(f *ast.File, fset *token.FileSet, file HandlerFile) error {
