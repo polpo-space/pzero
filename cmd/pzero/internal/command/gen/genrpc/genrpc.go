@@ -208,7 +208,13 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 				pbOutDir = pbOutDirExternal
 			}
 
-			includeArgs := buildProtocIncludeArgs(protoDirs)
+			// Keep protoc's logical name for the input file aligned with the
+			// canonical import name selected by relToProtoDir. protoc derives a
+			// file's logical name from the first matching -I root; if a narrower
+			// proto-dir wins before an explicit module include root, the same
+			// physical file can be loaded once as "region.proto" and again as
+			// "device/v1/region.proto" through an import.
+			includeArgs := buildProtocIncludeArgs(protoDirs, protoRoot)
 			command := fmt.Sprintf("goctl rpc protoc %s%s --go_out=%s --go-grpc_out=%s --zrpc_out=%s --client=%t --home %s -m --style %s",
 				v,
 				includeArgs,
@@ -323,8 +329,12 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 				if !pathx.FileExists(pzerodesc.GetProtoDescriptorPath(v)) {
 					_ = os.MkdirAll(filepath.Dir(pzerodesc.GetProtoDescriptorPath(v)), 0o755)
 				}
+				descriptorRoot, _, rootErr := relToProtoDir(v, protoDirs)
+				if rootErr != nil {
+					return nil, rootErr
+				}
 				protocCommand := fmt.Sprintf("protoc --include_imports%s --descriptor_set_out=%s %s",
-					buildProtocIncludeArgs(protoDirs),
+					buildProtocIncludeArgs(protoDirs, descriptorRoot),
 					pzerodesc.GetProtoDescriptorPath(v),
 					v,
 				)
@@ -422,9 +432,23 @@ func buildProtoImportPaths(protoDirs []string) []string {
 	return paths
 }
 
-func buildProtocIncludeArgs(protoDirs []string) string {
+func buildProtocIncludeArgs(protoDirs []string, preferredRoot ...string) string {
+	paths := buildProtoImportPaths(protoDirs)
+	if len(preferredRoot) > 0 && preferredRoot[0] != "" {
+		preferred := filepath.Clean(preferredRoot[0])
+		reordered := make([]string, 0, len(paths))
+		reordered = append(reordered, preferred)
+		for _, path := range paths {
+			if filepath.Clean(path) == preferred {
+				continue
+			}
+			reordered = append(reordered, path)
+		}
+		paths = reordered
+	}
+
 	var b strings.Builder
-	for _, p := range buildProtoImportPaths(protoDirs) {
+	for _, p := range paths {
 		b.WriteString(" -I")
 		b.WriteString(p)
 	}
