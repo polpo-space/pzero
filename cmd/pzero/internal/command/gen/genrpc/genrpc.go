@@ -284,7 +284,7 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			}
 
 			// goctl zrpc_out=. 会在已有 cmd/ 脚手架项目里再吐一份入口；清掉以免污染
-			jr.cleanupGoctlFrameArtifacts(v)
+			jr.cleanupGoctlFrameArtifacts(v, protoSpecMap[v].Package.Name)
 
 			if progressChan != nil {
 				progressChan <- progress.NewFile(v)
@@ -526,12 +526,18 @@ func isExternalGoPackage(goPackage string) bool {
 }
 
 // cleanupGoctlFrameArtifacts 删除 goctl 在已有 pzero 项目中多余生成的入口/配置。
-func (jr *PzeroRpc) cleanupGoctlFrameArtifacts(protoFile string) {
+func (jr *PzeroRpc) cleanupGoctlFrameArtifacts(protoFile, protoPackage string) {
 	base := strings.TrimSuffix(filepath.Base(protoFile), filepath.Ext(protoFile))
 	wd := config.C.Wd()
 	candidates := []string{
 		filepath.Join(wd, base+".go"),
 		filepath.Join(wd, "etc", base+".yaml"),
+	}
+	if protoPackage != "" {
+		packageEtc := pzerodesc.GetProtoFrameEtcFilename(protoPackage, config.C.Style)
+		if packageEtc != "" {
+			candidates = append(candidates, filepath.Join(wd, "etc", packageEtc))
+		}
 	}
 	// 已有 cmd/ 脚手架时，根目录 main 由 goctl 生成的同名文件应删除
 	if pathx.FileExists(filepath.Join(wd, "cmd")) {
