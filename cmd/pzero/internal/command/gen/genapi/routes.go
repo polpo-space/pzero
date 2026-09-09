@@ -13,7 +13,6 @@ import (
 	"github.com/rinchsan/gosimports"
 	"github.com/zeromicro/go-zero/tools/goctl/api/spec"
 	zeroconfig "github.com/zeromicro/go-zero/tools/goctl/config"
-	"github.com/zeromicro/go-zero/tools/goctl/pkg/golang"
 	"github.com/zeromicro/go-zero/tools/goctl/util"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
@@ -22,12 +21,7 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
 )
 
-func (ja *PzeroApi) getRoutesGoBody(fp string, apiSpecMap map[string]*spec.ApiSpec, currentRoutesMap map[string][]spec.Route) (string, error) {
-	rootPkg, projectPkg, err := golang.GetParentPackageWithModule(config.C.Wd(), ja.Module)
-	if err != nil {
-		return "", err
-	}
-
+func (ja *PzeroApi) getRoutesGoBody(fp, rootPkg, projectPkg string, apiSpecMap map[string]*spec.ApiSpec, currentRoutesMap map[string][]spec.Route) (string, error) {
 	// 获取当前文件的路由（不包含 import）
 	currentRoutes := currentRoutesMap[fp]
 	if len(currentRoutes) == 0 {
