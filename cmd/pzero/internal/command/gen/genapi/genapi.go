@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/zeromicro/go-zero/tools/goctl/api/format"
 	"github.com/zeromicro/go-zero/tools/goctl/api/spec"
+	"github.com/zeromicro/go-zero/tools/goctl/pkg/golang"
 	"github.com/zeromicro/go-zero/tools/goctl/pkg/parser/api/parser"
 	"github.com/zeromicro/go-zero/tools/goctl/rpc/execx"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
@@ -27,6 +28,8 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/osx"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
 )
+
+var routePackageResolver = golang.GetParentPackageWithModule
 
 type PzeroApi struct {
 	Module string
@@ -294,6 +297,11 @@ func (ja *PzeroApi) prepareTemplateDir() (string, error) {
 
 // collectRoutesGoBody 并发收集所有文件的 routesGoBody
 func (ja *PzeroApi) collectRoutesGoBody(apiFiles []string, apiSpecMap map[string]*spec.ApiSpec, currentRoutesMap map[string][]spec.Route, importedFiles map[string]bool) (string, error) {
+	rootPkg, projectPkg, err := routePackageResolver(config.C.Wd(), ja.Module)
+	if err != nil {
+		return "", err
+	}
+
 	var allRoutesGoBodyMap sync.Map
 
 	var eg errgroup.Group
@@ -306,7 +314,7 @@ func (ja *PzeroApi) collectRoutesGoBody(apiFiles []string, apiSpecMap map[string
 
 		currentFile := apiFile
 		eg.Go(func() error {
-			routesGoBody, err := ja.getRoutesGoBody(currentFile, apiSpecMap, currentRoutesMap)
+			routesGoBody, err := ja.getRoutesGoBody(currentFile, rootPkg, projectPkg, apiSpecMap, currentRoutesMap)
 			if err != nil {
 				return err
 			}
