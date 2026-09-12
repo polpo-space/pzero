@@ -21,9 +21,11 @@ gen:
 ```bash
 # migrate first, then generate models from the live schema
 pzero gen
+# regenerate models only; does not rewrite api/rpc
+pzero gen model
 ```
 
-`--desc` scopes api/proto only and skips model generation. Do not pass `.sql` to `--desc`.
+`--desc` scopes api/proto only and skips model generation on the full `pzero gen` pipeline. Do not pass `.sql` to `--desc`. Use `pzero gen model` when the service already has api/proto and you only need table models.
 
 ## Common Methods
 

@@ -15,7 +15,8 @@ pzero 通过 PostgreSQL 数据源生成数据库代码到 `internal/model` 下�
 * `gen.model-driver` 支持 `postgres`（推荐）或 `pgx`
 * model 生成只支持远程数据源模式（`model-datasource: true`）
 * `desc/sql` 是 **schema snapshot**（当前结构镜像），可与 datasource 共存；**不会**、也**不能**作为 `pzero gen` 的 model 输入
-* 通过 `--desc` / `gen.desc` 指定 api/proto 时会跳过 model 生成（限定生成范围）；不要把 `.sql` 传给 `--desc`
+* 通过 `--desc` / `gen.desc` 指定 api/proto 时，全量 `pzero gen` 会跳过 model 生成（限定生成范围）；不要把 `.sql` 传给 `--desc`
+* 只要刷表 model、不重写 api/rpc 时，使用 `pzero gen model`
 
 ## Schema 三分法
 
@@ -102,9 +103,10 @@ gen:
 
 ```shell
 pzero gen
+pzero gen model
 ```
 
-生成的 `internal/model/model.go` 会注册所选表对应的模型代码。
+`pzero gen` 仍会跑 model → api → rpc。`pzero gen model` 只写所选表的 `internal/model`（含 `model.go` 注册）。
 
 pzero 支持多数据源。通过在 `model-datasource-table` 中使用 `database.table` 形式，可以将表映射到指定的数据源。
 
@@ -131,6 +133,7 @@ gen:
 
 ```shell
 pzero gen
+pzero gen model
 ```
 
 生成的 `internal/model/model.go` 会与所选 PostgreSQL 数据源集合保持一致。
@@ -157,6 +160,6 @@ pzero gen
 
 1. 保留 `desc/sql` snapshot；不要删，也不会再阻塞 `pzero gen`。
 2. 配置 `model-datasource: true` 与 `model-datasource-url`，并把 **全部** 需要注册的表写入 `model-datasource-table`（`model.go` 会按该列表全量重写）。
-3. 先 `migrate up`，再 `pzero gen`（无 `--desc`），从数据库结构生成 model。
+3. 先 `migrate up`，再 `pzero gen`（无 `--desc`）或 `pzero gen model`，从数据库结构生成 model。
 4. 生成 API 已 slim：`InsertV2` 改为 `Insert`；不再生成 `WithTable`、`FindSelectedColumnsByCondition`、按唯一索引的 `FindOneBy*`。业务侧请改用 `FindOneByCondition` 或 custom 方法。
 5. 生成 import 会切到 `github.com/polpo-space/pzero/core/stores/{modelx,condition}`。

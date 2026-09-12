@@ -29,6 +29,17 @@ docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen
 
 Model generation requires `model-datasource: true` and `model-datasource-url`. `desc/sql` is only a schema snapshot and does not trigger model generation.
 
+## Generate models only
+
+`pzero gen model` runs the model stage only. It does not regenerate api or rpc, even when `desc/api` or proto files exist.
+
+The command implies datasource mode. Pass `--model-datasource-url` or set it in `.pzero.yaml`.
+
+```shell
+pzero gen model
+pzero gen model --model-datasource-url "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
+```
+
 ## Generate from git changes
 
 ::: tip Uses git status -su for added/changed descriptors

@@ -29,6 +29,17 @@ docker run --rm -v ${PWD}:/app ghcr.io/polpo-space/pzero:latest gen
 
 Model 生成需要在配置中开启 `model-datasource: true` 并提供 `model-datasource-url`。`desc/sql` 仅为 schema snapshot，不会触发 model 生成。
 
+## 只生成 model
+
+`pzero gen model` 只跑 model 段，即使目录里已有 `desc/api` 或 proto，也不会重写 api/rpc。
+
+该命令本身即开启 datasource 模式。URL 可通过 `--model-datasource-url` 或 `.pzero.yaml` 提供。
+
+```shell
+pzero gen model
+pzero gen model --model-datasource-url "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
+```
+
 ## 基于 git 变动生成代码
 
 ::: tip 基于 git status -su 获取新增/改动的可描述文件

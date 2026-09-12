@@ -269,7 +269,7 @@ func (c *Config) ToolVersion() ToolVersion {
 }
 
 func TraverseCommands(prefix string, cmd *cobra.Command) error {
-	err := SetConfig(prefix, cmd.Flags())
+	err := SetConfig(prefix, cmd.LocalFlags())
 	if err != nil {
 		return err
 	}

@@ -94,11 +94,6 @@ func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error
 
 	goctlHome = tempDir
 
-	// --desc / gen.desc 用于限定 api/proto 生成范围；有 desc 时跳过 model，避免无意义全表 regen。
-	if len(config.C.Gen.Desc) != 0 {
-		return nil, nil
-	}
-
 	if len(config.C.Gen.ModelDatasourceTable) == 1 && config.C.Gen.ModelDatasourceTable[0] == "*" {
 		allTables, err = getAllTables(conns)
 		if err != nil {
@@ -162,8 +157,12 @@ func normalizeModelDriver(driver string) (string, error) {
 	}
 }
 
-// hasExplicitSQLDesc reports whether gen.desc/--desc explicitly targets SQL snapshot
+// HasExplicitSQLDesc reports whether gen.desc/--desc explicitly targets SQL snapshot
 // paths. Presence of desc/sql alone is fine and must not block datasource model gen.
+func HasExplicitSQLDesc() bool {
+	return hasExplicitSQLDesc()
+}
+
 func hasExplicitSQLDesc() bool {
 	if len(config.C.Gen.Desc) == 0 {
 		return false
