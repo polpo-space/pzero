@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/gen/gen"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/gen/genswagger"
@@ -48,7 +49,33 @@ var genSwaggerCmd = &cobra.Command{
 	SilenceErrors: true,
 }
 
+// genModelCmd represents the gen model command
+var genModelCmd = &cobra.Command{
+	Use:   "model",
+	Short: `Generate internal/model from PostgreSQL datasource only`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		config.C.Gen.ModelDatasource = true
+		err := gen.RunModel()
+		if err == nil {
+			return nil
+		}
+		if config.C.Quiet {
+			return err
+		}
+		return console.MarkRenderedError(err)
+	},
+	SilenceUsage:  true,
+	SilenceErrors: true,
+}
+
+var commandsRegistered bool
+
 func GetCommand() *cobra.Command {
+	if commandsRegistered {
+		return genCmd
+	}
+	commandsRegistered = true
+
 	{
 		genCmd.Flags().StringSliceP("desc", "", []string{}, "set desc path")
 		genCmd.Flags().StringSliceP("desc-ignore", "", []string{}, "set desc ignore path")
@@ -57,20 +84,29 @@ func GetCommand() *cobra.Command {
 		genCmd.Flags().BoolP("route2code", "", false, "is generate route2code")
 		genCmd.Flags().StringSliceP("proto-dir", "", []string{}, "RPC proto scan roots, default desc/proto")
 		genCmd.Flags().StringSliceP("proto-include", "", []string{}, "proto include path")
-		genCmd.Flags().StringP("model-driver", "", "postgres", "goctl model driver, postgres only")
-		genCmd.Flags().BoolP("model-strict", "", false, "goctl model strict mode, see [https://go-zero.dev/docs/tutorials/cli/model]")
-		genCmd.Flags().StringSliceP("model-ignore-columns", "", []string{"create_at", "created_at", "create_time", "update_at", "updated_at", "update_time"}, "ignore columns of postgres model")
-		genCmd.Flags().StringP("model-schema", "", "", "model schema")
-		genCmd.Flags().BoolP("model-datasource", "", false, "goctl datasource")
-		genCmd.Flags().StringSliceP("model-datasource-url", "", []string{}, "goctl model datasource url")
-		genCmd.Flags().StringSliceP("model-datasource-table", "", []string{"*"}, "goctl model datasource table")
-		genCmd.Flags().BoolP("model-cache", "", false, "goctl model cache")
-		genCmd.Flags().StringSliceP("model-cache-table", "", []string{"*"}, "goctl model cache tables")
-		genCmd.Flags().StringP("model-cache-prefix", "", "cache", "goctl model cache prefix")
 		genCmd.Flags().BoolP("rpc-client", "", false, "generate rpc client code")
 	}
 
 	{
+		// 同一组 flag 挂到 gen 与 gen model，键仍是 gen.model-datasource-*。
+		// 不用 PersistentFlags，避免 pzero gen swagger -h 漏出无关开关。
+		modelFlags := pflag.NewFlagSet("model", pflag.ContinueOnError)
+		modelFlags.StringP("model-driver", "", "postgres", "goctl model driver, postgres only")
+		modelFlags.BoolP("model-strict", "", false, "goctl model strict mode, see [https://go-zero.dev/docs/tutorials/cli/model]")
+		modelFlags.StringSliceP("model-ignore-columns", "", []string{"create_at", "created_at", "create_time", "update_at", "updated_at", "update_time"}, "ignore columns of postgres model")
+		modelFlags.StringP("model-schema", "", "", "model schema")
+		modelFlags.BoolP("model-datasource", "", false, "goctl datasource")
+		modelFlags.StringSliceP("model-datasource-url", "", []string{}, "goctl model datasource url")
+		modelFlags.StringSliceP("model-datasource-table", "", []string{"*"}, "goctl model datasource table")
+		modelFlags.BoolP("model-cache", "", false, "goctl model cache")
+		modelFlags.StringSliceP("model-cache-table", "", []string{"*"}, "goctl model cache tables")
+		modelFlags.StringP("model-cache-prefix", "", "cache", "goctl model cache prefix")
+		genCmd.Flags().AddFlagSet(modelFlags)
+		genModelCmd.Flags().AddFlagSet(modelFlags)
+	}
+
+	{
+		genCmd.AddCommand(genModelCmd)
 		genCmd.AddCommand(genSwaggerCmd)
 
 		genSwaggerCmd.Flags().StringSliceP("desc", "", []string{}, "set desc path")

@@ -41,7 +41,7 @@ pzero add proto test/test1
 ## Add sql snapshot
 
 Creates a PostgreSQL schema snapshot placeholder under `desc/sql`.  
-This is not model input; enable datasource and run `pzero gen` to generate models.
+This is not model input; enable datasource and run `pzero gen` or `pzero gen model` to generate models.
 
 ```shell
 # table name is test

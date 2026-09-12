@@ -41,7 +41,7 @@ pzero add proto test/test1
 ## 新增 sql snapshot
 
 将在 `desc/sql` 下新增 schema snapshot 占位文件（PostgreSQL DDL）。  
-这不是 model 输入；生成 model 请配置 datasource 后执行 `pzero gen`。
+这不是 model 输入；生成 model 请配置 datasource 后执行 `pzero gen` 或 `pzero gen model`。
 
 ```shell
 # table 名为 test

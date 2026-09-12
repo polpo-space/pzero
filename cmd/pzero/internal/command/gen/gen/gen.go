@@ -24,71 +24,20 @@ import (
 )
 
 func Run() error {
-	var module string
-	moduleStruct, err := mod.GetGoMod(config.C.Wd())
+	module, err := resolveModule()
 	if err != nil {
-		return errors.Wrapf(err, "get go module struct error")
-	}
-	module = moduleStruct.Path
-	gosimports.LocalPrefix = module
-
-	if !pathx.FileExists("go.mod") {
-		module, err = mod.GetParentPackage(config.C.Wd())
-		if err != nil {
-			return errors.Wrapf(err, "get parent package error")
-		}
+		return err
 	}
 
 	defer func() {
 		RemoveExtraFiles(config.C.Wd(), config.C.Style)
 	}()
 
-	pzeroModel := genmodel.PzeroModel{
-		Module: module,
-	}
-
-	modelTitleFn := func() string {
-		modelTitle := "model"
-		if config.C.Gen.ModelDatasource {
-			dsString := config.C.Gen.ModelDatasourceUrl[0]
-			if len(config.C.Gen.ModelDatasourceUrl) > 1 {
-				dsString = fmt.Sprintf("%s...", config.C.Gen.ModelDatasourceUrl[0])
-			}
-			modelTitle += " " + console.Cyan(fmt.Sprintf("by Datasource(%s)", dsString))
+	// --desc 限定 api/proto 时跳过 model；指向 sql 仍进入 model 段，由 genmodel 报错。
+	if shouldRunModelStage() {
+		if err := runModelStage(module); err != nil {
+			return err
 		}
-		return console.Green("Gen") + " " + console.Yellow(modelTitle)
-	}
-
-	modelHeaderShown := config.C.Gen.GitChange && !config.C.Quiet && config.C.Gen.ModelDatasource
-
-	// Show box header immediately for git-change mode only if sql dir exists
-	if modelHeaderShown {
-		modelTitle := "model"
-		if config.C.Gen.ModelDatasource {
-			modelTitle += " " + console.Cyan(fmt.Sprintf("by Datasource(%s)", strings.Join(config.C.Gen.ModelDatasourceUrl, ",")))
-		}
-		title := console.Green("Gen") + " " + console.Yellow(modelTitle) + " " + console.Cyan("(git-change mode)")
-		fmt.Printf("%s\n", console.BoxHeader("", title))
-	}
-
-	// Generate model
-	progressChan := make(chan progress.Message, 10)
-	done := make(chan struct{})
-	var modelErr error
-	go func() {
-		modelFiles, genErr := pzeroModel.Gen(progressChan)
-		if genErr != nil {
-			modelErr = genErr
-		}
-		_ = modelFiles
-		close(done)
-	}()
-
-	modelState := progress.ConsumeStage(progressChan, done, modelTitleFn(), config.C.Quiet, modelHeaderShown)
-	progress.FinishStage(modelTitleFn(), config.C.Quiet, &modelState, modelErr)
-
-	if modelErr != nil {
-		return modelErr
 	}
 
 	var apiSpecMap map[string]*spec.ApiSpec
@@ -172,6 +121,76 @@ func Run() error {
 	}
 
 	return nil
+}
+
+func RunModel() error {
+	module, err := resolveModule()
+	if err != nil {
+		return err
+	}
+	return runModelStage(module)
+}
+
+func resolveModule() (string, error) {
+	moduleStruct, err := mod.GetGoMod(config.C.Wd())
+	if err != nil {
+		return "", errors.Wrapf(err, "get go module struct error")
+	}
+	module := moduleStruct.Path
+	gosimports.LocalPrefix = module
+
+	if !pathx.FileExists("go.mod") {
+		module, err = mod.GetParentPackage(config.C.Wd())
+		if err != nil {
+			return "", errors.Wrapf(err, "get parent package error")
+		}
+	}
+	return module, nil
+}
+
+func shouldRunModelStage() bool {
+	return len(config.C.Gen.Desc) == 0 || genmodel.HasExplicitSQLDesc()
+}
+
+func runModelStage(module string) error {
+	pzeroModel := genmodel.PzeroModel{
+		Module: module,
+	}
+
+	modelTitleFn := func() string {
+		modelTitle := "model"
+		if config.C.Gen.ModelDatasource && len(config.C.Gen.ModelDatasourceUrl) > 0 {
+			dsString := config.C.Gen.ModelDatasourceUrl[0]
+			if len(config.C.Gen.ModelDatasourceUrl) > 1 {
+				dsString = fmt.Sprintf("%s...", config.C.Gen.ModelDatasourceUrl[0])
+			}
+			modelTitle += " " + console.Cyan(fmt.Sprintf("by Datasource(%s)", dsString))
+		}
+		return console.Green("Gen") + " " + console.Yellow(modelTitle)
+	}
+
+	modelHeaderShown := config.C.Gen.GitChange && !config.C.Quiet && config.C.Gen.ModelDatasource
+
+	if modelHeaderShown {
+		modelTitle := "model"
+		if len(config.C.Gen.ModelDatasourceUrl) > 0 {
+			modelTitle += " " + console.Cyan(fmt.Sprintf("by Datasource(%s)", strings.Join(config.C.Gen.ModelDatasourceUrl, ",")))
+		}
+		title := console.Green("Gen") + " " + console.Yellow(modelTitle) + " " + console.Cyan("(git-change mode)")
+		fmt.Printf("%s\n", console.BoxHeader("", title))
+	}
+
+	progressChan := make(chan progress.Message, 10)
+	done := make(chan struct{})
+	var modelErr error
+	go func() {
+		_, modelErr = pzeroModel.Gen(progressChan)
+		close(done)
+	}()
+
+	modelState := progress.ConsumeStage(progressChan, done, modelTitleFn(), config.C.Quiet, modelHeaderShown)
+	progress.FinishStage(modelTitleFn(), config.C.Quiet, &modelState, modelErr)
+	return modelErr
 }
 
 // collectAndSaveMetadata 收集并保存项目元数据（复用已解析的数据）

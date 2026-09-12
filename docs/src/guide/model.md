@@ -15,7 +15,8 @@ The model generator is PostgreSQL-only:
 * `gen.model-driver` accepts `postgres` (recommended) or `pgx`
 * model generation only supports datasource input (`model-datasource: true`)
 * `desc/sql` is a **schema snapshot** of the current structure; it may coexist with datasource mode and is **not** model gen input
-* When `--desc` / `gen.desc` scopes api/proto generation, model gen is skipped; do not pass `.sql` to `--desc`
+* When `--desc` / `gen.desc` scopes api/proto generation, the full `pzero gen` pipeline skips model; do not pass `.sql` to `--desc`
+* Use `pzero gen model` to regenerate `internal/model` only, without rewriting api or rpc
 
 ## Schema roles
 
@@ -141,9 +142,10 @@ gen:
 
 ```shell
 pzero gen
+pzero gen model
 ```
 
-Generated `internal/model/model.go` contains the registered models for the selected tables.
+`pzero gen` still runs model → api → rpc. `pzero gen model` writes only `internal/model` (including `model.go` registration) for the selected tables.
 
 pzero supports multi-datasource model generation. Use `database.table` in `model-datasource-table` to map a table to a specific datasource URL.
 
@@ -170,6 +172,7 @@ gen:
 
 ```shell
 pzero gen
+pzero gen model
 ```
 
 Generated `internal/model/model.go` stays consistent with the selected PostgreSQL datasource set.
@@ -196,6 +199,6 @@ For detailed usage, see: [condition component](../component/condition.md)
 
 1. Keep `desc/sql` snapshots; they no longer block `pzero gen`.
 2. Enable `model-datasource: true` with `model-datasource-url`, and list **every** table that must be registered in `model-datasource-table` (`model.go` is fully rewritten from that list).
-3. Run `migrate up`, then `pzero gen` (without `--desc`) to generate models from the live schema.
+3. Run `migrate up`, then `pzero gen` (without `--desc`) or `pzero gen model` to generate models from the live schema.
 4. Generated API is slim: rename `InsertV2` to `Insert`; `WithTable`, `FindSelectedColumnsByCondition`, and per-index `FindOneBy*` are gone—use `FindOneByCondition` or custom methods.
 5. Imports move to `github.com/polpo-space/pzero/core/stores/{modelx,condition}`.
