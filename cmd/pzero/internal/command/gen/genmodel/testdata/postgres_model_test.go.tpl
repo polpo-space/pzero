@@ -173,3 +173,45 @@ func (c *recordingConn) QueryRowsPartialCtx(ctx context.Context, _ any, query st
 	_, err := c.ExecCtx(ctx, query, args...)
 	return err
 }
+
+func TestSingleRowProjection(t *testing.T) {
+	for _, fields := range [][]condition.Field{
+		{State}, nil, {},
+	} {
+		for _, withSession := range []bool{false, true} {
+			for _, failure := range []error{sqlx.ErrNotFound, errors.New("query failed"), nil} {
+				conn := &recordingConn{err: failure}
+				m := NewDeviceStatesModel(conn)
+				var session sqlx.Session
+				if withSession {
+					session = conn
+					m = NewDeviceStatesModel(nil)
+				}
+				row, err := m.FindOneFieldsByCondition(context.Background(), session, fields,
+					condition.Condition{Field: State, Operator: condition.Equal, Value: 3})
+				if !errors.Is(err, failure) {
+					t.Fatalf("error = %v, want %v", err, failure)
+				}
+				if failure == nil && (row == nil || row.State != 3) {
+					t.Fatalf("projected row = %+v", row)
+				}
+				projection := `"device_states"."device_id", "device_states"."state"`
+				if len(fields) != 0 {
+					projection = `"device_states"."state"`
+				}
+				wantSQL := "SELECT " + projection + ` FROM "device_states" WHERE "state" = $1 LIMIT $2`
+				if conn.query != wantSQL || !reflect.DeepEqual(conn.args, []any{3, 1}) {
+					t.Fatalf("SQL = %s %v, want %s [3 1]", conn.query, conn.args, wantSQL)
+				}
+			}
+		}
+	}
+}
+
+func (c *recordingConn) QueryRowPartialCtx(_ context.Context, dest any, query string, args ...any) error {
+	c.query, c.args = query, args
+	if c.err == nil {
+		dest.(*DeviceStates).State = 3
+	}
+	return c.err
+}
