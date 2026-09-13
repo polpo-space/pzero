@@ -76,8 +76,7 @@ func CollectFromAPI(apiSpecMap map[string]*spec.ApiSpec) (*APIMetadata, error) {
 			groupAnnotation := group.GetAnnotation("group")
 
 			for _, route := range group.Routes {
-				handler := route.Handler
-				handler = strings.TrimSuffix(route.Handler, "Handler")
+				handler := strings.TrimSuffix(route.Handler, "Handler")
 
 				// 构建 logic 文件路径
 				logicPath, err := buildLogicPath(groupAnnotation, handler)

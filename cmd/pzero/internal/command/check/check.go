@@ -371,16 +371,14 @@ func RunCheckCommand(all bool) error {
 }
 
 func ensureToolForCheck(spec toolCheckSpec) (string, error) {
-	action := "ok"
 	if err := spec.ensurePath(); err != nil {
-		action = "installed"
 		if err := spec.install(); err != nil {
 			return "", err
 		}
 		if err := spec.ensurePath(); err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("%s (%s %s)", spec.name, action, spec.required), nil
+		return fmt.Sprintf("%s (installed %s)", spec.name, spec.required), nil
 	}
 
 	checkVersion, err := version.NewVersion(spec.required)
@@ -388,14 +386,13 @@ func ensureToolForCheck(spec toolCheckSpec) (string, error) {
 		return "", err
 	}
 	if spec.current == nil || spec.current.LessThan(checkVersion) {
-		action = "upgraded"
 		if err := spec.install(); err != nil {
 			return "", err
 		}
 		if err := spec.ensurePath(); err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("%s (%s to %s)", spec.name, action, spec.required), nil
+		return fmt.Sprintf("%s (upgraded to %s)", spec.name, spec.required), nil
 	}
 
 	return fmt.Sprintf("%s (v%s)", spec.name, spec.required), nil

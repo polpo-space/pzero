@@ -458,15 +458,6 @@ func (s *newConsoleStage) info(item string) {
 	fmt.Printf("%s\n", console.BoxInfoItem(item))
 }
 
-func (s *newConsoleStage) item(item string) {
-	if s.quiet {
-		return
-	}
-
-	s.ensureShown()
-	fmt.Printf("%s\n", console.BoxItem(item))
-}
-
 func (s *newConsoleStage) success() {
 	if s.quiet {
 		return

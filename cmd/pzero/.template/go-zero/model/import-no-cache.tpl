@@ -1,6 +1,8 @@
 import (
 	"context"
+	{{range .data.Fields}}{{if and (ge (len .DataType) 4) (eq (slice .DataType 0 4) "sql.")}}
 	"database/sql"
+	{{break}}{{end}}{{end}}
 	"strings"
 	"slices"
 	{{if .time}}"time"{{end}}
