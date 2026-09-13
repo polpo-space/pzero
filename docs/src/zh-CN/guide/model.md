@@ -18,6 +18,8 @@ pzero 通过 PostgreSQL 数据源生成数据库代码到 `internal/model` 下�
 * 通过 `--desc` / `gen.desc` 指定 api/proto 时，全量 `pzero gen` 会跳过 model 生成（限定生成范围）；不要把 `.sql` 传给 `--desc`
 * 只要刷表 model、不重写 api/rpc 时，使用 `pzero gen model`
 
+生成的 model 固定使用 PostgreSQL SQL 语法，不受 `sqlbuilder.DefaultFlavor` 或 `modelx.WithFlavor` 影响。自增主键通过 `INSERT ... RETURNING` 取回，字段元数据在包初始化时计算一次。公开的方言选项仍保留给旧模型及其他运行时调用方使用。
+
 ## Schema 三分法
 
 | 路径 | 职责 |
