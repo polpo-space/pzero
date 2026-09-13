@@ -11,11 +11,7 @@ linters:
     - wastedassign
     - whitespace
 formatters:
+  # pzero format checks imports using each file's go.mod in this workspace.
   enable:
     - gofmt
     - gofumpt
-    - goimports
-  settings:
-    goimports:
-      local-prefixes:
-        - github.com/polpo-space/pzero

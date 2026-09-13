@@ -262,7 +262,6 @@ func RemoveExtraFiles(wd, style string) {
 		if err == nil && len(entries) == 0 {
 			if err := os.Remove(etcDir); err != nil && !errors.Is(err, os.ErrNotExist) {
 			}
-
 		}
 	}
 }
