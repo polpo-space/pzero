@@ -77,15 +77,19 @@ func (m *custom{{.upperStartCamelObject}}Model) FindOneByCondition(ctx context.C
 }
 
 func (m *custom{{.upperStartCamelObject}}Model) FindOneFieldsByCondition(ctx context.Context, session sqlx.Session, fields []condition.Field, conditions ...condition.Condition) (*{{.upperStartCamelObject}}, error) {
-	statement, args := condition.BuildSelectWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewSelectBuilder().Select(m.withTableFields(cast.ToStringSlice({{.lowerStartCamelObject}}FieldNames)...)...).From(m.table).Limit(1), conditions...)
+    if len(fields) == 0 {
+        fields = condition.ToFieldSlice({{.lowerStartCamelObject}}FieldNames)
+    }
+
+	statement, args := condition.BuildSelectWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewSelectBuilder().Select(m.withTableFields(cast.ToStringSlice(fields)...)...).From(m.table).Limit(1), conditions...)
 
 	var resp {{.upperStartCamelObject}}
 	var err error
 
 	if session != nil {
-		err = session.QueryRowCtx(ctx, &resp, statement, args...)
+		err = session.QueryRowPartialCtx(ctx, &resp, statement, args...)
 	} else {
-	    err = m.conn.QueryRowCtx(ctx, &resp, statement, args...)
+	    err = m.conn.QueryRowPartialCtx(ctx, &resp, statement, args...)
 	}
 	if err != nil {
 		return nil, err
