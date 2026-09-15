@@ -188,16 +188,16 @@ CREATE TABLE `user` (
 → Generate Model layer code, CRUD operations, supports complex queries
 
 **Feature Description**:
-- ✅ **Multiple data sources**: Support generating model code from remote PostgreSQL datasources
+- ✅ **PostgreSQL datasource**: Generate models from one remote PostgreSQL database per invocation
 - ✅ **Auto-generate CRUD interfaces**: Automatically generate basic operations like create, read, update, delete
 - ✅ **Complex query support**: Provide powerful chain queries for complex business scenarios
-- ✅ **One code adapts to multiple databases**: Generated code compatible with MySQL, PostgreSQL, Sqlite and other databases, no need to regenerate, easily switch underlying database storage
+- ✅ **PostgreSQL models**: Generated SQL uses PostgreSQL syntax; choose the schema with `model-schema`
 
 **Flexible generation strategy**, greatly improving code generation efficiency for large projects:
 
 ```bash
-# Only generate code for files changed in git
-pzero gen --git-change
+# Regenerate the current application
+pzero gen
 
 # Generate for specific file
 pzero gen --desc desc/api/user.api

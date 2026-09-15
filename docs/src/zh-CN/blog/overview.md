@@ -188,16 +188,16 @@ CREATE TABLE `user` (
 → 生成 Model 层代码、CRUD 操作，支持复杂查询
 
 **特性说明**：
-- ✅ **多种数据源**：支持基于远程 PostgreSQL 数据源生成 model 代码
+- ✅ **PostgreSQL 数据源**：每次基于一个远程 PostgreSQL 数据库生成 model 代码
 - ✅ **自动生成 CRUD 接口**：自动生成增删改查等基础操作
 - ✅ **复杂查询支持**：提供强大的链式查询处理复杂业务场景
-- ✅ **一套代码适配多数据库**：生成的代码兼容 MySQL、PostgreSQL、Sqlite 等多种数据库，无需重新生成，轻松切换数据库底层存储
+- ✅ **PostgreSQL 模型**：生成 SQL 固定使用 PostgreSQL 语法，通过 `model-schema` 选择 schema
 
 **灵活生成策略**，极大提升大型项目代码生成效率：
 
 ```bash
-# 只生成 git 改动的文件对应的代码
-pzero gen --git-change
+# 完整生成当前应用
+pzero gen
 
 # 指定文件生成
 pzero gen --desc desc/api/user.api

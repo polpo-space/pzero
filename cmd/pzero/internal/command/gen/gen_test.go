@@ -1,6 +1,20 @@
 package gen
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+func TestRetiredGeneratorFlags(t *testing.T) {
+	gen := GetCommand()
+	for _, cmd := range append(gen.Commands(), gen) {
+		for _, name := range []string{"git-change", "route2code"} {
+			if err := cmd.ParseFlags([]string{"--" + name}); err == nil || !strings.Contains(err.Error(), "unknown flag") {
+				t.Fatalf("%s --%s must be rejected, got %v", cmd.CommandPath(), name, err)
+			}
+		}
+	}
+}
 
 func TestGetCommandIncludesModel(t *testing.T) {
 	cmd := GetCommand()

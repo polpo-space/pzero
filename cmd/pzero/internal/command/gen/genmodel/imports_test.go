@@ -15,6 +15,9 @@ import (
 	"github.com/zeromicro/go-zero/tools/goctl/model/sql/gen"
 	"github.com/zeromicro/go-zero/tools/goctl/model/sql/model"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
+
+	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 )
 
 func TestPostgresModelTemplates(t *testing.T) {
@@ -22,6 +25,9 @@ func TestPostgresModelTemplates(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	origConfig, origHome := config.C, embeded.Home
+	embeded.Home = filepath.Dir(home)
+	t.Cleanup(func() { config.C, embeded.Home = origConfig, origHome })
 	oldHome, err := pathx.GetGoctlHome()
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +75,9 @@ func TestPostgresModelTemplates(t *testing.T) {
 						Columns:     []*model.Column{primary, state},
 						UniqueIndex: map[string][]*model.Column{"state": {state}},
 					}
-					dir := filepath.Join(project, fmt.Sprintf("auto_%t_cache_%t_nullable_%t", autoIncrement, cached, nullable))
+					caseName := fmt.Sprintf("auto_%t_cache_%t_nullable_%t", autoIncrement, cached, nullable)
+					caseDir := filepath.Join(project, caseName)
+					dir := filepath.Join(caseDir, "internal", "model", "device_states")
 					generator, err := gen.NewDefaultGenerator("cache", dir, &goctlconfig.Config{NamingFormat: "go_zero"}, gen.WithPostgreSql())
 					if err != nil {
 						t.Fatal(err)
@@ -99,6 +107,18 @@ func TestPostgresModelTemplates(t *testing.T) {
 					}
 					if want := cached || nullable; importsSQL != want {
 						t.Fatalf("database/sql imported = %t, want %t", importsSQL, want)
+					}
+					// Compile registration together with the actual generated models,
+					// including cache expiry options for the surviving single-database path.
+					t.Chdir(caseDir)
+					config.C = config.Config{Gen: config.GenConfig{ModelCache: cached}}
+					config.C.Gen.ModelCacheExpiryTable = append(config.C.Gen.ModelCacheExpiryTable, struct {
+						Table          string `mapstructure:"table"`
+						Expiry         int64  `mapstructure:"expiry"`
+						NotFoundExpiry int64  `mapstructure:"not-found-expiry"`
+					}{Table: "device_states", Expiry: 60, NotFoundExpiry: 10})
+					if err := (&PzeroModel{Module: "example.com/modeltest/" + caseName}).GenRegister([]string{"device_states"}); err != nil {
+						t.Fatal(err)
 					}
 				})
 			}

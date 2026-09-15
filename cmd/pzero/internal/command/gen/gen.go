@@ -79,9 +79,7 @@ func GetCommand() *cobra.Command {
 	{
 		genCmd.Flags().StringSliceP("desc", "", []string{}, "set desc path")
 		genCmd.Flags().StringSliceP("desc-ignore", "", []string{}, "set desc ignore path")
-		genCmd.Flags().BoolP("git-change", "", false, "set is git change, if changes then generate code")
 		genCmd.Flags().StringP("api-types-dir", "", filepath.Join("internal", "types"), "set generated api types dir, relative to the project root")
-		genCmd.Flags().BoolP("route2code", "", false, "is generate route2code")
 		genCmd.Flags().StringSliceP("proto-dir", "", []string{}, "RPC proto scan roots, default desc/proto")
 		genCmd.Flags().StringSliceP("proto-include", "", []string{}, "proto include path")
 		genCmd.Flags().BoolP("rpc-client", "", false, "generate rpc client code")
@@ -96,7 +94,7 @@ func GetCommand() *cobra.Command {
 		modelFlags.StringSliceP("model-ignore-columns", "", []string{"create_at", "created_at", "create_time", "update_at", "updated_at", "update_time"}, "ignore columns of postgres model")
 		modelFlags.StringP("model-schema", "", "", "model schema")
 		modelFlags.BoolP("model-datasource", "", false, "goctl datasource")
-		modelFlags.StringSliceP("model-datasource-url", "", []string{}, "goctl model datasource url")
+		modelFlags.StringSliceP("model-datasource-url", "", []string{}, "one PostgreSQL datasource URL")
 		modelFlags.StringSliceP("model-datasource-table", "", []string{"*"}, "goctl model datasource table")
 		modelFlags.BoolP("model-cache", "", false, "goctl model cache")
 		modelFlags.StringSliceP("model-cache-table", "", []string{"*"}, "goctl model cache tables")
@@ -112,7 +110,6 @@ func GetCommand() *cobra.Command {
 		genSwaggerCmd.Flags().StringSliceP("desc", "", []string{}, "set desc path")
 		genSwaggerCmd.Flags().StringSliceP("desc-ignore", "", []string{}, "set desc ignore path")
 		genSwaggerCmd.Flags().StringP("output", "o", filepath.Join("desc", "swagger"), "set swagger output dir")
-		genSwaggerCmd.Flags().BoolP("route2code", "", false, "is generate route2code")
 		genSwaggerCmd.Flags().BoolP("merge", "", true, "is merge muti swagger to one file")
 	}
 

@@ -17,7 +17,6 @@ import (
 	pzerodesc "github.com/polpo-space/pzero/cmd/pzero/internal/desc"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console/progress"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/filex"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/gitstatus"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/osx"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/stringx"
 )
@@ -40,7 +39,7 @@ func (l RegisterLines) String() string {
 	return "\n\t\t" + strings.Join(l, "\n\t\t")
 }
 
-func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcparser.Proto, error) {
+func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) error {
 	var (
 		serverImports   ImportLines
 		pbImports       ImportLines
@@ -52,11 +51,11 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 	// 获取全量 proto 文件（支持多 proto-dir）
 	protoFiles, err := findRpcServiceProtoFilesInDirs(protoDirs)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if len(protoFiles) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	protoSpecMap := make(map[string]*rpcparser.Proto, len(protoFiles))
@@ -65,7 +64,7 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 		var parse rpcparser.Proto
 		parse, err = protoParser.Parse(v, true)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		protoSpecMap[v] = &parse
 	}
@@ -75,17 +74,6 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 	genCodeProtoSpecMap := make(map[string]*rpcparser.Proto, len(protoFiles))
 
 	switch {
-	case config.C.Gen.GitChange && gitstatus.IsGitRepo(filepath.Join(config.C.Wd())) && len(config.C.Gen.Desc) == 0:
-		for _, dir := range protoDirs {
-			m, _, err := gitstatus.ChangedFiles(dir, ".proto")
-			if err != nil {
-				continue
-			}
-			genCodeProtoFiles = append(genCodeProtoFiles, m...)
-			for _, file := range m {
-				genCodeProtoSpecMap[file] = protoSpecMap[file]
-			}
-		}
 	case len(config.C.Gen.Desc) > 0:
 		for _, v := range config.C.Gen.Desc {
 			if !osx.IsDir(v) {
@@ -97,7 +85,7 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 			} else {
 				specifiedProtoFiles, err := pzerodesc.FindRpcServiceProtoFiles(v)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				genCodeProtoFiles = append(genCodeProtoFiles, specifiedProtoFiles...)
 				for _, saf := range specifiedProtoFiles {
@@ -126,7 +114,7 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 		} else {
 			specifiedProtoFiles, err := pzerodesc.FindRpcServiceProtoFiles(v)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			for _, saf := range specifiedProtoFiles {
 				genCodeProtoFiles = lo.Reject(genCodeProtoFiles, func(item string, _ int) bool {
@@ -142,12 +130,12 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 	}
 
 	if len(genCodeProtoFiles) == 0 {
-		return protoSpecMap, nil
+		return nil
 	}
 
 	tempDir, err := os.MkdirTemp(os.TempDir(), "pzero-rpc-")
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer os.RemoveAll(tempDir)
 
@@ -155,19 +143,19 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 	if pathx.FileExists(customTemplatePath) {
 		err = filex.CopyDir(customTemplatePath, filepath.Join(tempDir, "rpc"))
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 	goctlHome := tempDir
 
 	pbOutDirExternal := filepath.Join(tempDir, "pbout")
 	if err = os.MkdirAll(pbOutDirExternal, 0o755); err != nil {
-		return nil, err
+		return err
 	}
 
 	excludeThirdPartyProtoFiles, err := findExcludeThirdPartyProtoFilesInDirs(protoDirs)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	importPaths := buildProtoImportPaths(protoDirs)
@@ -179,12 +167,12 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 	for _, v := range protoFiles {
 		allLogicFiles, err := jr.GetAllLogicFiles(v, protoSpecMap[v])
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		allServerFiles, err := jr.GetAllServerFiles(v, protoSpecMap[v])
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		fileExternal := isExternalGoPackage(protoSpecMap[v].GoPackage)
@@ -192,12 +180,12 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 		if lo.Contains(genCodeProtoFiles, v) {
 			protoRoot, rel, err := relToProtoDir(v, protoDirs)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
 			fds, err := protoParser.ParseFiles(rel)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			if len(fds) == 0 {
 				continue
@@ -227,12 +215,12 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 				}
 				_, expRel, err := relToProtoDir(exp, protoDirs)
 				if err != nil {
-					return nil, err
+					return err
 				}
 
 				expFds, err := protoParser.ParseFiles(expRel)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				if len(expFds) == 0 {
 					continue
@@ -259,7 +247,7 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 
 			_, err = execx.Run(command, config.C.Wd())
 			if err != nil {
-				return nil, err
+				return err
 			}
 			if fileExternal {
 				pbImport := resolveGoPackageImport(jr.Module, protoSpecMap[v].GoPackage)
@@ -267,12 +255,12 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 				generatedPBQualifier := protoSpecMap[v].PbPackage
 				for _, file := range allServerFiles {
 					if err := rewriteGeneratedPBImport(file.Path, pbImport, pbPackage, generatedPBQualifier); err != nil {
-						return nil, err
+						return err
 					}
 				}
 				for _, file := range allLogicFiles {
 					if err := rewriteGeneratedPBImport(file.Path, pbImport, pbPackage, generatedPBQualifier); err != nil {
-						return nil, err
+						return err
 					}
 				}
 			}
@@ -330,7 +318,7 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 				)
 				_, err = execx.Run(protocCommand, config.C.Wd())
 				if err != nil {
-					return nil, err
+					return err
 				}
 			}
 		}
@@ -355,20 +343,20 @@ func (jr *PzeroRpc) Gen(progressChan chan<- progress.Message) (map[string]*rpcpa
 
 	if len(protoFiles) > 0 {
 		if err = jr.genServer(serverImports, pbImports, registerServers); err != nil {
-			return nil, err
+			return err
 		}
 		// 无 service 的公共 proto：只为相对 go_package 生成本地 pb
 		for _, dir := range protoDirs {
 			if err = jr.genNoRpcServiceExcludeThirdPartyProto(dir); err != nil {
-				return nil, err
+				return err
 			}
 		}
 		if err = jr.genApiMiddlewares(protoFiles); err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	return protoSpecMap, nil
+	return nil
 }
 
 func findRpcServiceProtoFilesInDirs(dirs []string) ([]string, error) {

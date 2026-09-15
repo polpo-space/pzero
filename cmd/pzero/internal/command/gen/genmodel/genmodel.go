@@ -18,7 +18,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console/progress"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/dsn"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/filex"
 )
 
@@ -26,16 +25,10 @@ type PzeroModel struct {
 	Module string
 }
 
-type Conn struct {
-	Schema  string
-	SqlConn sqlx.SqlConn
-}
-
 func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error) {
 	var (
 		allTables []string
 		err       error
-		conns     []Conn
 		genFiles  []string
 	)
 
@@ -58,15 +51,16 @@ func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error
 		return nil, errors.New("model-datasource-url is required when model-datasource is enabled")
 	}
 
-	for _, v := range config.C.Gen.ModelDatasourceUrl {
-		meta, err := dsn.ParseDSN(config.C.Gen.ModelDriver, v)
-		if err != nil {
-			return nil, err
+	if len(config.C.Gen.ModelDatasourceUrl) != 1 {
+		return nil, errors.New("model generation requires exactly one datasource URL; generate each database in a separate project")
+	}
+	if strings.TrimSpace(config.C.Gen.ModelDatasourceUrl[0]) == "" {
+		return nil, errors.New("model-datasource-url must not be empty")
+	}
+	for _, table := range config.C.Gen.ModelDatasourceTable {
+		if strings.Contains(table, ".") {
+			return nil, errors.Errorf("qualified table %q is no longer supported; use an unqualified table name and model-schema for its PostgreSQL schema", table)
 		}
-		conns = append(conns, Conn{
-			Schema:  meta[dsn.Database],
-			SqlConn: postgres.New(v),
-		})
 	}
 
 	// 处理模板
@@ -95,7 +89,7 @@ func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error
 	goctlHome = tempDir
 
 	if len(config.C.Gen.ModelDatasourceTable) == 1 && config.C.Gen.ModelDatasourceTable[0] == "*" {
-		allTables, err = getAllTables(conns)
+		allTables, err = getAllTables(postgres.New(config.C.Gen.ModelDatasourceUrl[0]))
 		if err != nil {
 			return nil, err
 		}
@@ -126,26 +120,17 @@ func (jm *PzeroModel) Gen(progressChan chan<- progress.Message) ([]string, error
 	return genFiles, nil
 }
 
-func getAllTables(conns []Conn) ([]string, error) {
+func getAllTables(conn sqlx.SqlConn) ([]string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	var allTables []string
-
-	if config.C.Gen.ModelSchema == "" {
-		config.C.Gen.ModelSchema = "public"
+	schema := config.C.Gen.ModelSchema
+	if schema == "" {
+		schema = "public"
 	}
-	for _, conn := range conns {
-		var tables []string
-		err := conn.SqlConn.QueryRowsCtx(ctx, &tables, "select tablename from pg_tables where schemaname = $1", config.C.Gen.ModelSchema)
-		if err != nil {
-			return nil, err
-		}
-		for _, v := range tables {
-			allTables = append(allTables, v)
-		}
-	}
-	return allTables, nil
+	var tables []string
+	err := conn.QueryRowsCtx(ctx, &tables, "select tablename from pg_tables where schemaname = $1", schema)
+	return tables, err
 }
 
 func normalizeModelDriver(driver string) (string, error) {
@@ -216,43 +201,14 @@ func getIgnoreColumns(tableName string) []string {
 }
 
 func generateModelFromDatasource(tableName, goctlHome string) error {
-	bf := tableName
-	if strings.Contains(tableName, ".") {
-		bf = strings.Split(tableName, ".")[1]
-	}
-
-	var (
-		modelDir string
-		schema   = config.C.Gen.ModelSchema
-	)
-
-	if strings.Contains(tableName, ".") {
-		split := strings.Split(tableName, ".")
-		modelDir = filepath.Join("internal", "model", split[0], strings.ToLower(split[1]))
-	} else {
-		modelDir = filepath.Join("internal", "model", strings.ToLower(bf))
-	}
-
+	modelDir := filepath.Join("internal", "model", strings.ToLower(tableName))
+	schema := config.C.Gen.ModelSchema
 	if schema == "" {
 		schema = "public"
 	}
-	var datasourceUrl string
-	if strings.Contains(tableName, ".") {
-		for _, v := range config.C.Gen.ModelDatasourceUrl {
-			meta, err := dsn.ParseDSN("pgx", v)
-			if err != nil {
-				return err
-			}
-			if meta[dsn.Database] == strings.Split(tableName, ".")[0] {
-				datasourceUrl = v
-				break
-			}
-		}
-	} else {
-		datasourceUrl = config.C.Gen.ModelDatasourceUrl[0]
-	}
+	datasourceUrl := config.C.Gen.ModelDatasourceUrl[0]
 
-	cmd := exec.Command("goctl", "model", "pg", "datasource", "--url", datasourceUrl, "--schema", schema, "-t", bf, "--dir", modelDir, "--home", goctlHome, "--style", config.C.Style, "-i", strings.Join(getIgnoreColumns(bf), ","), "--cache="+fmt.Sprintf("%t", getIsCacheTable(bf)), "-p", config.C.Gen.ModelCachePrefix, "--strict="+fmt.Sprintf("%t", config.C.Gen.ModelStrict))
+	cmd := exec.Command("goctl", "model", "pg", "datasource", "--url", datasourceUrl, "--schema", schema, "-t", tableName, "--dir", modelDir, "--home", goctlHome, "--style", config.C.Style, "-i", strings.Join(getIgnoreColumns(tableName), ","), "--cache="+fmt.Sprintf("%t", getIsCacheTable(tableName)), "-p", config.C.Gen.ModelCachePrefix, "--strict="+fmt.Sprintf("%t", config.C.Gen.ModelStrict))
 	// Debug removed(cmd.String())
 	resp, err := cmd.CombinedOutput()
 	if err != nil {

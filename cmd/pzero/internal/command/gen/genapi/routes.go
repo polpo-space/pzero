@@ -6,20 +6,15 @@ import (
 	goparser "go/parser"
 	"go/printer"
 	"go/token"
-	"path/filepath"
-	"slices"
 	"strings"
 
-	"github.com/rinchsan/gosimports"
 	"github.com/zeromicro/go-zero/tools/goctl/api/spec"
 	zeroconfig "github.com/zeromicro/go-zero/tools/goctl/config"
 	"github.com/zeromicro/go-zero/tools/goctl/util"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 	jgogen "github.com/polpo-space/pzero/cmd/pzero/internal/pkg/gogen"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/mod"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
 )
 
 func (ja *PzeroApi) getRoutesGoBody(fp string, apiSpecMap map[string]*spec.ApiSpec, currentRoutesMap map[string][]spec.Route) (string, error) {
@@ -141,99 +136,4 @@ func (ja *PzeroApi) getRoutesGoBody(fp string, apiSpecMap map[string]*spec.ApiSp
 	}
 
 	return "", nil
-}
-
-type Route struct {
-	Group string
-	spec.Route
-}
-
-func (ja *PzeroApi) genRoute2Code(apiSpecMap map[string]*spec.ApiSpec, currentRoutesMap map[string][]spec.Route, importedFiles map[string]bool) ([]byte, error) {
-	var routes []Route
-
-	for fp, s := range apiSpecMap {
-		// 跳过被 import 的文件
-		if importedFiles[fp] {
-			continue
-		}
-
-		// 获取当前文件的路由
-		currentRoutes := currentRoutesMap[fp]
-		if len(currentRoutes) == 0 {
-			continue
-		}
-
-		// 为当前文件的路由创建映射
-		routeKeyMap := make(map[string]bool)
-		for _, r := range currentRoutes {
-			key := r.Path + ":" + r.Method
-			routeKeyMap[key] = true
-		}
-
-		// 只添加当前文件的路由
-		for _, g := range s.Service.Groups {
-			for _, r := range g.Routes {
-				key := r.Path + ":" + r.Method
-				if !routeKeyMap[key] {
-					continue
-				}
-
-				route := Route{
-					Group: g.GetAnnotation("group"),
-					Route: r,
-				}
-				if g.GetAnnotation("prefix") != "" {
-					route.Path = g.GetAnnotation("prefix") + r.Path
-				}
-				route.Handler = strings.TrimSuffix(r.Handler, "Handler")
-				routes = append(routes, route)
-			}
-		}
-	}
-
-	// 先按 group 分组排序
-	slices.SortFunc(routes, func(a, b Route) int {
-		if a.Group < b.Group {
-			return -1
-		} else if a.Group > b.Group {
-			return 1
-		}
-		return 0
-	})
-
-	// 再按 path 排序
-	slices.SortStableFunc(routes, func(a, b Route) int {
-		if a.Group == b.Group {
-			if a.Path < b.Path {
-				return -1
-			} else if a.Path > b.Path {
-				return 1
-			}
-		}
-		return 0
-	})
-
-	// 最后按 method 排序
-	slices.SortStableFunc(routes, func(a, b Route) int {
-		if a.Group == b.Group && a.Path == b.Path {
-			if a.Method < b.Method {
-				return -1
-			} else if a.Method > b.Method {
-				return 1
-			}
-		}
-		return 0
-	})
-
-	template, err := templatex.ParseTemplate(filepath.Join("api", "route2code.go.tpl"), map[string]any{
-		"Routes": routes,
-	}, embeded.ReadTemplateFile(filepath.Join("api", "route2code.go.tpl")))
-	if err != nil {
-		return nil, err
-	}
-	process, err := gosimports.Process("", template, nil)
-	if err != nil {
-		return nil, err
-	}
-	return process, nil
 }

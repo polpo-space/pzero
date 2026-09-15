@@ -32,9 +32,9 @@ Generated models always use PostgreSQL SQL syntax, independently of `sqlbuilder.
 
 ## Features
 
-* Supports multi-datasource code generation
+* Generates models from one PostgreSQL datasource per invocation
 * Supports redis/custom cache
-* Keeps generated model registration consistent across single-schema and multi-schema projects
+* Selects one PostgreSQL schema with `model-schema` (default: `public`)
 
 ## Cache Configuration
 
@@ -149,35 +149,7 @@ pzero gen model
 
 `pzero gen` still runs model → api → rpc. `pzero gen model` writes only `internal/model` (including `model.go` registration) for the selected tables.
 
-pzero supports multi-datasource model generation. Use `database.table` in `model-datasource-table` to map a table to a specific datasource URL.
-
-For example, add `jzero-admin_log.operate_log`:
-
-```yaml
-gen:
-  model-driver: postgres
-  model-datasource: true
-  model-datasource-url:
-    - "postgres://postgres:postgres@127.0.0.1:5432/jzero-admin?sslmode=disable"
-    - "postgres://postgres:postgres@127.0.0.1:5432/jzero-admin_log?sslmode=disable"
-  model-schema: public
-  model-ignore-columns: ["create_time", "update_time"]
-  model-datasource-table:
-    - manage_email
-    - manage_menu
-    - manage_role
-    - manage_role_menu
-    - manage_user
-    - manage_user_role
-    - jzero-admin_log.operate_log
-```
-
-```shell
-pzero gen
-pzero gen model
-```
-
-Generated `internal/model/model.go` stays consistent with the selected PostgreSQL datasource set.
+Each invocation accepts exactly one URL, as a scalar or one-element list. Table names must not include a `database.` or `schema.` prefix; select the schema with `model-schema`. See [retired feature migration](../getting-started/gen.md#migrating-retired-generator-features) for existing multi-database projects.
 
 ## Default generated methods
 

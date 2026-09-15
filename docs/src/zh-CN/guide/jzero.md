@@ -17,16 +17,15 @@ order: 0.1
 ::: code-tabs#yaml
 @tab .pzero.yaml
 ```yaml
-gen:
-  git-change: true
+style: go_zero
 ```
 :::
 
-即 `pzero gen` + `.pzero.yaml` = `pzero gen --git-change=true`
+即 `pzero gen` + `.pzero.yaml` = `pzero gen --style go_zero`
 
-对于环境变量的使用, 需要增加前缀 `PZERO_`, 如 `PZERO_GEN_GIT_CHANGE`
+对于环境变量的使用, 需要增加前缀 `PZERO_`, 如 `PZERO_STYLE`
 
-即 `PZERO_GEN_GIT_CHANGE=go_zero pzero gen` = `pzero gen --git-change=true`
+即 `PZERO_STYLE=go_zero pzero gen` = `pzero gen --style go_zero`
 
 环境变量的定义支持使用配置文件, 默认为 `.pzero.env.yaml`
 
@@ -35,7 +34,7 @@ gen:
 ::: code-tabs#yaml
 @tab .pzero.env.yaml
 ```yaml
-PZERO_GEN_GIT_CHANGE: true
+PZERO_STYLE: go_zero
 ```
 :::
 

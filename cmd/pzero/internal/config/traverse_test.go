@@ -1,12 +1,53 @@
 package config
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
+
+func TestRetiredGeneratorConfiguration(t *testing.T) {
+	orig, cfgFile, envFile := C, CfgFile, CfgEnvFile
+	t.Cleanup(func() {
+		C, CfgFile, CfgEnvFile = orig, cfgFile, envFile
+		viper.Reset()
+	})
+	t.Chdir(t.TempDir())
+	CfgFile, CfgEnvFile = ".pzero.yaml", ".pzero.env.yaml"
+	for _, key := range []string{"gen.git-change", "gen.route2code", "gen.swagger.route2code"} {
+		for _, source := range []string{"yaml", "env"} {
+			t.Run(key+"/"+source, func(t *testing.T) {
+				viper.Reset()
+				C = Config{}
+				if source == "yaml" {
+					parts := strings.Split(key, ".")
+					var body strings.Builder
+					for i, part := range parts {
+						body.WriteString(strings.Repeat("  ", i) + part + ":")
+						if i == len(parts)-1 {
+							body.WriteString(" false")
+						}
+						body.WriteByte('\n')
+					}
+					if err := os.WriteFile(CfgFile, []byte(body.String()), 0o600); err != nil {
+						t.Fatal(err)
+					}
+					t.Cleanup(func() { _ = os.Remove(CfgFile) })
+				} else {
+					t.Setenv("PZERO_"+strings.ToUpper(strings.NewReplacer(".", "_", "-", "_").Replace(key)), "false")
+				}
+				err := InitConfig(&cobra.Command{Use: "pzero"})
+				if err == nil || !strings.Contains(err.Error(), key+" has been retired") {
+					t.Fatalf("expected migration error for %s, got %v", key, err)
+				}
+			})
+		}
+	}
+}
 
 func TestTraverseCommandsBindsLocalFlagsOnly(t *testing.T) {
 	orig := C

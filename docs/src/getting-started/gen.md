@@ -40,15 +40,6 @@ pzero gen model
 pzero gen model --model-datasource-url "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
 ```
 
-## Generate from git changes
-
-::: tip Uses git status -su for added/changed descriptors
-:::
-
-```shell
-pzero gen --git-change
-```
-
 ## Generate with explicit desc
 
 `--desc` scopes **api/proto** generation; model generation is skipped when desc is set.
@@ -65,4 +56,14 @@ pzero gen --desc-ignore desc/api/xx.api
 pzero gen --desc-ignore desc/proto/xx.proto
 ```
 
-More usage: [pzero guide](../guide/pzero.md)
+More usage: [pzero guide](../guide/jzero.md)
+
+## Migrating retired generator features
+
+- Remove `--git-change`, `gen.git-change`, and `PZERO_GEN_GIT_CHANGE`. `pzero gen` regenerates the application's descriptors; select applications in CI and keep `--desc` / `--desc-ignore` for explicit scopes. `pzero format --git-change` remains supported.
+- Remove `--route2code`, `gen.route2code`, `gen.swagger.route2code`, and the corresponding environment variables. Pzero no longer generates permission-code maps or injects them into Swagger descriptions. Move any authorization mapping to application-owned code, update its callers, then remove the old generated `internal/handler/route2code.go`.
+- Generation no longer writes IDE navigation metadata. GoLand integrations that consume `~/.pzero/desc-metadata` must use another navigation source. Existing metadata is left untouched and may be deleted manually.
+- Model generation accepts exactly one PostgreSQL URL (a scalar or a one-element YAML list). Multiple URLs and `database.table` names are rejected before model files are written. Use unqualified table names and `model-schema` for the PostgreSQL schema. Generate separate databases in separate projects/output directories; running them successively in one project would overwrite `model.go` registration.
+- Custom `model/model.go.tpl` templates must use `.Imports` (strings) and `.TableInfos` for the single database. `.ImportsWithAlias`, `.MutiModels`, `.MutiModelsWithAlias`, and table `Alias`/`FullName`/`WithCache` fields are no longer supplied. Cache expiry settings and individual model constructors remain supported.
+
+Retired generator flags fail as unknown flags; retired configuration/environment keys produce a migration error instead of silently changing behavior.
