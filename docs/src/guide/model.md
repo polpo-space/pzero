@@ -18,8 +18,6 @@ The model generator is PostgreSQL-only:
 * When `--desc` / `gen.desc` scopes api/proto generation, the full `pzero gen` pipeline skips model; do not pass `.sql` to `--desc`
 * Use `pzero gen model` to regenerate `internal/model` only, without rewriting api or rpc
 
-Generated models always use PostgreSQL SQL syntax, independently of `sqlbuilder.DefaultFlavor` or `modelx.WithFlavor`. Auto-generated primary keys use `INSERT ... RETURNING`; column metadata is initialized once per package. The public flavor options remain available for older models and other runtime consumers.
-
 ## Schema roles
 
 | Path | Role |

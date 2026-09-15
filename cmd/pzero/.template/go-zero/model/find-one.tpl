@@ -3,9 +3,9 @@ func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, se
 	{{.cacheKey}}
 	var resp {{.upperStartCamelObject}}
 	err := m.cachedConn.QueryRowCtx(ctx, &resp, {{.cacheKeyVariable}}, func(ctx context.Context, conn sqlx.SqlConn, v any) error {
-	    sb := sqlbuilder.PostgreSQL.NewSelectBuilder().Select({{.lowerStartCamelObject}}Rows).From(m.table)
-	    sb.Where(sb.EQ(condition.QuoteWithFlavor(sqlbuilder.PostgreSQL, "{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
-        sql, args := sb.Build()
+	    sb := sqlbuilder.Select({{.lowerStartCamelObject}}Rows).From(m.table)
+	    sb.Where(sb.EQ(condition.QuoteWithFlavor(m.flavor, "{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
+        sql, args := sb.BuildWithFlavor(m.flavor)
         if session != nil {
 		    return session.QueryRowCtx(ctx, v, sql, args...)
 	    }
@@ -22,10 +22,10 @@ func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, se
 }
 {{else}}
 func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, session sqlx.Session, {{.lowerStartCamelPrimaryKey}} {{.dataType}}) (*{{.upperStartCamelObject}}, error) {
-	sb := sqlbuilder.PostgreSQL.NewSelectBuilder().Select({{.lowerStartCamelObject}}Rows).From(m.table)
-	sb.Where(sb.EQ(condition.QuoteWithFlavor(sqlbuilder.PostgreSQL, "{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
+	sb := sqlbuilder.Select({{.lowerStartCamelObject}}Rows).From(m.table)
+	sb.Where(sb.EQ(condition.QuoteWithFlavor(m.flavor, "{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
 	sb.Limit(1)
-	sql, args := sb.Build()
+	sql, args := sb.BuildWithFlavor(m.flavor)
 	var resp {{.upperStartCamelObject}}
     var err error
     if session != nil {
