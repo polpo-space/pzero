@@ -23,7 +23,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/embeded"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console/progress"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/filex"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/gitstatus"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/osx"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/templatex"
 )
@@ -46,14 +45,14 @@ func (l RegisterLines) String() string {
 	return "\n\t\t" + strings.Join(l, "\n\t\t")
 }
 
-func (ja *PzeroApi) Gen(progressChan chan<- progress.Message) (map[string]*spec.ApiSpec, error) {
+func (ja *PzeroApi) Gen(progressChan chan<- progress.Message) error {
 	if !pathx.FileExists(config.C.ApiDir()) {
-		return nil, nil
+		return nil
 	}
 
 	apiFiles, err := desc.FindRouteApiFiles(config.C.ApiDir())
 	if err != nil {
-		return nil, errors.Wrap(err, "find route api files")
+		return errors.Wrap(err, "find route api files")
 	}
 
 	apiSpecMap := make(map[string]*spec.ApiSpec, len(apiFiles))
@@ -62,7 +61,7 @@ func (ja *PzeroApi) Gen(progressChan chan<- progress.Message) (map[string]*spec.
 	for _, v := range apiFiles {
 		apiSpec, err := parser.Parse(v, nil)
 		if err != nil {
-			return nil, errors.Wrapf(err, "parse %s", v)
+			return errors.Wrapf(err, "parse %s", v)
 		}
 		apiSpecMap[v] = apiSpec
 	}
@@ -72,7 +71,7 @@ func (ja *PzeroApi) Gen(progressChan chan<- progress.Message) (map[string]*spec.
 	for _, v := range apiFiles {
 		routes, err := desc.ParseCurrentApiRoutes(v)
 		if err != nil {
-			return nil, errors.Wrapf(err, "parse current routes %s", v)
+			return errors.Wrapf(err, "parse current routes %s", v)
 		}
 		currentRoutesMap[v] = routes
 	}
@@ -91,16 +90,6 @@ func (ja *PzeroApi) Gen(progressChan chan<- progress.Message) (map[string]*spec.
 	var genCodeApiFiles []string
 
 	switch {
-	case config.C.Gen.GitChange && gitstatus.IsGitRepo(filepath.Join(config.C.Wd())) && len(config.C.Gen.Desc) == 0:
-		// 从 git status 获取变动的文件生成
-		m, _, err := gitstatus.ChangedFiles(config.C.ApiDir(), ".api")
-		if err == nil {
-			// 获取变动的 api 文件
-			genCodeApiFiles = append(genCodeApiFiles, m...)
-			for _, file := range m {
-				genCodeApiSpecMap[file] = apiSpecMap[file]
-			}
-		}
 	case len(config.C.Gen.Desc) > 0:
 		// 从指定的 desc 文件夹或者文件生成
 		for _, v := range config.C.Gen.Desc {
@@ -112,7 +101,7 @@ func (ja *PzeroApi) Gen(progressChan chan<- progress.Message) (map[string]*spec.
 			} else {
 				specifiedApiFiles, err := desc.FindApiFiles(v)
 				if err != nil {
-					return nil, err
+					return err
 				}
 				genCodeApiFiles = append(genCodeApiFiles, specifiedApiFiles...)
 				for _, saf := range specifiedApiFiles {
@@ -147,7 +136,7 @@ func (ja *PzeroApi) Gen(progressChan chan<- progress.Message) (map[string]*spec.
 		} else {
 			specifiedApiFiles, err := desc.FindApiFiles(v)
 			if err != nil {
-				return nil, err
+				return err
 			}
 			for _, saf := range specifiedApiFiles {
 				genCodeApiFiles = lo.Reject(genCodeApiFiles, func(item string, _ int) bool {
@@ -163,25 +152,25 @@ func (ja *PzeroApi) Gen(progressChan chan<- progress.Message) (map[string]*spec.
 	}
 
 	if len(genCodeApiFiles) == 0 {
-		return apiSpecMap, nil
+		return nil
 	}
 
 	if err := validateAPITypes(apiFiles, apiSpecMap); err != nil {
-		return nil, err
+		return err
 	}
 
 	err = ja.generateApiCode(apiFiles, apiSpecMap, genCodeApiFiles, genCodeApiSpecMap, currentRoutesMap, importedFiles, progressChan)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// 将 types.go 分 group 或者分 dir
 	err = ja.separateTypesGo(apiFiles, apiSpecMap)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return apiSpecMap, nil
+	return nil
 }
 
 func (ja *PzeroApi) generateApiCode(apiFiles []string, apiSpecMap map[string]*spec.ApiSpec, genCodeApiFiles []string, genCodeApiSpecMap map[string]*spec.ApiSpec, currentRoutesMap map[string][]spec.Route, importedFiles map[string]bool, progressChan chan<- progress.Message) error {
@@ -210,12 +199,6 @@ func (ja *PzeroApi) generateApiCode(apiFiles []string, apiSpecMap map[string]*sp
 
 	if err := ja.generateRoutesGoFile(apiFiles, apiSpecMap, importedFiles, allRoutesGoBody); err != nil {
 		return err
-	}
-
-	if config.C.Gen.Route2Code {
-		if err := ja.generateRoute2CodeFile(apiSpecMap, currentRoutesMap, importedFiles); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -466,18 +449,4 @@ func (ja *PzeroApi) generateRoutesGoFile(apiFiles []string, apiSpecMap map[strin
 	}
 
 	return os.WriteFile(filepath.Join("internal", "handler", "routes.go"), process, 0o644)
-}
-
-// generateRoute2CodeFile 生成 route2code.go 文件
-func (ja *PzeroApi) generateRoute2CodeFile(apiSpecMap map[string]*spec.ApiSpec, currentRoutesMap map[string][]spec.Route, importedFiles map[string]bool) error {
-	route2CodeBytes, err := ja.genRoute2Code(apiSpecMap, currentRoutesMap, importedFiles)
-	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(filepath.Join("internal", "handler", "route2code.go"), route2CodeBytes, 0o644); err != nil {
-		return err
-	}
-
-	return nil
 }

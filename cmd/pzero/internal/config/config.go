@@ -98,9 +98,7 @@ type GenConfig struct {
 
 	Desc                    []string `mapstructure:"desc"`
 	DescIgnore              []string `mapstructure:"desc-ignore"`
-	GitChange               bool     `mapstructure:"git-change"`
 	ApiTypesDir             string   `mapstructure:"api-types-dir"`
-	Route2Code              bool
 	ProtoDirs               []string `mapstructure:"proto-dir"` // RPC proto 扫描根，空则回落 desc/proto
 	ProtoInclude            []string `mapstructure:"proto-include"`
 	RpcClient               bool     `mapstructure:"rpc-client"`
@@ -132,7 +130,6 @@ type GenSwaggerConfig struct {
 	Desc       []string `mapstructure:"desc"`
 	DescIgnore []string `mapstructure:"desc-ignore"`
 	Output     string   `mapstructure:"output"`
-	Route2Code bool     `mapstructure:"route2code"`
 	Merge      bool     `mapstructure:"merge"`
 }
 
@@ -355,6 +352,11 @@ func InitConfig(rootCmd *cobra.Command) error {
 
 	if err := TraverseCommands("", rootCmd); err != nil {
 		return err
+	}
+	for _, key := range []string{"gen.git-change", "gen.route2code", "gen.swagger.route2code"} {
+		if viper.IsSet(key) {
+			return fmt.Errorf("%s has been retired; remove it from configuration and environment (see the generator migration guide)", key)
+		}
 	}
 	return nil
 }

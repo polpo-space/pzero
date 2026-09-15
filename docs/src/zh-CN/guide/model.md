@@ -32,9 +32,9 @@ pzero 通过 PostgreSQL 数据源生成数据库代码到 `internal/model` 下�
 
 ## 特性
 
-* 支持多数据源生成代码
+* 每次从一个 PostgreSQL 数据源生成代码
 * 支持 redis/自定义缓存
-* 单数据源和多 schema 项目生成出的模型注册方式保持一致
+* 通过 `model-schema` 选择一个 PostgreSQL schema（默认 `public`）
 
 ## 缓存配置
 
@@ -110,35 +110,7 @@ pzero gen model
 
 `pzero gen` 仍会跑 model → api → rpc。`pzero gen model` 只写所选表的 `internal/model`（含 `model.go` 注册）。
 
-pzero 支持多数据源。通过在 `model-datasource-table` 中使用 `database.table` 形式，可以将表映射到指定的数据源。
-
-例如增加 `jzero-admin_log.operate_log`：
-
-```yaml
-gen:
-  model-driver: postgres
-  model-datasource: true
-  model-datasource-url:
-    - "postgres://postgres:postgres@127.0.0.1:5432/jzero-admin?sslmode=disable"
-    - "postgres://postgres:postgres@127.0.0.1:5432/jzero-admin_log?sslmode=disable"
-  model-schema: public
-  model-ignore-columns: ["create_time", "update_time"]
-  model-datasource-table:
-    - manage_email
-    - manage_menu
-    - manage_role
-    - manage_role_menu
-    - manage_user
-    - manage_user_role
-    - jzero-admin_log.operate_log
-```
-
-```shell
-pzero gen
-pzero gen model
-```
-
-生成的 `internal/model/model.go` 会与所选 PostgreSQL 数据源集合保持一致。
+每次生成只接受一个 URL；字符串和单元素列表均可。表名不带 `database.` 或 `schema.` 前缀，schema 由 `model-schema` 指定。多数据库迁移见[退役功能迁移](../getting-started/gen.md#退役功能迁移)。
 
 ## 默认生成如下方法
 

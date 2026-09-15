@@ -74,7 +74,7 @@ func TestPackageTypesAndConflictPreflight(t *testing.T) {
 		return files
 	}
 	before := snapshot()
-	if _, err := ja.Gen(nil); err == nil || !strings.Contains(err.Error(), "conflicting API type") {
+	if err := ja.Gen(nil); err == nil || !strings.Contains(err.Error(), "conflicting API type") {
 		t.Fatalf("expected type conflict, got %v", err)
 	}
 	if !maps.Equal(before, snapshot()) {

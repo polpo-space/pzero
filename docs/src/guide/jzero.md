@@ -17,16 +17,15 @@ Example: `pzero gen --style go_zero` corresponds to `.pzero.yaml` content
 ::: code-tabs#yaml
 @tab .pzero.yaml
 ```yaml
-gen:
-  git-change: true
+style: go_zero
 ```
 :::
 
-`pzero gen` + `.pzero.yaml` = `pzero gen --git-change=true`
+`pzero gen` + `.pzero.yaml` = `pzero gen --style go_zero`
 
-For environment variable usage, need to add prefix `PZERO_`, such as `PZERO_GEN_GIT_CHANGE`
+For environment variable usage, need to add prefix `PZERO_`, such as `PZERO_STYLE`
 
-`PZERO_GEN_GIT_CHANGE=go_zero pzero gen` = `pzero gen --git-change=true`
+`PZERO_STYLE=go_zero pzero gen` = `pzero gen --style go_zero`
 
 Environment variable definition supports using configuration file, default is `.pzero.env.yaml`
 
@@ -35,7 +34,7 @@ Example:
 ::: code-tabs#yaml
 @tab .pzero.env.yaml
 ```yaml
-PZERO_GEN_GIT_CHANGE: true
+PZERO_STYLE: go_zero
 ```
 :::
 

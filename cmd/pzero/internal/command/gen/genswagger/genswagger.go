@@ -23,7 +23,6 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console/progress"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/osx"
-	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/stringx"
 )
 
 func Gen() (err error) {
@@ -249,22 +248,6 @@ func processSwaggerAPIFile(apiPath string) error {
 	for pmk := range pathMaps {
 		pathMethodsMap := cast.ToStringMap(pathMaps[pmk])
 		for pmmk := range pathMethodsMap {
-			for _, group := range parse.Service.Groups {
-				for _, route := range group.Routes {
-					if group.GetAnnotation("prefix") != "" {
-						route.Path = group.GetAnnotation("prefix") + route.Path
-					}
-					if route.Method == pmmk && route.Path == adjustHttpPath(pmk) && group.GetAnnotation("group") != "" {
-						h := strings.TrimSuffix(route.Handler, "Handler")
-						groupName := group.GetAnnotation("group")
-
-						if config.C.Gen.Swagger.Route2Code || config.C.Gen.Route2Code {
-							_ = g.Set(fmt.Sprintf("paths.%s.%s.description", pmk, pmmk), "接口权限编码"+":"+stringx.FirstLower(strings.ReplaceAll(groupName, "/", ":"))+":"+stringx.FirstLower(h))
-						}
-					}
-				}
-			}
-
 			tags := cast.ToStringSlice(g.Get(fmt.Sprintf("paths.%s.%s.tags", pmk, pmmk)))
 			if len(tags) == 0 || (len(tags) == 1 && tags[0] == "") {
 				if goPackage != "" {

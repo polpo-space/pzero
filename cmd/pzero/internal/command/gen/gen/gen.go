@@ -5,12 +5,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/rinchsan/gosimports"
-	"github.com/zeromicro/go-zero/tools/goctl/api/spec"
-	rpcparser "github.com/zeromicro/go-zero/tools/goctl/rpc/parser"
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/command/gen/genapi"
@@ -40,20 +37,11 @@ func Run() error {
 		}
 	}
 
-	var apiSpecMap map[string]*spec.ApiSpec
-	var protoSpecMap map[string]*rpcparser.Proto
-
 	pzeroApi := genapi.PzeroApi{
 		Module: module,
 	}
 
-	apiTitleFn := func() string {
-		title := console.Green("Gen") + " " + console.Yellow("api")
-		if config.C.Gen.GitChange {
-			title += " " + console.Cyan("(git-change mode)")
-		}
-		return title
-	}
+	apiTitle := console.Green("Gen") + " " + console.Yellow("api")
 
 	apiHeaderShown := !config.C.Quiet && pathx.FileExists(config.C.ApiDir())
 
@@ -64,16 +52,16 @@ func Run() error {
 
 	// Show box header immediately before starting goroutine
 	if apiHeaderShown {
-		fmt.Printf("%s\n", console.BoxHeader("", apiTitleFn()))
+		fmt.Printf("%s\n", console.BoxHeader("", apiTitle))
 	}
 
 	go func() {
-		apiSpecMap, apiErr = pzeroApi.Gen(apiProgressChan)
+		apiErr = pzeroApi.Gen(apiProgressChan)
 		close(apiDone)
 	}()
 
-	apiState := progress.ConsumeStage(apiProgressChan, apiDone, apiTitleFn(), config.C.Quiet, apiHeaderShown)
-	progress.FinishStage(apiTitleFn(), config.C.Quiet, &apiState, apiErr)
+	apiState := progress.ConsumeStage(apiProgressChan, apiDone, apiTitle, config.C.Quiet, apiHeaderShown)
+	progress.FinishStage(apiTitle, config.C.Quiet, &apiState, apiErr)
 
 	if apiErr != nil {
 		return apiErr
@@ -83,41 +71,23 @@ func Run() error {
 		Module: module,
 	}
 
-	rpcTitleFn := func() string {
-		title := console.Green("Gen") + " " + console.Yellow("rpc")
-		if config.C.Gen.GitChange {
-			title += " " + console.Cyan("(git-change mode)")
-		}
-		return title
-	}
-
-	rpcHeaderShown := config.C.Gen.GitChange && !config.C.Quiet && pathx.FileExists(config.C.ProtoDir())
-
-	// Show box header immediately for git-change mode
-	if rpcHeaderShown {
-		fmt.Printf("%s\n", console.BoxHeader("", rpcTitleFn()))
-	}
+	rpcTitle := console.Green("Gen") + " " + console.Yellow("rpc")
 
 	// Generate rpc
 	rpcProgressChan := make(chan progress.Message, 10)
 	rpcDone := make(chan struct{})
 	var rpcErr error
 	go func() {
-		protoSpecMap, rpcErr = pzeroRpc.Gen(rpcProgressChan)
+		rpcErr = pzeroRpc.Gen(rpcProgressChan)
 		close(rpcProgressChan)
 		close(rpcDone)
 	}()
 
-	rpcState := progress.ConsumeStage(rpcProgressChan, rpcDone, rpcTitleFn(), config.C.Quiet, rpcHeaderShown)
-	progress.FinishStage(rpcTitleFn(), config.C.Quiet, &rpcState, rpcErr)
+	rpcState := progress.ConsumeStage(rpcProgressChan, rpcDone, rpcTitle, config.C.Quiet, false)
+	progress.FinishStage(rpcTitle, config.C.Quiet, &rpcState, rpcErr)
 
 	if rpcErr != nil {
 		return rpcErr
-	}
-
-	// 收集并保存元数据（复用已解析的数据）
-	if err = collectAndSaveMetadata(apiSpecMap, protoSpecMap); err != nil {
-		// Debug removed("collect and save metadata error: %s", err.Error())
 	}
 
 	return nil
@@ -157,28 +127,7 @@ func runModelStage(module string) error {
 		Module: module,
 	}
 
-	modelTitleFn := func() string {
-		modelTitle := "model"
-		if config.C.Gen.ModelDatasource && len(config.C.Gen.ModelDatasourceUrl) > 0 {
-			dsString := config.C.Gen.ModelDatasourceUrl[0]
-			if len(config.C.Gen.ModelDatasourceUrl) > 1 {
-				dsString = fmt.Sprintf("%s...", config.C.Gen.ModelDatasourceUrl[0])
-			}
-			modelTitle += " " + console.Cyan(fmt.Sprintf("by Datasource(%s)", dsString))
-		}
-		return console.Green("Gen") + " " + console.Yellow(modelTitle)
-	}
-
-	modelHeaderShown := config.C.Gen.GitChange && !config.C.Quiet && config.C.Gen.ModelDatasource
-
-	if modelHeaderShown {
-		modelTitle := "model"
-		if len(config.C.Gen.ModelDatasourceUrl) > 0 {
-			modelTitle += " " + console.Cyan(fmt.Sprintf("by Datasource(%s)", strings.Join(config.C.Gen.ModelDatasourceUrl, ",")))
-		}
-		title := console.Green("Gen") + " " + console.Yellow(modelTitle) + " " + console.Cyan("(git-change mode)")
-		fmt.Printf("%s\n", console.BoxHeader("", title))
-	}
+	modelTitle := console.Green("Gen") + " " + console.Yellow("model")
 
 	progressChan := make(chan progress.Message, 10)
 	done := make(chan struct{})
@@ -188,40 +137,9 @@ func runModelStage(module string) error {
 		close(done)
 	}()
 
-	modelState := progress.ConsumeStage(progressChan, done, modelTitleFn(), config.C.Quiet, modelHeaderShown)
-	progress.FinishStage(modelTitleFn(), config.C.Quiet, &modelState, modelErr)
+	modelState := progress.ConsumeStage(progressChan, done, modelTitle, config.C.Quiet, false)
+	progress.FinishStage(modelTitle, config.C.Quiet, &modelState, modelErr)
 	return modelErr
-}
-
-// collectAndSaveMetadata 收集并保存项目元数据（复用已解析的数据）
-func collectAndSaveMetadata(apiSpecMap map[string]*spec.ApiSpec, protoSpecMap map[string]*rpcparser.Proto) error {
-	if len(apiSpecMap) == 0 && len(protoSpecMap) == 0 {
-		return nil
-	}
-
-	var md desc.Metadata
-
-	if len(apiSpecMap) > 0 {
-		apiMetadata, err := desc.CollectFromAPI(apiSpecMap)
-		if err != nil {
-			return errors.Wrapf(err, "collect api metadata")
-		}
-		md.API = apiMetadata
-	}
-
-	if len(protoSpecMap) > 0 {
-		protoMetadata, err := desc.CollectFromProto(protoSpecMap)
-		if err != nil {
-			return errors.Wrapf(err, "collect proto metadata")
-		}
-		md.Proto = protoMetadata
-	}
-
-	if err := desc.Save(&md); err != nil {
-		return errors.Wrapf(err, "save metadata")
-	}
-
-	return nil
 }
 
 func RemoveExtraFiles(wd, style string) {

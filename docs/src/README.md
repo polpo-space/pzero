@@ -17,7 +17,7 @@ Based on describable files (**api/proto/sql**), it automatically generates **ser
 Key features include:
 
 * Supports flexible control of pzero configurations through combinations of **configuration files/command-line parameters/environment variables**, with minimal commands to generate code, AI-friendly
-* Supports generating code based on **git-changed files** or specific descriptor files, or ignoring specific descriptor files, improving code generation efficiency for large projects
+* Supports regenerating an application, selecting specific descriptor files, or ignoring specific descriptor files
 * Built-in common development templates with enhanced template features, supports **custom templates** to build proprietary enterprise code templates, significantly reducing development costs
 
 ## Design Philosophy

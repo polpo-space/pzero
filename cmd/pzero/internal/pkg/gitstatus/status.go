@@ -8,13 +8,6 @@ import (
 	"strings"
 )
 
-func IsGitRepo(path string) bool {
-	cmd := exec.Command("git", "rev-parse", "--is-inside-work-tree")
-	cmd.Dir = path
-	_, err := cmd.CombinedOutput()
-	return err == nil
-}
-
 func ChangedFiles(path, ext string) ([]string, []string, error) {
 	var m []string
 	var d []string

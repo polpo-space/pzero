@@ -1,10 +1,45 @@
 package genmodel
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/polpo-space/pzero/cmd/pzero/internal/config"
 )
+
+func TestRejectMultiDatasourceBeforeWriting(t *testing.T) {
+	orig := config.C
+	t.Cleanup(func() { config.C = orig })
+	t.Chdir(t.TempDir())
+	if err := os.MkdirAll("internal/model", 0o755); err != nil {
+		t.Fatal(err)
+	}
+	const existing = "existing model registration\n"
+	if err := os.WriteFile("internal/model/model.go", []byte(existing), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name, want   string
+		urls, tables []string
+	}{
+		{"multiple URLs", "exactly one", []string{"postgres://localhost/a", "postgres://localhost/b"}, []string{"*"}},
+		{"blank URL", "must not be empty", []string{" "}, []string{"users"}},
+		{"qualified table", "qualified table", []string{"postgres://localhost/a"}, []string{"a.users"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			config.C = config.Config{Gen: config.GenConfig{ModelDatasource: true, ModelDatasourceUrl: tc.urls, ModelDatasourceTable: tc.tables}}
+			_, err := (&PzeroModel{Module: "example.com/app"}).Gen(nil)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("expected %q, got %v", tc.want, err)
+			}
+			data, err := os.ReadFile("internal/model/model.go")
+			if err != nil || string(data) != existing {
+				t.Fatalf("rejected input changed registration: %q, %v", data, err)
+			}
+		})
+	}
+}
 
 func TestHasExplicitSQLDesc(t *testing.T) {
 	orig := config.C
