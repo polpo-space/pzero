@@ -15,9 +15,13 @@ import (
 //
 //	return nil, status.Error(errcode.NotFound)                          // 使用默认提示
 //	return nil, status.ErrorMessage(errcode.InvalidParam, "name 不能为空") // 覆盖提示
-//	return nil, status.Wrap(errcode.Internal, err)                      // 携带底层错误
+//	return nil, status.Wrap(errcode.Internal, err)                      // 底层错误只进日志, 不进响应
 //
-// 响应中间件会通过 status.FromError 将其转换为 {code, msg, data} 结构返回给调用方。
+// 需要为业务码指定 gRPC code 时(需本仓库发布后的 core/status):
+//
+//	status.Register(12001, status.WithMessage("stock unavailable"), status.WithGRPCCode(codes.FailedPrecondition))
+//
+// 响应中间件通过 status.FromError 转换为 {code, msg, data}, msg 取 Message() 不含底层 cause。
 var (
 	InvalidParam = register(http.StatusBadRequest, "invalid parameter")
 	Unauthorized = register(http.StatusUnauthorized, "unauthorized")

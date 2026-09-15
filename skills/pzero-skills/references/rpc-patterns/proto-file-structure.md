@@ -81,7 +81,8 @@ pzero gen --proto-dir ../../../contracts/proto/nfc --proto-dir ../../../contract
 RPC projects ship the same `internal/errcode/errcode.go` as API projects. A `status.Status` implements
 `GRPCStatus()`, so it can be returned from any gRPC handler directly: `core/status` maps the business code to a
 gRPC code (`400 -> InvalidArgument`, `404 -> NotFound`, `500 -> Internal`, other codes -> `Unknown`) and carries
-the original code in a `google.rpc.ErrorInfo` detail.
+the original code in a `google.rpc.ErrorInfo` detail. `GRPCStatus()` sends `Message()` only; wrapped causes
+stay on the server (`Error()` / logs). Override the default gRPC mapping with `status.WithGRPCCode`.
 
 ```go
 // internal/errcode/errcode.go
@@ -98,7 +99,8 @@ if err != nil {
 
 On the caller side (an API service calling this RPC), pass the error through unchanged. `status.FromError` in the
 response middleware reads the `ErrorInfo` detail and restores `10001`; plain gRPC errors without the detail are
-mapped back by gRPC code (`NotFound -> 404`, `PermissionDenied -> 403`, otherwise `500`).
+mapped back by gRPC code (`NotFound -> 404`, `PermissionDenied -> 403`, `FailedPrecondition -> 400`,
+`Aborted -> 409`, `Canceled -> 499`, otherwise `500`).
 
 ```go
 resp, err := l.svcCtx.UserRpc.GetUser(l.ctx, &userpb.GetUserRequest{Id: req.Id})
@@ -110,7 +112,7 @@ if err != nil {
 Rules:
 
 - Never build `grpc/status` errors by hand in logic; use `errcode` so HTTP and gRPC share one code space
-- Only codes mapped to `Internal`/`Unavailable`/`DeadlineExceeded`/`ResourceExhausted`/`Unimplemented` count as
-  failures for the go-zero breaker; business errors do not trip it
+- Only codes mapped to `Internal`/`Unavailable`/`DeadlineExceeded`/`ResourceExhausted`/`Unimplemented`/`DataLoss`
+  count as failures for the go-zero breaker; business errors (including `Unknown` / `FailedPrecondition`) do not trip it
 - Codes a BFF must branch on belong in a `contracts` proto enum, not in the service's `internal/errcode` alone;
   see [Shared Error Codes](error-codes.md)

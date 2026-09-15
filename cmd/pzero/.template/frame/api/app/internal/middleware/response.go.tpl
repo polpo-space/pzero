@@ -35,7 +35,7 @@ func (e *ErrorMiddleware) Handle(ctx context.Context, err error) (int, any) {
 	return http.StatusOK, Body{
 		Data: nil,
 		Code: int(fromError.Code()),
-		Msg:  fromError.Error(),
+		Msg:  fromError.Message(),
 	}
 }
 

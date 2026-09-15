@@ -82,4 +82,7 @@ Rules:
 
 - Group codes by module with a dedicated range (for example `10001-10999` for users)
 - Never pass a raw `status.Code` literal to `status.Error`; unregistered codes degrade to `500`
-- Use `status.Wrap` to keep the underlying error for logging while returning a stable code to callers
+- Use `status.Wrap` to keep the underlying error for **logging**; `Error()` includes the cause, `Message()` does not.
+  Response middleware serializes `Message()`, so DB/SDK details never reach the client
+- Override the default gRPC mapping with `status.WithGRPCCode` when a caller without `core/status` needs a
+  canonical code (for example `FailedPrecondition` instead of `Unknown`)

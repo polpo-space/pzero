@@ -55,6 +55,7 @@ import (
 	"net/http"
 
 	"github.com/polpo-space/pzero/core/status"
+	"google.golang.org/grpc/codes"
 
 	orderv1 "github.com/org/repo/contracts/gen/order/v1"
 )
@@ -70,8 +71,8 @@ var (
 
 func code(e orderv1.OrderError) status.Code { return status.Code(e) }
 
-func register(code status.Code, message string) status.Code {
-	status.RegisterWithMessage(code, message)
+func register(code status.Code, message string, opts ...status.Option) status.Code {
+	status.Register(code, append([]status.Option{status.WithMessage(message)}, opts...)...)
 	return code
 }
 ```
@@ -91,6 +92,17 @@ if err != nil {
 ```
 
 `status.Status` implements `GRPCStatus()`; return it directly, no `grpc/status` calls in logic.
+`Wrap` keeps the cause for server logs (`Error()`); the gRPC message is `Message()` only.
+
+Need a canonical gRPC code other than the default mapping:
+
+```go
+StockUnavailable = register(
+    code(orderv1.OrderError_ORDER_ERROR_PREPRODUCTION_STOCK_UNAVAILABLE),
+    "preproduction stock unavailable",
+    status.WithGRPCCode(codes.FailedPrecondition),
+)
+```
 
 ## Step 4: Consume in the BFF
 
@@ -170,16 +182,26 @@ Adding a service means adding one line to `ranges`. Disjoint ranges make cross-e
 
 ## Wire behaviour
 
-- Contract codes map to gRPC `Unknown`; HTTP-semantic local codes map by meaning
-  (`400 -> InvalidArgument`, `404 -> NotFound`, `500 -> Internal`, ...). Only `Internal`/`Unavailable`/
-  `DeadlineExceeded`/`ResourceExhausted`/`Unimplemented` count as failures for the go-zero breaker
+- `Error()` is for logs and the Go error chain and may include the wrapped cause. `Message()` is the
+  client-facing text and never includes the cause. `GRPCStatus()` and the HTTP serializer both use `Message()`.
+  `status.Wrap(errcode.Internal, err)` therefore logs the DB/SDK error locally and still returns
+  `"internal server error"` on the wire
+- Contract codes map to gRPC `Unknown` unless registered with `status.WithGRPCCode`. HTTP-semantic local codes
+  map by meaning (`400 -> InvalidArgument`, `404 -> NotFound`, `500 -> Internal`, ...). Legacy gRPC errors
+  without `ErrorInfo` map back by grpc-gateway rules (`FailedPrecondition`/`OutOfRange -> 400`, `Aborted -> 409`,
+  `Canceled -> 499`, `Unknown`/`DataLoss -> 500`)
+- go-zero zrpc breaker treats `DeadlineExceeded`/`Internal`/`Unavailable`/`DataLoss`/`Unimplemented`/
+  `ResourceExhausted` as failures; other gRPC codes (including `Unknown` and `FailedPrecondition`) do not trip it
 - Consumers without `core/status` (other languages, plain gRPC clients) see the gRPC code plus the `ErrorInfo`
   detail with `domain = "pzero"` and `reason = "<number>"`
 
 ## Never Do
 
 - Never compare `s.Message()` or `err.Error()` to identify an RPC error
+- Never put `fromError.Error()` / `err.Error()` into an HTTP `msg` or gRPC status message; those include causes
 - Never branch on bare `codes.NotFound` when the caller needs to know *what* was not found
 - Never hand-write `codes -> http` switches in the BFF; `status.FromError` already contains that table
+- Never wrap `status.Error` / `status.Wrap` with `errors.WithStack` or `fmt.Errorf("%w")` before returning from a
+  gRPC handler: grpc-go then replaces the status message with `err.Error()`, which includes the cause
 - Never put `core/status`, `register()`, or messages into `contracts`
 - Never re-register contract codes in the BFF unless it deliberately emits them itself

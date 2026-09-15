@@ -53,6 +53,13 @@ func TestRunGeneratesErrcode(t *testing.T) {
 				assert.Contains(t, string(content), expected)
 			}
 
+			if frame == "api" {
+				response, err := os.ReadFile(filepath.Join(projectDir, "internal", "middleware", "response.go"))
+				require.NoError(t, err)
+				assert.Contains(t, string(response), "fromError.Message()")
+				assert.NotContains(t, string(response), "fromError.Error()")
+			}
+
 			if frame != "rpc" {
 				return
 			}
