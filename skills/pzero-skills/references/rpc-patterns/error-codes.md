@@ -1,5 +1,7 @@
 # Shared Error Codes (Service <-> BFF)
 
+The full API/RPC/BFF playbook is [Error Handling](../error-handling.md). This page is only the contracts proto-enum pattern for numbers a BFF must distinguish.
+
 ## Overview
 
 One code space for the whole system. A business error is an integer that travels from the RPC service to the

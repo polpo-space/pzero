@@ -26,7 +26,8 @@ When helping with pzero development:
 3. **For RPC services**: Review [Proto File Structure](references/rpc-patterns/proto-file-structure.md)
 4. **For databases**: Review [Database Best Practices](references/database-patterns/best-practices.md)
 5. **For SQL changes**: Check [SQL Migration Guide](references/database-patterns/sql-migration.md)
-6. **For specific operations**: Reference the appropriate pattern guide below
+6. **For errors in API/RPC/BFF logic**: Follow [Error Handling](references/error-handling.md) — do not invent a second error system
+7. **For specific operations**: Reference the appropriate pattern guide below
 
 ## Core Patterns
 
@@ -40,6 +41,7 @@ When helping with pzero development:
 - Handler patterns and HTTP concerns
 - Logic patterns and business implementation
 - Correct vs incorrect patterns with examples
+- [Error Handling](references/error-handling.md): `status.Error` / `Wrap` / pass-through; `Message()` vs `Error()`; never leak causes
 
 ### RPC Services
 
@@ -48,6 +50,7 @@ When helping with pzero development:
 - [Proto Middleware](references/rpc-patterns/proto-middleware.md): HTTP/RPC middleware at service and method levels
 - [Job Patterns](references/rpc-patterns/job-patterns.md): In-process scheduled jobs via `--features job` (ServiceGroup merge deploy)
 - [Shared Error Codes](references/rpc-patterns/error-codes.md): One code space across services and BFFs; numbers in `contracts` proto enums, messages in the emitting service, `status.FromError` in the BFF
+- [Error Handling](references/error-handling.md): API / RPC / BFF decision tree and real scenarios (read this before writing `return nil, err`)
 
 ### Database Operations
 
@@ -134,7 +137,7 @@ myproject/
 - Set `go_package`, `group`, and `compact_handler: true` in `.api` files
 - Import models with aliases like `xxmodel`
 - Use `errors.Is(err, model.ErrNotFound)` from `github.com/pkg/errors`
-- Return business errors from API and RPC logic with `status.Error(errcode.X)` / `status.Wrap(errcode.X, err)`; add new codes as one `register(...)` line in `internal/errcode`
+- Return business errors from API and RPC logic with `status.Error(errcode.X)` / `status.Wrap(errcode.X, err)`; add new codes as one `register(...)` line in `internal/errcode`. Follow [Error Handling](references/error-handling.md)
 - Pass RPC client errors through unchanged (`return nil, err`); `status.FromError` restores the original business code on the API side
 - Put error codes a BFF must distinguish in a `contracts` proto enum (`<Svc>Error`, fixed range per service); compare with `status.FromError(err).Code() == status.Code(pb.X)`
 - Run `pzero gen --desc` before implementing logic

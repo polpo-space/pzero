@@ -116,3 +116,7 @@ Detailed explanation:
 After executing `pzero gen`, following files will be generated, using auth as example:
 * internal/middleware/authmiddleware.go
 * internal/middleware/middleware_gen.go
+
+## Error handling
+
+RPC logic returns `status.Error` / `status.Wrap` directly; do not hand-build `grpc/status`. BFFs pass through by default. Full guide: [Error Handling Guide](error-handling.md).

@@ -116,3 +116,4 @@ Rules:
   count as failures for the go-zero breaker; business errors (including `Unknown` / `FailedPrecondition`) do not trip it
 - Codes a BFF must branch on belong in a `contracts` proto enum, not in the service's `internal/errcode` alone;
   see [Shared Error Codes](error-codes.md)
+- Full API/RPC/BFF playbook: [Error Handling](../error-handling.md)

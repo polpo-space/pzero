@@ -142,3 +142,7 @@ service simpleapi {
 	post /system/webhook/receive (WebhookRequest) returns (WebhookResponse)
 }
 ```
+
+## Error handling
+
+Logic returns only `status.Error` / `status.Wrap` / `status.ErrorMessage`. HTTP `msg` is `Message()`, never a DB error. Full scenarios including BFF → RPC: [Error Handling Guide](error-handling.md).

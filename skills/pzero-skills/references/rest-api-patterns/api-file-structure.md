@@ -86,3 +86,4 @@ Rules:
   Response middleware serializes `Message()`, so DB/SDK details never reach the client
 - Override the default gRPC mapping with `status.WithGRPCCode` when a caller without `core/status` needs a
   canonical code (for example `FailedPrecondition` instead of `Unknown`)
+- Full API/RPC/BFF playbook: [Error Handling](../error-handling.md)

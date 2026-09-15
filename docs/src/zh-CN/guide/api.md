@@ -143,3 +143,7 @@ service simpleapi {
 	post /system/webhook/receive (WebhookRequest) returns (WebhookResponse)
 }
 ```
+
+## 错误处理
+
+logic 只返回 `status.Error` / `status.Wrap` / `status.ErrorMessage`。HTTP `msg` 用 `Message()`，不要把 DB 错误拼进响应。完整场景（含 BFF 调 RPC）见 [错误处理指南](error-handling.md)。

@@ -116,3 +116,7 @@ service User {
 执行 `pzero gen` 后将会生成一下文件, 以 auth 为例:
 * internal/middleware/authmiddleware.go
 * internal/middleware/middleware_gen.go
+
+## 错误处理
+
+RPC logic 直接返回 `status.Error` / `status.Wrap`，不要手写 `grpc/status`。BFF 默认透传。完整指南见 [错误处理指南](error-handling.md)。
