@@ -47,6 +47,7 @@ When helping with pzero development:
 - [Proto Field Validation](references/rpc-patterns/proto-validation.md): Field validation with protovalidate, CEL expressions, built-in constraints
 - [Proto Middleware](references/rpc-patterns/proto-middleware.md): HTTP/RPC middleware at service and method levels
 - [Job Patterns](references/rpc-patterns/job-patterns.md): In-process scheduled jobs via `--features job` (ServiceGroup merge deploy)
+- [Shared Error Codes](references/rpc-patterns/error-codes.md): One code space across services and BFFs; numbers in `contracts` proto enums, messages in the emitting service, `status.FromError` in the BFF
 
 ### Database Operations
 
@@ -118,6 +119,7 @@ myproject/
 │   ├── model/
 │   ├── svc/
 │   ├── config/
+│   ├── errcode/
 │   └── middleware/
 └── etc/
     └── etc.yaml
@@ -132,6 +134,9 @@ myproject/
 - Set `go_package`, `group`, and `compact_handler: true` in `.api` files
 - Import models with aliases like `xxmodel`
 - Use `errors.Is(err, model.ErrNotFound)` from `github.com/pkg/errors`
+- Return business errors from API and RPC logic with `status.Error(errcode.X)` / `status.Wrap(errcode.X, err)`; add new codes as one `register(...)` line in `internal/errcode`
+- Pass RPC client errors through unchanged (`return nil, err`); `status.FromError` restores the original business code on the API side
+- Put error codes a BFF must distinguish in a `contracts` proto enum (`<Svc>Error`, fixed range per service); compare with `status.FromError(err).Code() == status.Code(pb.X)`
 - Run `pzero gen --desc` before implementing logic
 - Use the default `go_zero` file naming style unless the project explicitly requires another style
 - Run schema migrations through the generated API/RPC service command
@@ -145,6 +150,7 @@ myproject/
 - Never skip `go_package`, `group`, or `compact_handler`
 - Never import models without aliases
 - Never compare model errors with `==`
+- Never return bare `errors.New(...)`, raw `status.Code` literals, or hand-built `grpc/status` errors from logic; unregistered codes degrade to 500 / `Unknown`
 - Never hard-code configuration values
 - Never run migrations automatically during server startup
 - Never implement logic before generating framework code
