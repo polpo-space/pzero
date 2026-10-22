@@ -1,0 +1,188 @@
+package device_states
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"fmt"
+	"strings"
+	"sync"
+	"testing"
+
+	"github.com/polpo-space/pzero/core/stores/condition"
+	"github.com/polpo-space/pzero/core/stores/modelx"
+	"github.com/zeromicro/go-zero/core/stores/cache"
+	"github.com/zeromicro/go-zero/core/stores/sqlc"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
+)
+
+type testSession struct {
+	sqlx.Session
+	query     string
+	args      []any
+	execCalls int
+	result    testResult
+	execErr   error
+	queryErr  error
+}
+
+func (s *testSession) QueryRowCtx(_ context.Context, _ any, query string, args ...any) error {
+	s.query, s.args = query, args
+	if s.queryErr != nil {
+		return s.queryErr
+	}
+	return sqlx.ErrNotFound
+}
+func (s *testSession) QueryRowsPartialCtx(_ context.Context, target any, _ string, _ ...any) error {
+	*target.(*[]*DeviceStates) = []*DeviceStates{{DeviceId: 1}}
+	return nil
+}
+func (s *testSession) ExecCtx(_ context.Context, query string, args ...any) (sql.Result, error) {
+	s.execCalls++
+	s.query, s.args = query, args
+	return s.result, s.execErr
+}
+
+type testResult struct {
+	rows int64
+	err  error
+}
+
+func (r testResult) LastInsertId() (int64, error) { return 0, errors.New("unexpected LastInsertId") }
+func (r testResult) RowsAffected() (int64, error) { return r.rows, r.err }
+
+type testCache struct {
+	cache.Cache
+	deleted []string
+	err     error
+}
+
+func (c *testCache) DelCtx(_ context.Context, keys ...string) error {
+	c.deleted = append(c.deleted, keys...)
+	return c.err
+}
+
+func TestLockRequiresSession(t *testing.T) {
+	m := NewDeviceStatesModel(nil)
+	if _, err := m.FindOneForUpdate(context.Background(), nil, 1); !errors.Is(err, modelx.ErrTransactionRequired) {
+		t.Fatalf("nil session: %v", err)
+	}
+}
+
+func TestAffectedRows(t *testing.T) {
+	ctx := context.Background()
+	cache := &testCache{}
+	cached := sqlc.NewConnWithCache(nil, cache)
+	m := NewDeviceStatesModel(nil, modelx.WithCachedConn(cached))
+	conditions := condition.NewChain().Equal(DeviceId, 1).Equal(State, 1).Build()
+	session := &testSession{result: testResult{rows: 1}}
+	got, err := m.UpdateFieldsByConditionAffected(ctx, session, map[string]any{"state": 2}, conditions...)
+	if err != nil || got != 1 {
+		t.Fatalf("updated: rows=%d err=%v", got, err)
+	}
+	if !strings.Contains(session.query, `"state" = $`) || len(session.args) != 3 {
+		t.Fatalf("update conditions lost: %q %#v", session.query, session.args)
+	}
+	session.result.rows = 0
+	got, err = m.UpdateFieldsByConditionAffected(ctx, session, map[string]any{"state": 2}, conditions...)
+	if err != nil || got != 0 {
+		t.Fatalf("no match: rows=%d err=%v", got, err)
+	}
+	sentinel := errors.New("rows unavailable")
+	session.result.err = sentinel
+	if _, err := m.UpdateFieldsByConditionAffected(ctx, session, map[string]any{"state": 2}, conditions...); !errors.Is(err, sentinel) {
+		t.Fatalf("RowsAffected error lost: %v", err)
+	}
+	if err := m.UpdateFieldsByCondition(ctx, session, map[string]any{"state": 2}, conditions...); err != nil {
+		t.Fatalf("legacy update unexpectedly requires RowsAffected: %v", err)
+	}
+	session.execErr = errors.New("write failed")
+	if _, err := m.UpdateFieldsByConditionAffected(ctx, session, map[string]any{"state": 2}, conditions...); !errors.Is(err, session.execErr) {
+		t.Fatalf("write error lost: %v", err)
+	}
+	calls := session.execCalls
+	for _, fields := range []map[string]any{nil, {}} {
+		got, err = m.UpdateFieldsByConditionAffected(ctx, session, fields, conditions...)
+		if err != nil || got != 0 || session.execCalls != calls {
+			t.Fatalf("empty update executed: rows=%d err=%v", got, err)
+		}
+	}
+}
+
+func TestConcurrentPostgresModels(t *testing.T) {
+	originalRows := deviceStatesRows
+	var wg sync.WaitGroup
+	for range 40 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			m := NewDeviceStatesModel(nil)
+			session := &testSession{}
+			_, err := m.FindOneForUpdate(context.Background(), session, 7)
+			if !errors.Is(err, ErrNotFound) {
+				t.Errorf("locking read error: %v", err)
+				return
+			}
+			want := `SELECT "device_id","state","image_urls" FROM "device_states" WHERE "device_id" = $1 LIMIT $2 FOR UPDATE`
+			if session.query != want {
+				t.Errorf("PostgreSQL query: got %s, want %s", session.query, want)
+			}
+		}()
+	}
+	wg.Wait()
+	if deviceStatesRows != originalRows {
+		t.Fatal("constructors mutated package metadata")
+	}
+}
+
+func TestLockHandlesWrappedNotFound(t *testing.T) {
+	m := NewDeviceStatesModel(nil)
+	session := &testSession{queryErr: fmt.Errorf("wrapped: %w", sqlx.ErrNotFound)}
+	_, err := m.FindOneForUpdate(context.Background(), session, 1)
+	if err != ErrNotFound {
+		t.Fatalf("not normalized: %v", err)
+	}
+}
+
+func TestAffectedRowsSurvivesCacheDeletionFailure(t *testing.T) {
+	if !MODEL_USES_CACHE {
+		t.Skip("uncached models do not invalidate cache")
+	}
+	cacheErr := errors.New("delete cache failed")
+	failing := &testCache{err: cacheErr}
+	cached := sqlc.NewConnWithCache(nil, failing)
+	m := NewDeviceStatesModel(nil, modelx.WithCachedConn(cached))
+	session := &testSession{result: testResult{rows: 1}}
+	n, err := m.UpdateFieldsByConditionAffected(context.Background(), session, map[string]any{"state": 2}, condition.NewChain().Equal(DeviceId, 1).Build()...)
+	if n != 1 || !errors.Is(err, cacheErr) {
+		t.Fatalf("SQL succeeded but cache failed: rows=%d err=%v", n, err)
+	}
+	rowsErr := errors.New("rows unavailable")
+	session.result.err = rowsErr
+	_, err = m.UpdateFieldsByConditionAffected(context.Background(), session, map[string]any{"state": 2}, condition.NewChain().Equal(DeviceId, 1).Build()...)
+	if !errors.Is(err, cacheErr) || !errors.Is(err, rowsErr) {
+		t.Fatalf("lost combined errors: %v", err)
+	}
+}
+
+type plainConn struct{ sqlx.SqlConn }
+
+func (*plainConn) QueryRowCtx(context.Context, any, string, ...any) error {
+	return errors.New("plain connection must not be queried")
+}
+
+func TestLockRejectsPlainConnection(t *testing.T) {
+	m := NewDeviceStatesModel(nil)
+	if _, err := m.FindOneForUpdate(context.Background(), &plainConn{}, 1); !errors.Is(err, modelx.ErrTransactionRequired) {
+		t.Fatalf("plain connection: %v", err)
+	}
+}
+
+func TestMetadataIsIndependent(t *testing.T) {
+	first := newDeviceStatesModel(nil)
+	first.fieldNames[0] = "changed"
+	second := newDeviceStatesModel(nil)
+	if second.fieldNames[0] != `"device_id"` || deviceStatesFieldNames[0] != `"device_id"` {
+		t.Fatal("model mutation changed shared field metadata")
+	}
+}

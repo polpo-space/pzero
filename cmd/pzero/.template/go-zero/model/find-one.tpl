@@ -3,9 +3,9 @@ func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, se
 	{{.cacheKey}}
 	var resp {{.upperStartCamelObject}}
 	err := m.cachedConn.QueryRowCtx(ctx, &resp, {{.cacheKeyVariable}}, func(ctx context.Context, conn sqlx.SqlConn, v any) error {
-	    sb := sqlbuilder.Select({{.lowerStartCamelObject}}Rows).From(m.table)
-	    sb.Where(sb.EQ(condition.QuoteWithFlavor(m.flavor, "{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
-        sql, args := sb.BuildWithFlavor(m.flavor)
+	    sb := sqlbuilder.Select(m.rows).From(m.table)
+	    sb.Where(sb.EQ(condition.Quote("{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
+        sql, args := sb.BuildWithFlavor(sqlbuilder.PostgreSQL)
         if session != nil {
 		    return session.QueryRowCtx(ctx, v, sql, args...)
 	    }
@@ -22,10 +22,10 @@ func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, se
 }
 {{else}}
 func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, session sqlx.Session, {{.lowerStartCamelPrimaryKey}} {{.dataType}}) (*{{.upperStartCamelObject}}, error) {
-	sb := sqlbuilder.Select({{.lowerStartCamelObject}}Rows).From(m.table)
-	sb.Where(sb.EQ(condition.QuoteWithFlavor(m.flavor, "{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
+	sb := sqlbuilder.Select(m.rows).From(m.table)
+	sb.Where(sb.EQ(condition.Quote("{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
 	sb.Limit(1)
-	sql, args := sb.BuildWithFlavor(m.flavor)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.PostgreSQL)
 	var resp {{.upperStartCamelObject}}
     var err error
     if session != nil {
@@ -43,3 +43,27 @@ func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, se
 	}
 }
 {{end}}
+// FindOneForUpdate locks a row using the caller's transaction and never reads the cache.
+// Only pass the original session from SqlConn.TransactCtx, never a plain connection.
+// This rejects obvious SqlConn values but cannot verify arbitrary Session wrappers.
+// The caller owns commit/rollback; cached writes need a separate cache consistency strategy.
+func (m *default{{.upperStartCamelObject}}Model) FindOneForUpdate(ctx context.Context, session sqlx.Session, id {{.dataType}}) (*{{.upperStartCamelObject}}, error) {
+    if session == nil {
+        return nil, modelx.ErrTransactionRequired
+    }
+    if _, isConn := session.(sqlx.SqlConn); isConn {
+        return nil, modelx.ErrTransactionRequired
+    }
+    sb := sqlbuilder.PostgreSQL.NewSelectBuilder().Select(m.rows).From(m.table)
+    sb.Where(sb.EQ(condition.Quote("{{.originalPrimaryKey}}"), id))
+    sb.Limit(1).ForUpdate()
+    statement, args := sb.Build()
+    var row {{.upperStartCamelObject}}
+    if err := session.QueryRowCtx(ctx, &row, statement, args...); err != nil {
+        if errors.Is(err, sqlx.ErrNotFound) {
+            return nil, ErrNotFound
+        }
+        return nil, err
+    }
+    return &row, nil
+}

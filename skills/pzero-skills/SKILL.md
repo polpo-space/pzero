@@ -24,7 +24,7 @@ When helping with pzero development:
 1. **For new projects**: Start with [Development Workflows](#development-workflows)
 2. **For REST APIs**: Check [REST API File Structure](references/rest-api-patterns/api-file-structure.md) - critical rules
 3. **For RPC services**: Review [Proto File Structure](references/rpc-patterns/proto-file-structure.md)
-4. **For databases**: Review [Database Best Practices](references/database-patterns/best-practices.md)
+4. **For databases**: Review [Database Best Practices](references/database-patterns/best-practices.md); for state transitions, transactions, or cache consistency, read [CRUD Operations](references/database-patterns/crud-operations.md)
 5. **For SQL changes**: Check [SQL Migration Guide](references/database-patterns/sql-migration.md)
 6. **For errors in API/RPC/BFF logic**: Follow [Error Handling](references/error-handling.md) — do not invent a second error system
 7. **For specific operations**: Reference the appropriate pattern guide below
@@ -56,9 +56,11 @@ When helping with pzero development:
 
 - [Best Practices](references/database-patterns/best-practices.md): Model import rules, condition chain usage, error handling, field constants
 - [SQL Migration Guide](references/database-patterns/sql-migration.md): Managing pgx schema changes through generated service commands
-- [Model Generation](references/database-patterns/model-generation.md): Generate models from SQL files or remote datasource
-- [Database Connection](references/database-patterns/database-connection.md): PostgreSQL (`pgx`) and Redis configuration
-- [CRUD Operations](references/database-patterns/crud-operations.md): Generated methods and usage patterns
+- [Model Generation](references/database-patterns/model-generation.md): PostgreSQL datasource generation, arrays, type overrides, and CLI/runtime/custom-template upgrades
+- [Database Connection](references/database-patterns/database-connection.md): Explicit PostgreSQL (`pgx`) driver configuration and Redis setup
+- [CRUD Operations](references/database-patterns/crud-operations.md): Partial updates, affected-row semantics, transaction row locks, and cache consistency
+
+The ORM supports PostgreSQL only. For an existing application, check its pinned pzero runtime, CLI, and generated model interfaces before using the new methods; follow the Model Generation upgrade instructions when they are out of sync.
 
 **Critical reminder**: Always use `condition.NewChain()`, never use `condition.New()`.
 
@@ -90,7 +92,7 @@ Common steps:
 
 ### Setting Up Database Connection
 
-1. Configure `etc/etc.yaml`
+1. Configure `etc/etc.yaml` using the explicit driver setting in [Database Connection](references/database-patterns/database-connection.md)
 2. Initialize database connection in `ServiceContext` with `modelx.MustNewConn`
 3. Register models in the `Model` struct
 

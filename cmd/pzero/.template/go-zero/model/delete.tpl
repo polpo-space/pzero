@@ -8,8 +8,8 @@ func (m *default{{.upperStartCamelObject}}Model) Delete(ctx context.Context, ses
     {{end}}	{{.keys}}
         _, err {{if .containsIndexCache}}={{else}}:={{end}} m.cachedConn.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
     		sb := sqlbuilder.DeleteFrom(m.table)
-            sb.Where(sb.EQ(condition.QuoteWithFlavor(m.flavor, "{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
-            statement, args := sb.BuildWithFlavor(m.flavor)
+            sb.Where(sb.EQ(condition.Quote("{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
+            statement, args := sb.BuildWithFlavor(sqlbuilder.PostgreSQL)
             if session != nil {
     			return session.ExecCtx(ctx, statement, args...)
     		}
@@ -20,8 +20,8 @@ func (m *default{{.upperStartCamelObject}}Model) Delete(ctx context.Context, ses
 {{else}}
 func (m *default{{.upperStartCamelObject}}Model) Delete(ctx context.Context, session sqlx.Session, {{.lowerStartCamelPrimaryKey}} {{.dataType}}) error {
 	sb := sqlbuilder.DeleteFrom(m.table)
-    sb.Where(sb.EQ(condition.QuoteWithFlavor(m.flavor, "{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
-    statement, args := sb.BuildWithFlavor(m.flavor)
+    sb.Where(sb.EQ(condition.Quote("{{.originalPrimaryKey}}"), {{.lowerStartCamelPrimaryKey}}))
+    statement, args := sb.BuildWithFlavor(sqlbuilder.PostgreSQL)
     var err error
     if session != nil {
         _, err = session.ExecCtx(ctx, statement, args...)

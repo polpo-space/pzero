@@ -8,7 +8,7 @@ condition 的核心在于构造出 statement 和 args 参数, 然后搭配 go-ze
 
 ## 特性
 
-* 依赖于 [go-sqlbuilder](https://github.com/huandu/go-sqlbuilder) 一套代码兼容多种常用的数据库类型
+* 基于 go-sqlbuilder 构造 PostgreSQL SQL，统一使用双引号和 `$1`、`$2` 占位符，无需设置全局方言
 * 支持链式调用方便使用
 
 :::tip 搭配 pzero 的数据库代码自动生成的功能, 仅需构造出 conditions 即可
@@ -44,8 +44,8 @@ func main() {
 	var c Config
 	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	// 连接 mysql 并返回 flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
+	// 连接 PostgreSQL
+	sqlConn := modelx.MustNewConn(c.Sqlx)
 
 	conditions := condition.New(condition.Condition{
 		// 操作的字段
@@ -66,13 +66,8 @@ func main() {
 		},
 	})
 
-	// 设置全局 flavor(默认 mysql)
-	sqlbuilder.DefaultFlavor = sqlbuilder.PostgreSQL
 	statement, args := condition.BuildSelect(sqlbuilder.Select("*").From("user"), conditions...)
 	fmt.Println(statement, args)
-
-	// 使用特定 flavor
-	statement, args = condition.BuildSelectWithFlavor(flavor, sqlbuilder.Select("id", "name").From("user"), conditions...)
 
 	type User struct {
 		Id   int64  `db:"id"`
@@ -81,7 +76,7 @@ func main() {
 
 	var users []User
 
-	err := sqlConn.QueryRowsCtx(context.Background(), &users, statement, args)
+	err := sqlConn.QueryRowsCtx(context.Background(), &users, statement, args...)
 	if err != nil {
 		panic(err)
 	}
@@ -117,8 +112,8 @@ func main() {
 	var c Config
 	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	// 连接 mysql 并返回 flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
+	// 连接 PostgreSQL
+	sqlConn := modelx.MustNewConn(c.Sqlx)
 
 	chain := condition.NewChain().Equal("name", "pzero",
 		// WithValueFunc 比 value 优先级高
@@ -134,13 +129,8 @@ func main() {
 			}),
 	)
 
-	// 设置全局 flavor(默认 mysql)
-	sqlbuilder.DefaultFlavor = sqlbuilder.PostgreSQL
 	statement, args := condition.BuildSelect(sqlbuilder.Select("*").From("user"), chain.Build()...)
 	fmt.Println(statement, args)
-
-	// 使用特定 flavor
-	statement, args = condition.BuildSelectWithFlavor(flavor, sqlbuilder.Select("id", "name").From("user"), chain.Build()...)
 
 	type User struct {
 		Id   int64  `db:"id"`
@@ -149,7 +139,7 @@ func main() {
 
 	var users []User
 
-	err := sqlConn.QueryRowsCtx(context.Background(), &users, statement, args)
+	err := sqlConn.QueryRowsCtx(context.Background(), &users, statement, args...)
 	if err != nil {
 		panic(err)
 	}
@@ -162,8 +152,8 @@ func main() {
 
 ```yaml
 sqlx:
-    datasource: "jzero-admin.db"
-    driverName: "sqlite"
+    datasource: "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
+    driverName: "pgx"
 ```
 
 :::
@@ -197,8 +187,8 @@ func main() {
 	var c Config
 	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	// 连接 mysql 并返回 flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
+	// 连接 PostgreSQL
+	sqlConn := modelx.MustNewConn(c.Sqlx)
 
 	conditions := condition.New(condition.Condition{
 		// 操作的字段
@@ -219,8 +209,6 @@ func main() {
 		},
 	})
 
-	// 设置全局 flavor(默认 mysql)
-	sqlbuilder.DefaultFlavor = sqlbuilder.PostgreSQL
 	statement, args := condition.BuildUpdate(
 		sqlbuilder.Update("user"),
 		// 设置更新字段, 直接使用 map
@@ -232,19 +220,7 @@ func main() {
 		},
 		conditions...)
 
-	// 使用特定 flavor
-	statement, args = condition.BuildUpdateWithFlavor(flavor,
-		sqlbuilder.Update("user"),
-		// 设置更新字段, 直接使用 map
-		map[string]any{
-			"name": "pzero",
-			"version": condition.UpdateField{
-				Operator: condition.Incr,
-			},
-		},
-		conditions...)
-
-	result, err := sqlConn.ExecCtx(context.Background(), statement, args)
+	result, err := sqlConn.ExecCtx(context.Background(), statement, args...)
 	if err != nil {
 		panic(err)
 	}
@@ -278,8 +254,8 @@ func main() {
 	var c Config
 	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	// 连接 mysql 并返回 flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
+	// 连接 PostgreSQL
+	sqlConn := modelx.MustNewConn(c.Sqlx)
 
 	chain := condition.NewChain().Equal("name", "pzero",
 		// WithValueFunc 比 value 优先级高
@@ -295,8 +271,6 @@ func main() {
 			}),
 	)
 
-	// 设置全局 flavor(默认 mysql)
-	sqlbuilder.DefaultFlavor = sqlbuilder.PostgreSQL
 	statement, args := condition.BuildUpdate(
 		sqlbuilder.Update("user"),
 		// 设置更新字段, 构造出 map
@@ -307,17 +281,7 @@ func main() {
 		chain.Build()...)
 	fmt.Println(statement, args)
 
-	// 使用特定 flavor
-	statement, args = condition.BuildUpdateWithFlavor(flavor,
-		sqlbuilder.Update("user"),
-		// 设置更新字段, 构造出 map
-		condition.NewUpdateFieldChain().
-			Assign("name", "pzero").
-			Incr("version").
-			Build(),
-		chain.Build()...)
-
-	result, err := sqlConn.ExecCtx(context.Background(), statement, args)
+	result, err := sqlConn.ExecCtx(context.Background(), statement, args...)
 	if err != nil {
 		panic(err)
 	}
@@ -329,8 +293,8 @@ func main() {
 
 ```yaml
 sqlx:
-    datasource: "jzero-admin.db"
-    driverName: "sqlite"
+    datasource: "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
+    driverName: "pgx"
 ```
 
 :::
@@ -365,8 +329,8 @@ func main() {
 	var c Config
 	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	// 连接 mysql 并返回 flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
+	// 连接 PostgreSQL
+	sqlConn := modelx.MustNewConn(c.Sqlx)
 
 	conditions := condition.New(condition.Condition{
 		// 操作的字段
@@ -387,15 +351,10 @@ func main() {
 		},
 	})
 
-	// 设置全局 flavor(默认 mysql)
-	sqlbuilder.DefaultFlavor = sqlbuilder.PostgreSQL
 	statement, args := condition.BuildDelete(sqlbuilder.DeleteFrom("user"), conditions...)
 	fmt.Println(statement, args)
 
-	// 使用特定 flavor
-	statement, args = condition.BuildDeleteWithFlavor(flavor, sqlbuilder.DeleteFrom("user"), conditions...)
-
-	result, err := sqlConn.ExecCtx(context.Background(), statement, args)
+	result, err := sqlConn.ExecCtx(context.Background(), statement, args...)
 	if err != nil {
 		panic(err)
 	}
@@ -430,8 +389,8 @@ func main() {
 	var c Config
 	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	// 连接 mysql 并返回 flavor
-	sqlConn, flavor := modelx.MustNewConnAndSqlbuilderFlavor(c.Sqlx)
+	// 连接 PostgreSQL
+	sqlConn := modelx.MustNewConn(c.Sqlx)
 
 	chain := condition.NewChain().Equal("name", "pzero",
 		// WithValueFunc 比 value 优先级高
@@ -447,15 +406,10 @@ func main() {
 			}),
 	)
 
-	// 设置全局 flavor(默认 mysql)
-	sqlbuilder.DefaultFlavor = sqlbuilder.PostgreSQL
 	statement, args := condition.BuildDelete(sqlbuilder.DeleteFrom("user"), chain.Build()...)
 	fmt.Println(statement, args)
 
-	// 使用特定 flavor
-	statement, args = condition.BuildDeleteWithFlavor(flavor, sqlbuilder.DeleteFrom("user"), chain.Build()...)
-
-	result, err := sqlConn.ExecCtx(context.Background(), statement, args)
+	result, err := sqlConn.ExecCtx(context.Background(), statement, args...)
 	if err != nil {
 		panic(err)
 	}
@@ -468,8 +422,8 @@ func main() {
 
 ```yaml
 sqlx:
-    datasource: "jzero-admin.db"
-    driverName: "sqlite"
+    datasource: "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
+    driverName: "pgx"
 ```
 
 :::

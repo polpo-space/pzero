@@ -23,7 +23,9 @@ if errors.Is(err, usermodel.ErrNotFound) {
 }
 ```
 
-### Use `UpdateFieldsByCondition` for partial updates
+### Choose the partial-update contract
+
+Use `UpdateFieldsByCondition` when only the error is needed. For conditional state transitions, use `UpdateFieldsByConditionAffected` and follow [affected-row semantics](crud-operations.md#conditional-updates-and-affected-rows), including empty updates and cache failures.
 
 ```go
 updateData := map[string]any{
@@ -37,3 +39,4 @@ updateData := map[string]any{
 - Do not add redundant nil checks after `FindOne`
 - Create migrations for every schema change
 - Use `Insert` when you need inserted IDs (PostgreSQL `RETURNING`)
+- For transactions or row locking, read [Transaction Row Locks and Cache](crud-operations.md#transaction-row-locks-and-cache) before choosing a cached model
