@@ -204,7 +204,7 @@ s.AddStreamInterceptors(status.StreamServerInterceptor)
 | 包装过的 `context.Canceled` / `DeadlineExceeded` | message 带包装文本 | 固定文案，code 不变 |
 | 其他普通 error | `Unknown` + `err.Error()` | `Unknown` + `internal server error`，原始错误记一条 ERROR |
 
-code 与不启用时相同，熔断计数不变。panic 由 go-zero 外层的 recover 拦截器处理，不经过这里。
+code 与不启用时相同。返回的错误保留原错误链，外层 go-zero 熔断按 `context.DeadlineExceeded`、`breaker.ErrServiceUnavailable` 的判断和转换不变。panic 由 go-zero 外层的 recover 拦截器处理，不经过这里。
 
 ## 场景三：BFF 调 RPC
 

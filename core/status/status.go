@@ -231,13 +231,14 @@ func fromGRPC(st *grpcstatus.Status, err error) *Status {
 		found        bool
 		details      []proto.Message
 	)
-	// grpc-go 把无法解析的 detail 以 error 返回, 这类 detail 跳过。
+	// 业务码取第一个 Reason 可解析的 pzero ErrorInfo; 所有 pzero ErrorInfo(含重复、Reason 非法的)都不进 Details(),
+	// 否则再次转发时线上会出现多个 pzero ErrorInfo。grpc-go 把无法解析的 detail 以 error 返回, 这类 detail 跳过。
 	for _, detail := range st.Details() {
-		if info, ok := detail.(*errdetails.ErrorInfo); ok && info.GetDomain() == errorInfoDomain && !found {
-			if code, parseErr := strconv.Atoi(info.GetReason()); parseErr == nil {
+		if info, ok := detail.(*errdetails.ErrorInfo); ok && info.GetDomain() == errorInfoDomain {
+			if code, parseErr := strconv.Atoi(info.GetReason()); parseErr == nil && !found {
 				businessCode, found = Code(code), true
-				continue
 			}
+			continue
 		}
 		if message, ok := detail.(proto.Message); ok {
 			details = append(details, message)

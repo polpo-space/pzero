@@ -18,6 +18,8 @@ import (
 //   - context 取消或超时按 Canceled / DeadlineExceeded 返回, message 固定, 不带包装文本。
 //   - 其他错误保持 grpc-go 默认的 Unknown(熔断计数不变), message 换成默认文案, 原始错误在此记一条 ERROR。
 //
+// 返回的错误保留原错误链, 外层的 go-zero 熔断拦截器判断失败与转换 breaker.ErrServiceUnavailable 的行为不变。
+//
 // go-zero 内置的 recover 拦截器在外层, panic 不经过这里。
 func UnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 	resp, err := handler(ctx, req)
@@ -37,17 +39,32 @@ func StreamServerInterceptor(srv any, stream grpc.ServerStream, info *grpc.Strea
 
 func serverError(ctx context.Context, method string, err error) error {
 	if st := grpcStatusOf(err); st != nil {
-		return st.Err()
+		return &serverStatusError{status: st, cause: err}
 	}
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):
-		return grpcstatus.Error(codes.DeadlineExceeded, context.DeadlineExceeded.Error())
+		return &serverStatusError{status: grpcstatus.New(codes.DeadlineExceeded, context.DeadlineExceeded.Error()), cause: err}
 	case errors.Is(err, context.Canceled):
-		return grpcstatus.Error(codes.Canceled, context.Canceled.Error())
+		return &serverStatusError{status: grpcstatus.New(codes.Canceled, context.Canceled.Error()), cause: err}
 	}
 	logx.WithContext(ctx).Errorf("%s: %v", method, err)
-	return grpcstatus.Error(codes.Unknown, defaultMessage)
+	return &serverStatusError{status: grpcstatus.New(codes.Unknown, defaultMessage), cause: err}
 }
+
+// serverStatusError 携带要上线的 status, 同时保留原错误链。
+// grpc-go 对自身实现 GRPCStatus 的错误直接使用该 status, 不会把 message 换成 Error();
+// 外层拦截器(如 go-zero 熔断按 context.DeadlineExceeded、breaker.ErrServiceUnavailable 判断)仍能沿 Unwrap 识别 cause。
+// Error() 返回上线的 message, 外层用 Error() 构造新 status 时也不会带出 cause。
+type serverStatusError struct {
+	status *grpcstatus.Status
+	cause  error
+}
+
+func (e *serverStatusError) Error() string { return e.status.Message() }
+
+func (e *serverStatusError) Unwrap() error { return e.cause }
+
+func (e *serverStatusError) GRPCStatus() *grpcstatus.Status { return e.status }
 
 // grpcStatusOf 返回 err 链上第一个 GRPCStatus 提供者的 status; 没有、为 nil 或为 OK 时返回 nil。
 func grpcStatusOf(err error) *grpcstatus.Status {

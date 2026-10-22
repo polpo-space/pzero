@@ -204,7 +204,7 @@ s.AddStreamInterceptors(status.StreamServerInterceptor)
 | a wrapped `context.Canceled` / `DeadlineExceeded` | message includes wrapper text | fixed text, same code |
 | any other error | `Unknown` + `err.Error()` | `Unknown` + `internal server error`; the original error is logged once at ERROR |
 
-Codes are the same as without the interceptor, so breaker accounting does not change. Panics are handled by go-zero's outer recover interceptor and do not pass through it.
+Codes are the same as without the interceptor. The returned error keeps the original chain, so go-zero's outer breaker still detects `context.DeadlineExceeded` and `breaker.ErrServiceUnavailable` and converts them as before. Panics are handled by go-zero's outer recover interceptor and do not pass through it.
 
 ## Scenario 3: BFF calling RPC
 
