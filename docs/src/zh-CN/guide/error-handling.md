@@ -45,6 +45,17 @@ logic
 
 BFF 不需要在自己的 `errcode` 里注册 RPC 的码，也能从 `FromError` 读到数字和文案。
 
+`FromError` 返回的 Status 用 `Origin()` 标明来源：
+
+| `Origin()` | 来源 | `Code()` | `Message()` |
+| --- | --- | --- | --- |
+| `OriginLocal` | 本进程创建（含 `New` 返回的 `*Status`） | 本服务的码 | 本服务的文案 |
+| `OriginRemote` | 带 pzero `ErrorInfo` 的 gRPC 错误 | 下游注册的码 | 下游服务写的文案 |
+| `OriginGRPC` | 不带 `ErrorInfo` 的普通 gRPC 错误 | 按 gRPC code 推断 | 未经审核的原文 |
+| `OriginUnknown` | 其他 error | 500 | 默认文案 |
+
+下游文案要不要直接给用户看，由调用方决定。需要由 BFF 自己定文案时，对 `OriginRemote` 用 `status.Lookup(code)` 查本进程注册的文案。
+
 ## 决策树
 
 拿到一个 `err`，按顺序只走一条：
@@ -58,7 +69,7 @@ BFF 不需要在自己的 `errcode` 里注册 RPC 的码，也能从 `FromError`
    - 本接口要换一个对公网的码或文案 → `status.ErrorMessage(errcode.Y, "对公网文案")`。
 5. **不要** `errors.New("用户不存在")`，**不要** `grpc/status.Error(codes.NotFound, ...)`，**不要**手写 `codes → http` switch。
 
-未注册的 code 传给 `status.Error` 会静默变成 500。所以数字必须来自 `register(...)` 的返回值，不要写裸 `status.Code(10001)`。
+未注册的业务码传给 `status.Error` 会静默变成 500。所以数字必须来自 `register(...)` 的返回值，不要写裸 `status.Code(10001)`。映射表里的通用 HTTP 码已内置注册，见下节。
 
 ## 注册错误码
 
@@ -80,6 +91,10 @@ func register(code status.Code, message string) status.Code {
 ```
 
 本地通用码用 HTTP 语义（400/401/403/404/500）。本服务特有的、调用方必须区分的码，用业务号段，例如用户 10001–10999。
+
+下文映射表里的通用 HTTP 码（400/401/403/404/409/429/500/501/503/504）由 `core/status` 内置注册，文案为 `http.StatusText`，500 为 `internal server error`。只有要换默认文案时才需要再注册，应用注册的文案覆盖内置值。
+
+`status.Lookup(code)` 返回某个码的注册信息，未注册时返回 `false`，可用于按码查文案，或在测试里校验每个码都已注册。
 
 需要让不懂 `core/status` 的 gRPC 客户端看到 canonical code 时，在**已升级到本仓库 `core/status`** 的服务里写：
 
