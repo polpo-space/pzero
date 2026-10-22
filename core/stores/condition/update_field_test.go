@@ -8,7 +8,7 @@ import (
 )
 
 func TestUpdateFields(t *testing.T) {
-	sql, args := BuildUpdateWithFlavor(sqlbuilder.MySQL, sqlbuilder.NewUpdateBuilder().Update("users"), map[string]any{
+	sql, args := BuildUpdate(sqlbuilder.NewUpdateBuilder().Update("users"), map[string]any{
 		"age": UpdateField{
 			Operator: Add,
 			Value:    12,
@@ -24,7 +24,7 @@ func TestUpdateFields(t *testing.T) {
 }
 
 func TestUpdateFieldChain(t *testing.T) {
-	sql, args := BuildUpdateWithFlavor(sqlbuilder.MySQL, sqlbuilder.NewUpdateBuilder().Update("users"), NewUpdateFieldChain().
+	sql, args := BuildUpdate(sqlbuilder.NewUpdateBuilder().Update("users"), NewUpdateFieldChain().
 		Assign("name", "jaronnie", WithUpdateFieldSkip(true)).
 		Incr("version").
 		Add("age", 12, WithUpdateFieldValueFunc(func() any {

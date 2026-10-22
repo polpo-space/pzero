@@ -11,6 +11,20 @@ jobs:
   ci:
     name: ci
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pzero_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d pzero_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -43,11 +57,18 @@ jobs:
         working-directory: cmd/pzero
         run: go test ./...
 
+      - name: Build pinned goctl
+        run: go build -o "$RUNNER_TEMP/goctl" github.com/zeromicro/go-zero/tools/goctl
+
+      - name: Test PostgreSQL generated models
+        env:
+          PZERO_TEST_POSTGRES_DSN: postgres://postgres:postgres@127.0.0.1:5432/pzero_test?sslmode=disable
+        run: GOCTL="$RUNNER_TEMP/goctl" go test ./cmd/pzero/internal/command/gen/genmodel -run TestPostgresGeneratedModels -count=1
+
       - name: Test RPC toolchain compatibility
         run: |
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler
-          go build -o "$RUNNER_TEMP/goctl" github.com/zeromicro/go-zero/tools/goctl
           go install google.golang.org/protobuf/cmd/protoc-gen-go
           go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.6.1
           GOCTL="$RUNNER_TEMP/goctl" go test ./cmd/pzero/internal/command/gen/genrpc -run TestGoctlCrossProtoServices -count=1

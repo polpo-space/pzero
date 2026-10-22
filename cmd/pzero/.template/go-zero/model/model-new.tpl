@@ -8,13 +8,16 @@ func new{{.upperStartCamelObject}}Model(conn sqlx.SqlConn, op ...opts.Opt[modelx
     	cachedConn = *o.CachedConn
     }
 
-    init{{.upperStartCamelObject}}Vars(o.Flavor)
+    fields, insertFields := model{{.upperStartCamelObject}}Columns()
 
 	return &default{{.upperStartCamelObject}}Model{
 		cachedConn: cachedConn,
 		conn:       conn,
-		flavor:     o.Flavor,
-		table:      condition.QuoteWithFlavor(o.Flavor, "{{.data.Name.Source}}"),
+		table:      condition.Quote("{{.data.Name.Source}}"),
+		fieldNames: fields,
+		rows: strings.Join(fields, ","),
+		rowsExpectAutoFieldNames: insertFields,
+		rowsExpectAutoSet: strings.Join(insertFields, ","),
 	}
 }
 
@@ -30,6 +33,9 @@ func (m *default{{.upperStartCamelObject}}Model) clone() *default{{.upperStartCa
 		cachedConn: m.cachedConn,
 		conn:       m.conn,
 		table:      m.table,
-		flavor:     m.flavor,
+		fieldNames: m.fieldNames,
+		rows: m.rows,
+		rowsExpectAutoFieldNames: m.rowsExpectAutoFieldNames,
+		rowsExpectAutoSet: m.rowsExpectAutoSet,
 	}
 }

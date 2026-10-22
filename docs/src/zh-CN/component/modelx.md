@@ -6,7 +6,9 @@ order: 2
 
 ## 特性
 
-* 适配 mysql/postgres/sqlite, 无需导入驱动
+* 仅支持 PostgreSQL，内置 pgx 驱动，无需手动导入。
+* `driverName` 可为 `pgx`、`postgres` 或空值，统一使用 pgx；其他值会在启动时失败。
+* 不修改进程级 `sqlbuilder.DefaultFlavor`，model 和 condition 固定使用 PostgreSQL。
 
 ::: code-tabs#shell
 
@@ -32,8 +34,6 @@ func main() {
 	var c Config
 	conf.MustLoad("etc/etc.yaml", &c, conf.UseEnv())
 
-	sqlConn := modelx.MustNewConn(c.Sqlx)
-
 	// 连接数据库
 	sqlConn := modelx.MustNewConn(c.Sqlx)
 
@@ -50,7 +50,7 @@ func main() {
 @tab etc/etc.yaml
 ```yaml
 sqlx:
-    datasource: "jzero-admin.db"
-    driverName: "sqlite"
+    datasource: "postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable"
+    driverName: "pgx"
 ```
 :::

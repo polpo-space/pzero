@@ -9,13 +9,10 @@ import (
 )
 
 func SelectByWhereRawSql(sb *sqlbuilder.SelectBuilder, originalField string, args ...any) {
-	SelectByWhereRawSqlWithFlavor(sqlbuilder.DefaultFlavor, sb, originalField, args...)
-}
-
-func SelectByWhereRawSqlWithFlavor(flavor sqlbuilder.Flavor, sb *sqlbuilder.SelectBuilder, originalField string, args ...any) {
+	sb.SetFlavor(sqlbuilder.PostgreSQL)
 	originalFields := strings.Split(originalField, " and ")
 	for i, v := range originalFields {
-		field := QuoteWithFlavor(flavor, strings.Split(v, " = ")[0])
+		field := Quote(strings.Split(v, " = ")[0])
 		sb.Where(sb.EQ(field, args[i]))
 	}
 }
@@ -24,11 +21,6 @@ const dbTag = "db"
 
 // RawFieldNames converts golang struct field into slice string.
 func RawFieldNames(in any) []string {
-	return RawFieldNamesWithFlavor(sqlbuilder.DefaultFlavor, in)
-}
-
-// RawFieldNamesWithFlavor converts golang struct field into slice string.
-func RawFieldNamesWithFlavor(flavor sqlbuilder.Flavor, in any) []string {
 	out := make([]string, 0)
 	v := reflect.ValueOf(in)
 	if v.Kind() == reflect.Ptr {
@@ -48,7 +40,7 @@ func RawFieldNamesWithFlavor(flavor sqlbuilder.Flavor, in any) []string {
 		case "-":
 			continue
 		case "":
-			out = append(out, QuoteWithFlavor(flavor, fi.Name))
+			out = append(out, Quote(fi.Name))
 		default:
 			if strings.Contains(tagv, ",") {
 				tagv = strings.TrimSpace(strings.Split(tagv, ",")[0])
@@ -59,7 +51,7 @@ func RawFieldNamesWithFlavor(flavor sqlbuilder.Flavor, in any) []string {
 			if len(tagv) == 0 {
 				tagv = fi.Name
 			}
-			out = append(out, QuoteWithFlavor(flavor, tagv))
+			out = append(out, Quote(tagv))
 		}
 	}
 
@@ -67,14 +59,10 @@ func RawFieldNamesWithFlavor(flavor sqlbuilder.Flavor, in any) []string {
 }
 
 func RemoveIgnoreColumns(columns []string, ignoreColumns ...string) []string {
-	return RemoveIgnoreColumnsWithFlavor(sqlbuilder.DefaultFlavor, columns, ignoreColumns...)
-}
-
-func RemoveIgnoreColumnsWithFlavor(flavor sqlbuilder.Flavor, columns []string, ignoreColumns ...string) []string {
 	out := append([]string(nil), columns...)
 
 	for _, ic := range ignoreColumns {
-		ic = QuoteWithFlavor(flavor, ic)
+		ic = Quote(ic)
 		var n int
 		for _, v := range out {
 			if v != ic {
@@ -88,12 +76,12 @@ func RemoveIgnoreColumnsWithFlavor(flavor sqlbuilder.Flavor, columns []string, i
 	return out
 }
 
-func QuoteWithFlavor(flavor sqlbuilder.Flavor, str string) string {
+func Quote(str string) string {
 	split := strings.Split(str, ".")
 
 	var quoteStrs []string
 	for _, v := range split {
-		quoteStrs = append(quoteStrs, flavor.Quote(Unquote(v)))
+		quoteStrs = append(quoteStrs, sqlbuilder.PostgreSQL.Quote(Unquote(v)))
 	}
 	return strings.Join(quoteStrs, ".")
 }

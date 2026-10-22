@@ -15,6 +15,8 @@ import (
 	"github.com/spf13/cast"
 	"github.com/zeromicro/go-zero/core/stores/cache"
 	"github.com/eddieowens/opts"
+	{{$pqInThird := false}}{{range .data.Fields}}{{if eq .ThirdPkg "github.com/lib/pq"}}{{$pqInThird = true}}{{end}}{{end}}
+	{{if and .containsPQ (not $pqInThird)}}"github.com/lib/pq"{{end}}
 
 	{{.third}}
 )

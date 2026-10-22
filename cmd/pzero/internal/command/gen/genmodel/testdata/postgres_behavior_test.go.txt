@@ -1,0 +1,243 @@
+package modeltest
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"os"
+	"reflect"
+	"testing"
+	"time"
+
+	"github.com/alicebob/miniredis/v2"
+	"github.com/huandu/go-sqlbuilder"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/polpo-space/pzero/core/stores/condition"
+	"github.com/polpo-space/pzero/core/stores/modelx"
+	"github.com/zeromicro/go-zero/core/stores/cache"
+	"github.com/zeromicro/go-zero/core/stores/redis"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
+
+	"example.com/modeltest/internal/model/ticket_messages"
+	"example.com/modeltest/internal/model/tickets"
+	"example.com/modeltest/internal/model/typed_arrays"
+)
+
+func TestPostgresBehavior(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	originalFlavor := sqlbuilder.DefaultFlavor
+	conn := modelx.MustNewConn(sqlx.SqlConf{DriverName: os.Getenv("PZERO_TEST_DRIVER"), DataSource: os.Getenv("PZERO_TEST_POSTGRES_DSN")})
+	if sqlbuilder.DefaultFlavor != originalFlavor {
+		t.Fatal("opening a PostgreSQL connection changed the global SQL dialect")
+	}
+	db, err := conn.RawDB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	db.SetMaxOpenConns(5)
+	redisServer := miniredis.RunT(t)
+	options := modelx.WithCacheConf(cache.CacheConf{{RedisConf: redis.RedisConf{Host: redisServer.Addr(), Type: "node"}, Weight: 100}})
+	model := tickets.NewTicketsModel(conn, options)
+	messages := ticket_messages.NewTicketMessagesModel(conn, options)
+	arrays := typed_arrays.NewTypedArraysModel(conn, options)
+	fixtures := [][]string{nil, {}, {"https://example.com/image.png", "", "NULL", "a,b", `a"b`, `a\b`, "{braces}", "中文 空格"}}
+	var lockedID int64
+	for i, images := range fixtures {
+		t.Run(fmt.Sprintf("array_%d", i), func(t *testing.T) {
+			row := &tickets.Tickets{TicketSn: fmt.Sprintf("ticket-%d", i), ConsumerId: int64(i + 1), OrderSn: fmt.Sprintf("order-%d", i), ImageUrls: images, Status: 1}
+			if err := model.Insert(ctx, nil, row); err != nil {
+				t.Fatal(err)
+			}
+			if row.Id == 0 {
+				t.Fatal("identity primary key was not returned")
+			}
+			got, err := model.FindOne(ctx, nil, row.Id)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual([]string(got.ImageUrls), images) {
+				t.Fatalf("array roundtrip: got %#v, want %#v", got.ImageUrls, images)
+			}
+			if _, err := model.FindOne(ctx, nil, row.Id); err != nil {
+				t.Fatal(err)
+			} // cached read where enabled
+			message := &ticket_messages.TicketMessages{TicketId: row.Id, ImageUrls: images}
+			if err := messages.Insert(ctx, nil, message); err != nil {
+				t.Fatal(err)
+			}
+			messageRow, err := messages.FindOne(ctx, nil, message.Id)
+			if err != nil || !reflect.DeepEqual([]string(messageRow.ImageUrls), images) {
+				t.Fatalf("message roundtrip: %#v %v", messageRow, err)
+			}
+			// Both full and field updates must pass the array's driver.Valuer.
+			row.ImageUrls = []string{"updated", `quote"slash\`}
+			if err := model.Update(ctx, nil, row); err != nil {
+				t.Fatal(err)
+			}
+			got, err = model.FindOne(ctx, nil, row.Id)
+			if err != nil || !reflect.DeepEqual([]string(got.ImageUrls), []string(row.ImageUrls)) {
+				t.Fatalf("array update: %#v %v", got, err)
+			}
+			if err := model.UpdateFieldsByCondition(ctx, nil, map[string]any{"image_urls": tickets.Tickets{ImageUrls: images}.ImageUrls}, condition.NewChain().Equal(tickets.Id, row.Id).Build()...); err != nil {
+				t.Fatal(err)
+			}
+			got, err = model.FindOne(ctx, nil, row.Id)
+			if err != nil || !reflect.DeepEqual([]string(got.ImageUrls), images) {
+				t.Fatalf("array field update: %#v %v", got, err)
+			}
+			lockedID = row.Id
+		})
+	}
+	t.Run("other_array_types", func(t *testing.T) {
+		row := &typed_arrays.TypedArrays{Flags: []bool{true, false}, Counters: []int64{1, -2, 9007199254740993}, Weights: []float64{1.25, -2.5}}
+		if err := arrays.Insert(ctx, nil, row); err != nil {
+			t.Fatal(err)
+		}
+		got, err := arrays.FindOne(ctx, nil, row.Id)
+		if err != nil || !reflect.DeepEqual(row, got) {
+			t.Fatalf("typed arrays: %#v %v", got, err)
+		}
+	})
+	t.Run("bulk_insert", func(t *testing.T) {
+		rows := []*tickets.Tickets{
+			{TicketSn: "bulk-1", ConsumerId: 101, OrderSn: "bulk-1", ImageUrls: []string{"a,b"}},
+			{TicketSn: "bulk-2", ConsumerId: 102, OrderSn: "bulk-2", ImageUrls: []string{}},
+		}
+		if err := model.BulkInsert(ctx, nil, rows); err != nil {
+			t.Fatal(err)
+		}
+		got, err := model.FindByCondition(ctx, nil, condition.NewChain().Equal(tickets.TicketSn, "bulk-1").Build()...)
+		if err != nil || len(got) != 1 || !reflect.DeepEqual([]string(got[0].ImageUrls), []string{"a,b"}) {
+			t.Fatalf("bulk array: %#v %v", got, err)
+		}
+	})
+	t.Run("affected_rows_and_rollback", func(t *testing.T) {
+		where := condition.NewChain().Equal(tickets.Id, lockedID).Equal(tickets.Status, 1).Build()
+		rows, err := model.UpdateFieldsByConditionAffected(ctx, nil, map[string]any{"status": 2}, where...)
+		if err != nil || rows != 1 {
+			t.Fatalf("first transition: %d %v", rows, err)
+		}
+		rows, err = model.UpdateFieldsByConditionAffected(ctx, nil, map[string]any{"status": 2}, where...)
+		if err != nil || rows != 0 {
+			t.Fatalf("repeated transition: %d %v", rows, err)
+		}
+		got, err := model.FindOne(ctx, nil, lockedID)
+		if err != nil || got.Status != 2 {
+			t.Fatalf("cache invalidation: %#v %v", got, err)
+		}
+		abort := errors.New("rollback transaction")
+		err = conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
+			where := condition.NewChain().Equal(tickets.Id, lockedID).Equal(tickets.Status, 2).Build()
+			rows, err := model.UpdateFieldsByConditionAffected(ctx, session, map[string]any{"status": 3}, where...)
+			if err != nil || rows != 1 {
+				return fmt.Errorf("transaction update: %d %w", rows, err)
+			}
+			return abort
+		})
+		if !errors.Is(err, abort) {
+			t.Fatal(err)
+		}
+		got, err = model.FindOneByCondition(ctx, nil, condition.NewChain().Equal(tickets.Id, lockedID).Build()...)
+		if err != nil || got.Status != 2 {
+			t.Fatalf("transaction did not roll back: %#v %v", got, err)
+		}
+		if rows, err := model.UpdateFieldsByConditionAffected(ctx, nil, nil, where...); err != nil || rows != 0 {
+			t.Fatalf("empty update: %d %v", rows, err)
+		}
+		if _, err := model.UpdateFieldsByConditionAffected(ctx, nil, map[string]any{"unknown_column": 1}, where...); err == nil {
+			t.Fatal("SQL error swallowed")
+		}
+	})
+	t.Run("concurrent_compare_and_set", func(t *testing.T) {
+		const contenders = 8
+		type outcome struct {
+			rows int64
+			err  error
+		}
+		start, results := make(chan struct{}), make(chan outcome, contenders)
+		for range contenders {
+			go func() {
+				<-start
+				rows, err := model.UpdateFieldsByConditionAffected(ctx, nil,
+					map[string]any{"status": 4},
+					condition.NewChain().Equal(tickets.Id, lockedID).Equal(tickets.Status, 2).Build()...,
+				)
+				results <- outcome{rows: rows, err: err}
+			}()
+		}
+		close(start)
+		var affected int64
+		for range contenders {
+			result := <-results
+			if result.err != nil {
+				t.Errorf("competing update: %v", result.err)
+			}
+			affected += result.rows
+		}
+		if affected != 1 {
+			t.Fatalf("concurrent state transitions: got %d affected rows, want 1", affected)
+		}
+		got, err := model.FindOne(ctx, nil, lockedID)
+		if err != nil || got.Status != 4 {
+			t.Fatalf("state after concurrent updates: %#v %v", got, err)
+		}
+	})
+	t.Run("transaction_lock_and_cache_bypass", func(t *testing.T) {
+		if _, err := model.FindOneForUpdate(ctx, nil, lockedID); !errors.Is(err, modelx.ErrTransactionRequired) {
+			t.Fatalf("missing session: %v", err)
+		}
+		if _, err := model.FindOne(ctx, nil, lockedID); err != nil {
+			t.Fatal(err)
+		}
+		// Deliberately make the cache stale: a locking read must still fetch PostgreSQL.
+		if _, err := conn.ExecCtx(ctx, `UPDATE tickets SET status = 9 WHERE id = $1`, lockedID); err != nil {
+			t.Fatal(err)
+		}
+		acquired, release, finished := make(chan struct{}), make(chan struct{}), make(chan error, 1)
+		go func() {
+			finished <- conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
+				got, err := model.FindOneForUpdate(ctx, session, lockedID)
+				if err != nil {
+					return err
+				}
+				if got.Status != 9 {
+					return fmt.Errorf("locking read used cache: status=%d", got.Status)
+				}
+				close(acquired)
+				select {
+				case <-release:
+					return nil
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			})
+		}()
+		t.Cleanup(func() {
+			close(release)
+			if err := <-finished; err != nil {
+				t.Errorf("holding transaction: %v", err)
+			}
+		})
+		select {
+		case <-acquired:
+		case err := <-finished:
+			finished <- err
+			t.Fatalf("did not acquire lock: %v", err)
+		case <-ctx.Done():
+			t.Fatal(ctx.Err())
+		}
+		err := conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
+			if _, err := session.ExecCtx(ctx, `SET LOCAL lock_timeout = '100ms'`); err != nil {
+				return err
+			}
+			_, err := model.FindOneForUpdate(ctx, session, lockedID)
+			return err
+		})
+		var pgErr *pgconn.PgError
+		if !errors.As(err, &pgErr) || pgErr.Code != "55P03" {
+			t.Fatalf("competing transaction did not encounter the row lock: %v", err)
+		}
+	})
+}

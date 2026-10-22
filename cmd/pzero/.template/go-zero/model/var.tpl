@@ -1,8 +1,9 @@
 var (
-    {{.lowerStartCamelObject}}FieldNames []string
-    {{.lowerStartCamelObject}}Rows string
-    {{.lowerStartCamelObject}}RowsExpectAutoFieldNames []string
-    {{.lowerStartCamelObject}}RowsExpectAutoSet string
+    // PostgreSQL metadata retained for handwritten model extensions. Constructors
+    // never mutate it; generated operations use the model's instance fields.
+    {{.lowerStartCamelObject}}FieldNames, {{.lowerStartCamelObject}}RowsExpectAutoFieldNames = model{{.upperStartCamelObject}}Columns()
+    {{.lowerStartCamelObject}}Rows = strings.Join({{.lowerStartCamelObject}}FieldNames, ",")
+    {{.lowerStartCamelObject}}RowsExpectAutoSet = strings.Join({{.lowerStartCamelObject}}RowsExpectAutoFieldNames, ",")
 
     {{if .withCache}}{{.cacheKeys}}{{end}}
 )
@@ -12,9 +13,8 @@ const (
     {{end}}
 )
 
-func init{{.upperStartCamelObject}}Vars(flavor sqlbuilder.Flavor) {
-    {{.lowerStartCamelObject}}FieldNames = condition.RawFieldNamesWithFlavor(flavor, &{{.upperStartCamelObject}}{})
-    {{.lowerStartCamelObject}}Rows = strings.Join({{.lowerStartCamelObject}}FieldNames, ",")
-    {{.lowerStartCamelObject}}RowsExpectAutoFieldNames = condition.RemoveIgnoreColumnsWithFlavor(flavor, {{.lowerStartCamelObject}}FieldNames, {{if .autoIncrement}}"{{.originalPrimaryKey}}", {{end}} {{.ignoreColumns}})
-    {{.lowerStartCamelObject}}RowsExpectAutoSet = strings.Join({{.lowerStartCamelObject}}RowsExpectAutoFieldNames, ",")
+func model{{.upperStartCamelObject}}Columns() ([]string, []string) {
+    fields := condition.RawFieldNames(&{{.upperStartCamelObject}}{})
+    insertFields := condition.RemoveIgnoreColumns(fields, {{if .autoIncrement}}"{{.originalPrimaryKey}}", {{end}} {{.ignoreColumns}})
+    return fields, insertFields
 }

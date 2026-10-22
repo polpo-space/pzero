@@ -1,8 +1,6 @@
 import (
 	"context"
-	{{range .data.Fields}}{{if and (ge (len .DataType) 4) (eq (slice .DataType 0 4) "sql.")}}
 	"database/sql"
-	{{break}}{{end}}{{end}}
 	"strings"
 	"slices"
 	{{if .time}}"time"{{end}}
@@ -14,6 +12,8 @@ import (
 	"github.com/polpo-space/pzero/core/stores/modelx"
 	"github.com/spf13/cast"
     "github.com/eddieowens/opts"
+	{{$pqInThird := false}}{{range .data.Fields}}{{if eq .ThirdPkg "github.com/lib/pq"}}{{$pqInThird = true}}{{end}}{{end}}
+	{{if and .containsPQ (not $pqInThird)}}"github.com/lib/pq"{{end}}
 
 	{{.third}}
 )

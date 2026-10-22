@@ -1,6 +1,7 @@
 package genmodel
 
 import (
+	"bytes"
 	"fmt"
 	"go/parser"
 	"go/token"
@@ -16,6 +17,10 @@ import (
 )
 
 func TestModelSQLImport(t *testing.T) {
+	behavior, err := os.ReadFile("testdata/model_behavior_test.go.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
 	home, err := filepath.Abs("../../../../.template/go-zero")
 	if err != nil {
 		t.Fatal(err)
@@ -31,7 +36,7 @@ func TestModelSQLImport(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(project, "go.mod"), []byte("module example.com/modeltest\n\ngo 1.25.0\n"), 0o600); err != nil {
+	if err := os.WriteFile(filepath.Join(project, "go.mod"), []byte("module example.com/modeltest\n\ngo 1.25.0\n\nrequire github.com/lib/pq v1.10.9\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	// Compile against this checkout without changing its go.work or module files.
@@ -50,12 +55,15 @@ func TestModelSQLImport(t *testing.T) {
 				state := &model.Column{DbColumn: &model.DbColumn{
 					Name: "state", DataType: "int", IsNullAble: "NO", OrdinalPosition: 2,
 				}}
+				images := &model.Column{DbColumn: &model.DbColumn{
+					Name: "image_urls", DataType: "_text", IsNullAble: "YES", OrdinalPosition: 3,
+				}}
 				if nullable {
 					state.IsNullAble = "YES"
 				}
 				table := &model.Table{
 					Db: "public", Table: "device_states", PrimaryKey: primary,
-					Columns: []*model.Column{primary, state},
+					Columns: []*model.Column{primary, state, images},
 				}
 				dir := filepath.Join(project, fmt.Sprintf("cache_%t_nullable_%t", cached, nullable))
 				generator, err := gen.NewDefaultGenerator("", dir, &goctlconfig.Config{NamingFormat: "go_zero"}, gen.WithPostgreSql())
@@ -74,13 +82,17 @@ func TestModelSQLImport(t *testing.T) {
 				for _, imp := range file.Imports {
 					importsSQL = importsSQL || imp.Path.Value == `"database/sql"`
 				}
-				if want := cached || nullable; importsSQL != want {
-					t.Fatalf("database/sql imported = %t, want %t", importsSQL, want)
+				if !importsSQL {
+					t.Fatal("database/sql is required for the update result contract")
+				}
+				testSource := bytes.Replace(behavior, []byte("package device_states"), []byte("package "+file.Name.Name), 1)
+				if err := os.WriteFile(filepath.Join(dir, "behavior_test.go"), testSource, 0o600); err != nil {
+					t.Fatal(err)
 				}
 			})
 		}
 	}
-	cmd := exec.Command("go", "test", "./...")
+	cmd := exec.Command("go", "test", "-race", "./...")
 	cmd.Dir = project
 	cmd.Env = append(cmd.Environ(), "GOWORK="+workspace)
 	if output, err := cmd.CombinedOutput(); err != nil {
