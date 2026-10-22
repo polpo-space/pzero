@@ -22,7 +22,7 @@ A business error is an integer. The emitting service registers the number and th
 
 The generated API middleware already uses `Msg: fromError.Message()`. Do not change it back to `Error()`.
 
-`status.Wrap` returns `Status` itself. Do not wrap it again with `errors.WithStack` or `fmt.Errorf("%w")` before returning from a gRPC handler: grpc-go replaces the status message with `err.Error()` on the wrapped path, and the cause goes on the wire.
+`status.Wrap` returns `Status` itself. Do not wrap it again with `errors.WithStack` or `fmt.Errorf("%w")` before returning from a gRPC handler: grpc-go replaces the status message with `err.Error()` on the wrapped path, and the cause goes on the wire. The [server interceptor](#server-interceptor) lifts this restriction.
 
 ## Path
 
@@ -175,6 +175,37 @@ Do not write `grpcstatus.Error(codes.NotFound, "user not found")`. `Status` impl
 
 Generated RPC validator middleware already returns `status.ErrorMessage(errcode.InvalidParam, ...)` (`InvalidArgument`).
 
+### Structured data across services: details
+
+Define data callers need as a proto message in contracts and send it with `ErrorDetails`:
+
+```go
+return nil, status.ErrorDetails(errcode.AccountFrozen, &userv1.AccountFrozenDetail{
+	ExpectedDeletionAt: expectedAt,
+})
+```
+
+Details follow pzero's `ErrorInfo` in the gRPC status. Callers read them with `status.FromError(err).Details()`, which excludes pzero's own `ErrorInfo`. `Wrap`'s `extra` stays in the process and never goes on the wire.
+
+### Server interceptor
+
+`status.UnaryServerInterceptor` / `StreamServerInterceptor` normalize the gRPC output of handler errors. Enable them per service:
+
+```go
+s := zrpc.MustNewServer(c.RpcServerConf, register)
+s.AddUnaryInterceptors(status.UnaryServerInterceptor)
+s.AddStreamInterceptors(status.StreamServerInterceptor)
+```
+
+| Handler returns | Without | With |
+| --- | --- | --- |
+| `fmt.Errorf("...: %w", statusErr)` | message becomes `err.Error()`, wrapper text included | the Status before wrapping |
+| a wrapped plain gRPC error | same | the status before wrapping |
+| a wrapped `context.Canceled` / `DeadlineExceeded` | message includes wrapper text | fixed text, same code |
+| any other error | `Unknown` + `err.Error()` | `Unknown` + `internal server error`; the original error is logged once at ERROR |
+
+Codes are the same as without the interceptor, so breaker accounting does not change. Panics are handled by go-zero's outer recover interceptor and do not pass through it.
+
 ## Scenario 3: BFF calling RPC
 
 ### Pass through (default)
@@ -318,7 +349,7 @@ Never:
 
 - `errors.New`, raw `status.Code` literals, or handwritten `grpc/status`
 - `Error()` in an HTTP body or a handmade gRPC message
-- `WithStack` / `%w` around a status before returning from gRPC
+- `WithStack` / `%w` around a status before returning from gRPC, unless `status.UnaryServerInterceptor` is enabled
 - Identify a *kind* of business failure by message string or bare `codes.NotFound`
 - Copy a `codes → http` switch into the BFF
 - Put `core/status`, messages, or `register()` into `contracts`

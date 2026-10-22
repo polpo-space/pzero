@@ -9,6 +9,8 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/protoadapt"
 )
 
 type Code int
@@ -67,6 +69,13 @@ type Status struct {
 	extra    any
 	grpcCode codes.Code // 注册时显式指定的 gRPC code, OK 表示未指定
 	origin   Origin
+	// details 随 gRPC status 跨服务传输的结构化数据。用指针保持 Status 可比较,
+	// 避免 err == target 这类比较在运行时 panic; 创建后不再修改, 副本可以共享。
+	details *detailList
+}
+
+type detailList struct {
+	items []proto.Message
 }
 
 // Origin 表示 FromError 还原出的 Status 从哪里来, 调用方据此决定 code 与 Message() 是否可信。
@@ -176,6 +185,25 @@ func Wrap(code Code, err error, extra ...any) error {
 	return Error(http.StatusInternalServerError)
 }
 
+// ErrorDetails 返回已注册 code 的错误, 并附带跨服务传输的 proto details。
+// details 在 gRPC status 中排在 pzero ErrorInfo 之后, 调用方经 FromError(err).Details() 读取。
+// 未注册的 code 与 Error 一样回退为 500。
+func ErrorDetails(code Code, details ...proto.Message) error {
+	status, ok := lookup(code)
+	if !ok {
+		return Error(http.StatusInternalServerError)
+	}
+	status.details = newDetailList(details)
+	return status
+}
+
+func newDetailList(details []proto.Message) *detailList {
+	if len(details) == 0 {
+		return nil
+	}
+	return &detailList{items: append([]proto.Message(nil), details...)}
+}
+
 // FromError 从任意 error 还原 Status, 来源见 Origin()。
 // 识别顺序: 本地 Status(值或 New 返回的指针) -> gRPC status(优先读取 ErrorInfo 中的业务码, 否则按 gRPC code 反向映射) -> 500。
 func FromError(err error) *Status {
@@ -198,16 +226,28 @@ func FromError(err error) *Status {
 }
 
 func fromGRPC(st *grpcstatus.Status, err error) *Status {
+	var (
+		businessCode Code
+		found        bool
+		details      []proto.Message
+	)
+	// grpc-go 把无法解析的 detail 以 error 返回, 这类 detail 跳过。
 	for _, detail := range st.Details() {
-		info, ok := detail.(*errdetails.ErrorInfo)
-		if !ok || info.GetDomain() != errorInfoDomain {
-			continue
+		if info, ok := detail.(*errdetails.ErrorInfo); ok && info.GetDomain() == errorInfoDomain && !found {
+			if code, parseErr := strconv.Atoi(info.GetReason()); parseErr == nil {
+				businessCode, found = Code(code), true
+				continue
+			}
 		}
-		if code, parseErr := strconv.Atoi(info.GetReason()); parseErr == nil {
-			remote := New(Code(code), st.Message(), nil)
-			remote.origin = OriginRemote
-			return remote
+		if message, ok := detail.(proto.Message); ok {
+			details = append(details, message)
 		}
+	}
+	if found {
+		remote := New(businessCode, st.Message(), nil)
+		remote.origin = OriginRemote
+		remote.details = newDetailList(details)
+		return remote
 	}
 	code, ok := httpCodes[st.Code()]
 	if !ok {
@@ -215,6 +255,7 @@ func fromGRPC(st *grpcstatus.Status, err error) *Status {
 	}
 	mapped := New(code, st.Message(), err)
 	mapped.origin = OriginGRPC
+	mapped.details = newDetailList(details)
 	return mapped
 }
 
@@ -231,12 +272,24 @@ func (e Status) GRPCStatus() *grpcstatus.Status {
 		}
 	}
 	st := grpcstatus.New(code, e.Message())
-	withDetails, err := st.WithDetails(&errdetails.ErrorInfo{
+	withInfo, err := st.WithDetails(&errdetails.ErrorInfo{
 		Reason: strconv.Itoa(int(e.code)),
 		Domain: errorInfoDomain,
 	})
 	if err != nil {
 		return st
+	}
+	if e.details == nil {
+		return withInfo
+	}
+	// 业务 details 单独追加: 序列化失败时只丢 details, 业务码仍随 ErrorInfo 送达。
+	messages := make([]protoadapt.MessageV1, 0, len(e.details.items))
+	for _, detail := range e.details.items {
+		messages = append(messages, protoadapt.MessageV1Of(detail))
+	}
+	withDetails, err := withInfo.WithDetails(messages...)
+	if err != nil {
+		return withInfo
 	}
 	return withDetails
 }
@@ -252,6 +305,14 @@ func (e Status) Error() string {
 
 func (e Status) Unwrap() error {
 	return e.err
+}
+
+// Details 返回随 gRPC status 传输的 proto details(不含 pzero 自己的 ErrorInfo), 返回切片是副本。
+func (e Status) Details() []proto.Message {
+	if e.details == nil {
+		return nil
+	}
+	return append([]proto.Message(nil), e.details.items...)
 }
 
 func (e Status) Extra() any {

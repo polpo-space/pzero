@@ -22,7 +22,7 @@ order: 0.3
 
 脚手架里的 API 响应中间件已经是 `Msg: fromError.Message()`。不要改回 `Error()`。
 
-`status.Wrap` 返回的就是 `Status` 本身。不要再套 `errors.WithStack` 或 `fmt.Errorf("%w")` 之后从 gRPC handler 返回：grpc-go 对 wrap 过的 status 会把 message 改成 `err.Error()`，cause 立刻上线。
+`status.Wrap` 返回的就是 `Status` 本身。不要再套 `errors.WithStack` 或 `fmt.Errorf("%w")` 之后从 gRPC handler 返回：grpc-go 对 wrap 过的 status 会把 message 改成 `err.Error()`，cause 立刻上线。启用[服务端拦截器](#服务端拦截器)后不受此限。
 
 ## 数据怎么走
 
@@ -175,6 +175,37 @@ func (l *GetUser) GetUser(in *userv1.GetUserRequest) (*userv1.GetUserResponse, e
 
 校验失败走脚手架的 validator 中间件，已经是 `status.ErrorMessage(errcode.InvalidParam, ...)`，映射为 gRPC `InvalidArgument`。
 
+### 跨服务带结构化数据：details
+
+调用方需要的结构化数据定义成 contracts 里的 proto message，用 `ErrorDetails` 发出：
+
+```go
+return nil, status.ErrorDetails(errcode.AccountFrozen, &userv1.AccountFrozenDetail{
+	ExpectedDeletionAt: expectedAt,
+})
+```
+
+details 在 gRPC status 里排在 pzero 的 `ErrorInfo` 之后。调用方用 `status.FromError(err).Details()` 读取（不含 pzero 自己的 `ErrorInfo`）。`Wrap` 的 `extra` 只在本进程有效，不会上线。
+
+### 服务端拦截器
+
+`status.UnaryServerInterceptor` / `StreamServerInterceptor` 统一 handler 返回错误的 gRPC 输出，按需启用：
+
+```go
+s := zrpc.MustNewServer(c.RpcServerConf, register)
+s.AddUnaryInterceptors(status.UnaryServerInterceptor)
+s.AddStreamInterceptors(status.StreamServerInterceptor)
+```
+
+| handler 返回 | 不启用 | 启用后 |
+| --- | --- | --- |
+| `fmt.Errorf("...: %w", statusErr)` | message 变成 `err.Error()`，带出包装文本 | 按包装前的 Status 输出 |
+| 包装过的普通 gRPC 错误 | 同上 | 按包装前的 status 输出 |
+| 包装过的 `context.Canceled` / `DeadlineExceeded` | message 带包装文本 | 固定文案，code 不变 |
+| 其他普通 error | `Unknown` + `err.Error()` | `Unknown` + `internal server error`，原始错误记一条 ERROR |
+
+code 与不启用时相同，熔断计数不变。panic 由 go-zero 外层的 recover 拦截器处理，不经过这里。
+
 ## 场景三：BFF 调 RPC
 
 ### 透传（默认，也是最常见的）
@@ -319,7 +350,7 @@ Never:
 
 - 不要 `errors.New` / 裸 `status.Code` 字面量 / 手写 `grpc/status`
 - 不要把 `Error()` 写进 HTTP body 或自己拼 gRPC message
-- 不要在返回 gRPC 之前再 wrap 一层 `WithStack` / `%w`
+- 未启用 `status.UnaryServerInterceptor` 时，不要在返回 gRPC 之前再 wrap 一层 `WithStack` / `%w`
 - 不要按 message 字符串或裸 `codes.NotFound` 识别「哪种」业务失败
 - 不要在 BFF 再抄一份 `codes → http`
 - 不要把 `core/status`、文案、`register()` 放进 contracts
