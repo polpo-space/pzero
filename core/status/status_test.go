@@ -1,6 +1,7 @@
 package status
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -76,10 +77,8 @@ func TestGRPCRoundTrip(t *testing.T) {
 	assert.Equal(t, "get user list error", restored.Message())
 }
 
-// TestGRPCCodeMapping HTTP 语义的业务码映射到对应 gRPC code。
+// TestGRPCCodeMapping HTTP 语义的业务码映射到对应 gRPC code, 内置预注册无需再注册。
 func TestGRPCCodeMapping(t *testing.T) {
-	RegisterWithMessage(http.StatusNotFound, "not found")
-
 	st, ok := grpcstatus.FromError(Error(http.StatusNotFound))
 	assert.True(t, ok)
 	assert.Equal(t, codes.NotFound, st.Code())
@@ -121,6 +120,75 @@ func TestFromPlainError(t *testing.T) {
 	cause := errors.New("boom")
 	status := FromError(errors.Wrap(cause, "outer"))
 	assert.Equal(t, Code(http.StatusInternalServerError), status.Code())
+	assert.Equal(t, cause, status.Unwrap())
+}
+
+// TestBuiltinHTTPCodes grpcCodes 中的通用 HTTP 码无需注册即可使用, 不再静默变成 500。
+func TestBuiltinHTTPCodes(t *testing.T) {
+	for code, grpcCode := range grpcCodes {
+		status := FromError(Error(code))
+		assert.Equal(t, code, status.Code())
+		want := http.StatusText(int(code))
+		if code == http.StatusInternalServerError {
+			want = defaultMessage
+		}
+		assert.Equal(t, want, status.Message())
+
+		st, ok := grpcstatus.FromError(Error(code))
+		assert.True(t, ok)
+		assert.Equal(t, grpcCode, st.Code())
+	}
+}
+
+// TestRegisterOverridesBuiltinHTTPCode 应用注册的提示覆盖内置默认值。
+func TestRegisterOverridesBuiltinHTTPCode(t *testing.T) {
+	assert.Equal(t, "Conflict", FromError(Error(http.StatusConflict)).Message())
+	RegisterWithMessage(http.StatusConflict, "资源冲突")
+	t.Cleanup(func() { RegisterWithMessage(http.StatusConflict, http.StatusText(http.StatusConflict)) })
+
+	assert.Equal(t, "资源冲突", FromError(Error(http.StatusConflict)).Message())
+}
+
+// TestLookup 按码查询注册信息, 未注册返回 false。
+func TestLookup(t *testing.T) {
+	registered, ok := Lookup(GetUserListError)
+	assert.True(t, ok)
+	assert.Equal(t, GetUserListError, registered.Code())
+	assert.Equal(t, "get user list error", registered.Message())
+
+	builtin, ok := Lookup(http.StatusNotFound)
+	assert.True(t, ok)
+	assert.Equal(t, Code(http.StatusNotFound), builtin.Code())
+
+	_, ok = Lookup(28000)
+	assert.False(t, ok)
+}
+
+// TestOrigin FromError 标明 Status 的来源。
+func TestOrigin(t *testing.T) {
+	assert.Equal(t, OriginLocal, FromError(Wrap(GetUserListError, errors.New("cause"))).Origin())
+	assert.Equal(t, OriginLocal, FromError(fmt.Errorf("outer: %w", Error(GetUserListError))).Origin())
+
+	remote := FromError(grpcstatus.Convert(Error(GetUserListError)).Err())
+	assert.Equal(t, OriginRemote, remote.Origin())
+	assert.Equal(t, GetUserListError, remote.Code())
+
+	assert.Equal(t, OriginGRPC, FromError(grpcstatus.Error(codes.InvalidArgument, "legacy")).Origin())
+	assert.Equal(t, OriginUnknown, FromError(errors.New("boom")).Origin())
+}
+
+// TestFromErrorStatusPointer New 返回的 *Status 作为 error 时按本地 Status 还原, 保留 cause 与 extra。
+// 之前它被当作 gRPC 错误经 GRPCStatus() 还原, cause 与 extra 丢失。
+func TestFromErrorStatusPointer(t *testing.T) {
+	cause := errors.New("token exchange failed")
+	pointer := New(http.StatusForbidden, "no valid token received", cause)
+	pointer.extra = map[string]string{"reason": "expired"}
+
+	status := FromError(fmt.Errorf("callback: %w", pointer))
+	assert.Equal(t, OriginLocal, status.Origin())
+	assert.Equal(t, Code(http.StatusForbidden), status.Code())
+	assert.Equal(t, "no valid token received", status.Message())
+	assert.Equal(t, map[string]string{"reason": "expired"}, status.Extra())
 	assert.Equal(t, cause, status.Unwrap())
 }
 

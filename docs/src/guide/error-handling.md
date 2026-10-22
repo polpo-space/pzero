@@ -45,6 +45,17 @@ logic
 
 The BFF does not need to register the RPC code in its own `errcode` to read the number and message from `FromError`.
 
+The Status returned by `FromError` reports where it came from through `Origin()`:
+
+| `Origin()` | Source | `Code()` | `Message()` |
+| --- | --- | --- | --- |
+| `OriginLocal` | Created in this process (including a `*Status` from `New`) | This service's code | This service's text |
+| `OriginRemote` | gRPC error carrying pzero `ErrorInfo` | Code registered downstream | Text written by the downstream service |
+| `OriginGRPC` | Plain gRPC error without `ErrorInfo` | Inferred from the gRPC code | Unreviewed original text |
+| `OriginUnknown` | Any other error | 500 | Default text |
+
+Whether downstream text is shown to users is the caller's decision. A BFF that owns its copy can look up its own registered text for an `OriginRemote` code with `status.Lookup(code)`.
+
 ## Decision tree
 
 On an `err`, take exactly one branch, in order:
@@ -58,7 +69,7 @@ On an `err`, take exactly one branch, in order:
    - This handler must change the public code or wording → `status.ErrorMessage(errcode.Y, "public text")`.
 5. **Never** `errors.New("user not found")`, **never** `grpc/status.Error(codes.NotFound, ...)`, **never** a handwritten `codes → http` switch.
 
-Passing an unregistered code to `status.Error` silently becomes 500. Numbers must come from `register(...)`; do not write a raw `status.Code(10001)`.
+Passing an unregistered business code to `status.Error` silently becomes 500. Numbers must come from `register(...)`; do not write a raw `status.Code(10001)`. Generic HTTP codes in the mapping table are registered by default; see the next section.
 
 ## Registering codes
 
@@ -80,6 +91,10 @@ func register(code status.Code, message string) status.Code {
 ```
 
 Local generic codes use HTTP semantics (400/401/403/404/500). Service-specific codes that callers must distinguish use a dedicated range, e.g. 10001–10999 for users.
+
+The generic HTTP codes in the mapping table below (400/401/403/404/409/429/500/501/503/504) are registered by `core/status`, with `http.StatusText` as the message and `internal server error` for 500. Register them again only to change the default text; the application's registration overrides the built-in one.
+
+`status.Lookup(code)` returns a code's registration, or `false` if it is not registered. Use it to look up copy by code, or in tests to check that every code is registered.
 
 When a gRPC client without `core/status` needs a canonical code, on a service that already depends on this repo's `core/status`:
 

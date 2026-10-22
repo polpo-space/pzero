@@ -66,7 +66,23 @@ type Status struct {
 	err      error
 	extra    any
 	grpcCode codes.Code // 注册时显式指定的 gRPC code, OK 表示未指定
+	origin   Origin
 }
+
+// Origin 表示 FromError 还原出的 Status 从哪里来, 调用方据此决定 code 与 Message() 是否可信。
+type Origin int
+
+const (
+	// OriginLocal 本进程通过 Error / ErrorMessage / Wrap / New 创建。零值, 注册与创建无需设置。
+	OriginLocal Origin = iota
+	// OriginRemote 从携带 pzero ErrorInfo 的 gRPC 错误还原: code 是下游注册的业务码,
+	// Message() 是下游服务写的文案, 是否展示给用户由调用方决定。
+	OriginRemote
+	// OriginGRPC 从不带 ErrorInfo 的普通 gRPC 错误还原: code 由 gRPC code 反向映射推断, Message() 未经审核。
+	OriginGRPC
+	// OriginUnknown 既不是 Status 也不是 gRPC 错误, 统一为 500。
+	OriginUnknown
+)
 
 // Option 注册错误码时的可选配置。
 type Option func(*Status)
@@ -102,6 +118,16 @@ func Register(code Code, opts ...Option) {
 
 func RegisterWithMessage(code Code, message string) {
 	Register(code, WithMessage(message))
+}
+
+// Lookup 返回 code 注册时的 Status; 未注册时 ok 为 false。
+// 返回值是副本, Message() 为注册的默认提示, 用于按码查文案或在测试中校验注册是否齐全。
+func Lookup(code Code) (*Status, bool) {
+	status, ok := lookup(code)
+	if !ok {
+		return nil, false
+	}
+	return &status, true
 }
 
 func New(code Code, message string, err error) *Status {
@@ -150,18 +176,25 @@ func Wrap(code Code, err error, extra ...any) error {
 	return Error(http.StatusInternalServerError)
 }
 
-// FromError 从任意 error 还原 Status。
-// 识别顺序: 本地 Status -> gRPC status(优先读取 ErrorInfo 中的业务码, 否则按 gRPC code 反向映射) -> 500。
+// FromError 从任意 error 还原 Status, 来源见 Origin()。
+// 识别顺序: 本地 Status(值或 New 返回的指针) -> gRPC status(优先读取 ErrorInfo 中的业务码, 否则按 gRPC code 反向映射) -> 500。
 func FromError(err error) *Status {
 	err = errors.Cause(err)
 	var status Status
 	if errors.As(err, &status) {
 		return &status
 	}
+	var pointer *Status
+	if errors.As(err, &pointer) && pointer != nil {
+		status = *pointer
+		return &status
+	}
 	if st, ok := grpcstatus.FromError(err); ok && st != nil {
 		return fromGRPC(st, err)
 	}
-	return New(http.StatusInternalServerError, "", err)
+	unknown := New(http.StatusInternalServerError, "", err)
+	unknown.origin = OriginUnknown
+	return unknown
 }
 
 func fromGRPC(st *grpcstatus.Status, err error) *Status {
@@ -171,14 +204,18 @@ func fromGRPC(st *grpcstatus.Status, err error) *Status {
 			continue
 		}
 		if code, parseErr := strconv.Atoi(info.GetReason()); parseErr == nil {
-			return New(Code(code), st.Message(), nil)
+			remote := New(Code(code), st.Message(), nil)
+			remote.origin = OriginRemote
+			return remote
 		}
 	}
 	code, ok := httpCodes[st.Code()]
 	if !ok {
 		code = http.StatusInternalServerError
 	}
-	return New(code, st.Message(), err)
+	mapped := New(code, st.Message(), err)
+	mapped.origin = OriginGRPC
+	return mapped
 }
 
 // GRPCStatus 使 Status 可直接作为 gRPC handler 的返回错误:
@@ -221,6 +258,11 @@ func (e Status) Extra() any {
 	return e.extra
 }
 
+// Origin 返回该 Status 的来源, 见 Origin 各取值说明。
+func (e Status) Origin() Origin {
+	return e.origin
+}
+
 func (e Status) Code() Code {
 	return e.code
 }
@@ -240,6 +282,12 @@ func (e Status) Message() string {
 	return defaultMessage
 }
 
+// init 预注册 grpcCodes 中有 HTTP 语义的通用码, 应用无需为使用 400/404 等再注册一遍。
+// 应用可以用 Register 覆盖默认提示(导入包的 init 先于应用的变量初始化执行);
+// 以后若对重复注册做校验, 必须继续允许覆盖这些内置默认值。
 func init() {
+	for code := range grpcCodes {
+		RegisterWithMessage(code, http.StatusText(int(code)))
+	}
 	RegisterWithMessage(http.StatusInternalServerError, defaultMessage)
 }
