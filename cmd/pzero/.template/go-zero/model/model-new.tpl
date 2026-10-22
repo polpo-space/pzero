@@ -8,13 +8,10 @@ func new{{.upperStartCamelObject}}Model(conn sqlx.SqlConn, op ...opts.Opt[modelx
     	cachedConn = *o.CachedConn
     }
 
-    init{{.upperStartCamelObject}}Vars(o.Flavor)
-
 	return &default{{.upperStartCamelObject}}Model{
 		cachedConn: cachedConn,
 		conn:       conn,
-		flavor:     o.Flavor,
-		table:      condition.QuoteWithFlavor(o.Flavor, "{{.data.Name.Source}}"),
+		table:      condition.QuoteWithFlavor(sqlbuilder.PostgreSQL, "{{.data.Name.Source}}"),
 	}
 }
 
@@ -30,6 +27,5 @@ func (m *default{{.upperStartCamelObject}}Model) clone() *default{{.upperStartCa
 		cachedConn: m.cachedConn,
 		conn:       m.conn,
 		table:      m.table,
-		flavor:     m.flavor,
 	}
 }

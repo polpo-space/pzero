@@ -1,6 +1,7 @@
 package genmodel
 
 import (
+	"bytes"
 	"fmt"
 	"go/parser"
 	"go/token"
@@ -8,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"testing"
+	"text/template"
 
 	goctlconfig "github.com/zeromicro/go-zero/tools/goctl/config"
 	"github.com/zeromicro/go-zero/tools/goctl/model/sql/gen"
@@ -15,7 +17,7 @@ import (
 	"github.com/zeromicro/go-zero/tools/goctl/util/pathx"
 )
 
-func TestModelSQLImport(t *testing.T) {
+func TestPostgresModelTemplates(t *testing.T) {
 	home, err := filepath.Abs("../../../../.template/go-zero")
 	if err != nil {
 		t.Fatal(err)
@@ -41,49 +43,71 @@ func TestModelSQLImport(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	for _, cached := range []bool{false, true} {
-		for _, nullable := range []bool{false, true} {
-			t.Run(fmt.Sprintf("cache=%t/nullable=%t", cached, nullable), func(t *testing.T) {
-				primary := &model.Column{DbColumn: &model.DbColumn{
-					Name: "device_id", DataType: "bigint", IsNullAble: "NO", OrdinalPosition: 1,
-				}}
-				state := &model.Column{DbColumn: &model.DbColumn{
-					Name: "state", DataType: "int", IsNullAble: "NO", OrdinalPosition: 2,
-				}}
-				if nullable {
-					state.IsNullAble = "YES"
-				}
-				table := &model.Table{
-					Db: "public", Table: "device_states", PrimaryKey: primary,
-					Columns: []*model.Column{primary, state},
-				}
-				dir := filepath.Join(project, fmt.Sprintf("cache_%t_nullable_%t", cached, nullable))
-				generator, err := gen.NewDefaultGenerator("", dir, &goctlconfig.Config{NamingFormat: "go_zero"}, gen.WithPostgreSql())
-				if err != nil {
-					t.Fatal(err)
-				}
-				if err := generator.StartFromInformationSchema(map[string]*model.Table{table.Table: table}, cached, true); err != nil {
-					t.Fatal(err)
-				}
-				filename := filepath.Join(dir, "device_states_model_gen.go")
-				file, err := parser.ParseFile(token.NewFileSet(), filename, nil, parser.ImportsOnly)
-				if err != nil {
-					t.Fatal(err)
-				}
-				var importsSQL bool
-				for _, imp := range file.Imports {
-					importsSQL = importsSQL || imp.Path.Value == `"database/sql"`
-				}
-				if want := cached || nullable; importsSQL != want {
-					t.Fatalf("database/sql imported = %t, want %t", importsSQL, want)
-				}
-			})
+	behavior, err := template.ParseFiles("testdata/postgres_model_test.go.tpl")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, autoIncrement := range []bool{false, true} {
+		for _, cached := range []bool{false, true} {
+			for _, nullable := range []bool{false, true} {
+				t.Run(fmt.Sprintf("auto=%t/cache=%t/nullable=%t", autoIncrement, cached, nullable), func(t *testing.T) {
+					primary := &model.Column{DbColumn: &model.DbColumn{
+						Name: "device_id", DataType: "bigint", IsNullAble: "NO", OrdinalPosition: 1,
+					}}
+					if autoIncrement {
+						primary.Extra = "auto_increment"
+					}
+					state := &model.Column{DbColumn: &model.DbColumn{
+						Name: "state", DataType: "int", IsNullAble: "NO", OrdinalPosition: 2,
+					}}
+					if nullable {
+						state.IsNullAble = "YES"
+					}
+					table := &model.Table{
+						Db: "public", Table: "device_states", PrimaryKey: primary,
+						Columns:     []*model.Column{primary, state},
+						UniqueIndex: map[string][]*model.Column{"state": {state}},
+					}
+					dir := filepath.Join(project, fmt.Sprintf("auto_%t_cache_%t_nullable_%t", autoIncrement, cached, nullable))
+					generator, err := gen.NewDefaultGenerator("cache", dir, &goctlconfig.Config{NamingFormat: "go_zero"}, gen.WithPostgreSql())
+					if err != nil {
+						t.Fatal(err)
+					}
+					if err := generator.StartFromInformationSchema(map[string]*model.Table{table.Table: table}, cached, true); err != nil {
+						t.Fatal(err)
+					}
+					if !nullable {
+						var test bytes.Buffer
+						if err := behavior.Execute(&test, map[string]any{
+							"Package": filepath.Base(dir), "Cached": cached, "AutoIncrement": autoIncrement,
+						}); err != nil {
+							t.Fatal(err)
+						}
+						if err := os.WriteFile(filepath.Join(dir, "postgres_test.go"), test.Bytes(), 0o600); err != nil {
+							t.Fatal(err)
+						}
+					}
+					filename := filepath.Join(dir, "device_states_model_gen.go")
+					file, err := parser.ParseFile(token.NewFileSet(), filename, nil, parser.ImportsOnly)
+					if err != nil {
+						t.Fatal(err)
+					}
+					var importsSQL bool
+					for _, imp := range file.Imports {
+						importsSQL = importsSQL || imp.Path.Value == `"database/sql"`
+					}
+					if want := cached || nullable; importsSQL != want {
+						t.Fatalf("database/sql imported = %t, want %t", importsSQL, want)
+					}
+				})
+			}
 		}
 	}
 	cmd := exec.Command("go", "test", "./...")
 	cmd.Dir = project
 	cmd.Env = append(cmd.Environ(), "GOWORK="+workspace)
 	if output, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("generated models do not compile: %v\n%s", err, output)
+		t.Fatalf("generated model checks failed: %v\n%s", err, output)
 	}
 }

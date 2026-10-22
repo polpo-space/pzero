@@ -3,14 +3,14 @@ func (m *custom{{.upperStartCamelObject}}Model) BulkInsert(ctx context.Context, 
         return nil
     }
 
-    sb := sqlbuilder.InsertInto(m.table)
+    sb := sqlbuilder.PostgreSQL.NewInsertBuilder().InsertInto(m.table)
     sb.Cols({{.lowerStartCamelObject}}RowsExpectAutoSet)
 
     {{if $.expressionValues}}for _, data := range datas {
             sb.Values({{.expressionValues}})
         }{{end}}
 
-    statement, args := sb.BuildWithFlavor(m.flavor)
+    statement, args := sb.Build()
 
     var err error
     if session != nil {
@@ -26,7 +26,7 @@ func (m *custom{{.upperStartCamelObject}}Model) FindFieldsByCondition(ctx contex
         fields = condition.ToFieldSlice({{.lowerStartCamelObject}}FieldNames)
     }
 
-	statement, args := condition.BuildSelectWithFlavor(m.flavor, sqlbuilder.Select(m.withTableFields(cast.ToStringSlice(fields)...)...).From(m.table), conditions...)
+	statement, args := condition.BuildSelectWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewSelectBuilder().Select(m.withTableFields(cast.ToStringSlice(fields)...)...).From(m.table), conditions...)
 
 	var resp []*{{.upperStartCamelObject}}
 	var err error
@@ -54,7 +54,7 @@ func (m *custom{{.upperStartCamelObject}}Model) CountByCondition(ctx context.Con
     }
    }
 
-   statement, args := condition.BuildSelectWithFlavor(m.flavor, sqlbuilder.Select("count(*)").From(m.table), countconditions...)
+   statement, args := condition.BuildSelectWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewSelectBuilder().Select("count(*)").From(m.table), countconditions...)
 
    var (
     total int64
@@ -77,7 +77,7 @@ func (m *custom{{.upperStartCamelObject}}Model) FindOneByCondition(ctx context.C
 }
 
 func (m *custom{{.upperStartCamelObject}}Model) FindOneFieldsByCondition(ctx context.Context, session sqlx.Session, fields []condition.Field, conditions ...condition.Condition) (*{{.upperStartCamelObject}}, error) {
-	statement, args := condition.BuildSelectWithFlavor(m.flavor, sqlbuilder.Select(m.withTableFields(cast.ToStringSlice({{.lowerStartCamelObject}}FieldNames)...)...).From(m.table).Limit(1), conditions...)
+	statement, args := condition.BuildSelectWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewSelectBuilder().Select(m.withTableFields(cast.ToStringSlice({{.lowerStartCamelObject}}FieldNames)...)...).From(m.table).Limit(1), conditions...)
 
 	var resp {{.upperStartCamelObject}}
 	var err error
@@ -94,7 +94,7 @@ func (m *custom{{.upperStartCamelObject}}Model) FindOneFieldsByCondition(ctx con
 }
 
 func (m *custom{{.upperStartCamelObject}}Model) PageByCondition(ctx context.Context, session sqlx.Session, conditions ...condition.Condition) ([]*{{.upperStartCamelObject}}, int64 ,error) {
-	statement, args := condition.BuildSelectWithFlavor(m.flavor, sqlbuilder.Select(m.withTableFields({{.lowerStartCamelObject}}FieldNames...)...).From(m.table), conditions...)
+	statement, args := condition.BuildSelectWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewSelectBuilder().Select(m.withTableFields({{.lowerStartCamelObject}}FieldNames...)...).From(m.table), conditions...)
 
 	var resp []*{{.upperStartCamelObject}}
 	var err error
@@ -142,7 +142,7 @@ func (m *custom{{.upperStartCamelObject}}Model) UpdateFieldsByCondition(ctx cont
     }
 
 	_, err = m.cachedConn.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		statement, args := condition.BuildUpdateWithFlavor(m.flavor, sqlbuilder.Update(m.table), dataMap, conditions...)
+		statement, args := condition.BuildUpdateWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewUpdateBuilder().Update(m.table), dataMap, conditions...)
 		if session != nil {
 			return session.ExecCtx(ctx, statement, args...)
 		}
@@ -156,7 +156,7 @@ func (m *custom{{.upperStartCamelObject}}Model) UpdateFieldsByCondition(ctx cont
         return nil
     }
 
-	statement, args := condition.BuildUpdateWithFlavor(m.flavor, sqlbuilder.Update(m.table), data, conditions...)
+	statement, args := condition.BuildUpdateWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewUpdateBuilder().Update(m.table), data, conditions...)
 
 	var err error
 	if session != nil {
@@ -197,7 +197,7 @@ func (m *custom{{.upperStartCamelObject}}Model) DeleteByCondition(ctx context.Co
     }
 
 	_, err = m.cachedConn.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (result sql.Result, err error) {
-		statement, args := condition.BuildDeleteWithFlavor(m.flavor, sqlbuilder.DeleteFrom(m.table), conditions...)
+		statement, args := condition.BuildDeleteWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewDeleteBuilder().DeleteFrom(m.table), conditions...)
 		if session != nil {
 			return session.ExecCtx(ctx, statement, args...)
 		}
@@ -210,7 +210,7 @@ func (m *custom{{.upperStartCamelObject}}Model) DeleteByCondition(ctx context.Co
     if len(conditions) == 0 {
 		return nil
 	}
-	statement, args := condition.BuildDeleteWithFlavor(m.flavor, sqlbuilder.DeleteFrom(m.table), conditions...)
+	statement, args := condition.BuildDeleteWithFlavor(sqlbuilder.PostgreSQL, sqlbuilder.PostgreSQL.NewDeleteBuilder().DeleteFrom(m.table), conditions...)
 
 	var err error
 	if session != nil {

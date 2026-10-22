@@ -17,7 +17,6 @@ type (
 	default{{.upperStartCamelObject}}Model struct {
 		cachedConn sqlc.CachedConn
 		conn sqlx.SqlConn
-		flavor sqlbuilder.Flavor
 		table string
 	}
 
