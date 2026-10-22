@@ -169,16 +169,14 @@ pzero gen model
 | `SMALLINT[]`、`INTEGER[]`、`BIGINT[]` | `pq.Int64Array` |
 | `REAL[]`、`DOUBLE PRECISION[]` | `pq.Float64Array` |
 
-例如售后的 `tickets.image_urls TEXT[]` 和 `ticket_messages.image_urls TEXT[]` 会生成 `ImageUrls pq.StringArray`。`Insert`、`BulkInsert`、`Update` 和查询方法直接使用该字段：
+例如 `documents.image_urls TEXT[]` 会生成 `ImageUrls pq.StringArray`。`Insert`、`BulkInsert`、`Update` 和查询方法直接使用该字段：
 
 ```go
-ticket := &tickets.Tickets{
-    TicketSn: "AS-001",
-    ConsumerId: 1,
-    OrderSn: "ORDER-001",
+document := &documents.Documents{
+    Name: "example",
     ImageUrls: []string{"https://example.com/photo.png"},
 }
-err := ticketModel.Insert(ctx, nil, ticket)
+err := documentModel.Insert(ctx, nil, document)
 ```
 
 `nil` 数组写入 SQL `NULL`，非 nil 的空数组写入 `{}`，读取后仍保留区别。默认类型面向一维、元素非 NULL 的数组；多维数组、数组中的 NULL 元素等需要自定义类型。通过 `map[string]any` 更新时使用 `pq.StringArray` 等实现 `driver.Valuer` 的类型，不要把普通 `[]string` 当作通用数据库参数。
@@ -213,14 +211,14 @@ go mod tidy
 
 ## 条件更新与事务行锁
 
-`UpdateFieldsByConditionAffected` 返回 `(int64, error)`，可用于比较并更新状态。原 `UpdateFieldsByCondition` 继续只返回 `error`。空更新 map 是 no-op，返回 `0, nil`；SQL 执行或读取 `RowsAffected` 失败会返回错误。
+`UpdateFieldsByConditionAffected` 返回 `(int64, error)`，可用于比较并更新状态。原 `UpdateFieldsByCondition` 继续只返回 `error`。nil 或空更新 map 明确视为 no-op，返回 `0, nil`；这不是“状态条件未匹配”的证明。要求严格 CAS 的应用应先校验更新字段非空。SQL 执行或读取 `RowsAffected` 失败会返回错误。
 
 ```go
-affected, err := ticketModel.UpdateFieldsByConditionAffected(ctx, nil,
+affected, err := documentModel.UpdateFieldsByConditionAffected(ctx, nil,
     map[string]any{"status": nextStatus},
     condition.NewChain().
-        Equal(tickets.Id, ticketID).
-        Equal(tickets.Status, expectedStatus).
+        Equal(documents.Id, documentID).
+        Equal(documents.Status, expectedStatus).
         Build()...,
 )
 if err != nil {
@@ -231,35 +229,39 @@ if affected != 1 {
 }
 ```
 
+数据库更新成功但缓存删除失败时，返回真实受影响行数和缓存错误，例如 `(1, err)`。错误不等于“未更新”，不要据此盲目重试；有事务时，最终提交/回滚结果仍由调用方决定。`RowsAffected` 自身失败时行数不可用，应按错误处理。
+
 必须在条件中包含主键和预期状态，受影响行数才表达该条记录的状态竞争结果。方法本身仍允许批量更新，不自动补充业务条件。
 
 需要先读取再修改、并将多个操作放进同一事务时，应用组织事务并传入回调中的 session：
 
 ```go
 err := conn.TransactCtx(ctx, func(ctx context.Context, session sqlx.Session) error {
-    ticket, err := ticketModel.FindOneForUpdate(ctx, session, ticketID)
+    document, err := documentModel.FindOneForUpdate(ctx, session, documentID)
     if err != nil {
         return err
     }
-    if ticket.Status != expectedStatus {
+    if document.Status != expectedStatus {
         return errStateConflict
     }
-    ticket.Status = nextStatus
-    return ticketModel.Update(ctx, session, ticket)
+    document.Status = nextStatus
+    return documentModel.Update(ctx, session, document)
 })
 ```
 
-`FindOneForUpdate` 使用 `SELECT ... FOR UPDATE`，始终读取数据库，不走缓存；传入 nil session 返回 `modelx.ErrTransactionRequired`，查无记录返回 model 的 `ErrNotFound`。Go 的 `sqlx.Session` 接口不能证明 session 来自真实事务，因此调用方必须传入 `TransactCtx` 的 session，不能传普通连接冒充事务。锁直到调用方提交或回滚才释放；框架不创建隐式事务。
+此示例适用于禁用 model 缓存的事务写路径。有缓存时，现有写方法会在事务提交前删除缓存；并发普通查询可能在提交前读到旧数据并重新填入缓存。本接口只保证锁定查询绕过缓存，不提供提交后的自动缓存失效。需要强一致性的事务路径应禁用该 model 的缓存，或由应用落实提交后失效和相应的一致性策略。
+
+`FindOneForUpdate` 使用 `SELECT ... FOR UPDATE`，始终读取数据库，不走缓存；传入 nil 或普通 `sqlx.SqlConn` 返回 `modelx.ErrTransactionRequired`，查无记录返回 model 的 `ErrNotFound`。Go 的 `sqlx.Session` 接口不能证明 session 来自真实事务，即使拒绝了明显的普通连接，框架也无法验证任意包装后的 Session。因此只能传入 `TransactCtx` 回调中的原始 session，不能传普通连接或用包装器冒充事务。锁直到调用方提交或回滚才释放；框架不创建隐式事务。
 
 ## 生成文件、手写扩展与升级
 
 * `*_model_gen.go` 包含数据类型和通用实现，重新生成时覆盖。
 * `*_model.go` 保留业务扩展，已存在时不会被覆盖。生成方法放在嵌入的 `default...Model` 上；已有 `custom...Model` 同名方法可以继续覆盖默认实现，方法签名需与接口一致。
-* `internal/model/model.go` 仍按完整表列表重新注册。售后服务恢复 `tickets` 和 `ticket_messages` 的生成时，应把两张表加入列表，并移除仅为跳过数组表而维护的注册模板；保留真正的业务扩展。
+* `internal/model/model.go` 仍按完整表列表重新注册。恢复曾因特殊字段而跳过的表时，应把这些表加入列表，并移除仅为跳过表而维护的注册模板；保留真正的业务扩展。
 
 ORM 仅支持 PostgreSQL。`modelx.MustNewConn` 使用 pgx 驱动，不修改 `sqlbuilder.DefaultFlavor`；生成 model 和 condition 直接构造 PostgreSQL SQL，实例只保存连接、缓存和字段元数据，不再保存可切换的方言。自增主键统一通过 `INSERT ... RETURNING` 回填。
 
-升级时应同步更新 pzero CLI、应用的 pzero runtime 依赖，并重新生成全部 model。本次收敛移除了 `ModelOpts.Flavor`、`modelx.WithFlavor`、`MustNewConnAndSqlbuilderFlavor` 和 condition 的 `*WithFlavor` 接口。手写代码与自定义模板按下表迁移：
+升级时应同步更新 pzero CLI、应用的 pzero runtime 依赖，并重新生成全部 model。项目 `.template/go-zero/model` 下的自定义 model 模板必须整套同步，不能只升级 `types.tpl` 或 `find-one.tpl` 等单个文件；接口、实现、导入和构造模板相互依赖。本次收敛移除了 `ModelOpts.Flavor`、`modelx.WithFlavor`、`MustNewConnAndSqlbuilderFlavor` 和 condition 的 `*WithFlavor` 接口。手写代码与自定义模板按下表迁移：
 
 | 原用法 | PostgreSQL 用法 |
 | --- | --- |
@@ -270,13 +272,21 @@ ORM 仅支持 PostgreSQL。`modelx.MustNewConn` 使用 pgx 驱动，不修改 `s
 | `RawFieldNamesWithFlavor`、`RemoveIgnoreColumnsWithFlavor`、`SelectByWhereRawSqlWithFlavor` | 去掉 `WithFlavor` 后缀与首个方言参数 |
 | 旧 `Select/Update/DeleteWithFlavor` | 使用 `BuildSelect/Update/Delete` |
 
+应用配置必须显式写 `DriverName: pgx`（或 `postgres`）。go-zero 的 `sqlx.SqlConf` 在 `conf.MustLoad` 等加载流程中会把缺省驱动填为 `mysql`；这与直接构造 Go 结构体的空字符串不同。漏配会在启动时失败并提示补充 `DriverName: pgx`。
+
+```yaml
+Sqlx:
+  DriverName: pgx
+  DataSource: postgres://postgres:postgres@127.0.0.1:5432/app?sslmode=disable
+```
+
 旧生成代码仍可能访问被移除的方言选项或全局状态，不能仅升级 runtime 而不重新生成。
 
 为兼容 PostgreSQL 手写扩展，原包级 `xxxRows` / `xxxFieldNames` 等元数据保留为固定的 PostgreSQL 值，构造 model 时不再改写。手写扩展优先使用实例的 `m.rows`、`m.fieldNames`；不要修改这些元数据。
 
 ## 验证生成结果
 
-CI 用独立 PostgreSQL 验证售后两张表、其他常用数组、无缓存/有缓存/类型覆盖、条件更新、回滚、行锁竞争和重复生成保留扩展。可以用可丢弃的本地数据库运行相同测试：
+CI 用独立 PostgreSQL 验证代表性业务表、常用数组、无缓存/有缓存/类型覆盖、条件更新、回滚、行锁竞争和重复生成保留扩展。可以用可丢弃的本地数据库运行相同测试：
 
 ```shell
 go build -o /tmp/pzero-goctl github.com/zeromicro/go-zero/tools/goctl

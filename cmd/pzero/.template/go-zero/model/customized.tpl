@@ -117,6 +117,7 @@ func (m *default{{.upperStartCamelObject}}Model) PageByCondition(ctx context.Con
 }
 
 // UpdateFieldsByCondition keeps the existing error-only update contract.
+// Nil or empty data is a no-op.
 func (m *default{{.upperStartCamelObject}}Model) UpdateFieldsByCondition(ctx context.Context, session sqlx.Session, data map[string]any, conditions ...condition.Condition) error {
     _, err := m.updateFieldsByCondition(ctx, session, data, conditions...)
     return err
@@ -124,15 +125,16 @@ func (m *default{{.upperStartCamelObject}}Model) UpdateFieldsByCondition(ctx con
 
 // UpdateFieldsByConditionAffected returns the number of matching rows updated.
 // Include the expected state in conditions to implement compare-and-set updates.
+// Nil or empty data is a no-op returning (0, nil), not evidence of a state conflict.
+// A cache deletion failure returns the SQL row count together with the error;
+// do not infer that the update failed or retry solely because err is non-nil.
 func (m *default{{.upperStartCamelObject}}Model) UpdateFieldsByConditionAffected(ctx context.Context, session sqlx.Session, data map[string]any, conditions ...condition.Condition) (int64, error) {
     result, err := m.updateFieldsByCondition(ctx, session, data, conditions...)
-    if err != nil {
+    if result == nil {
         return 0, err
     }
-    if result == nil {
-        return 0, nil
-    }
-    return result.RowsAffected()
+    affected, rowsErr := result.RowsAffected()
+    return affected, errors.Join(err, rowsErr)
 }
 
 {{if .withCache}}

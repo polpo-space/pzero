@@ -1,6 +1,7 @@
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"strings"
 	"slices"
 	{{if .time}}"time"{{end}}

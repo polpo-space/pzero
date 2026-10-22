@@ -44,9 +44,14 @@ func (m *default{{.upperStartCamelObject}}Model) FindOne(ctx context.Context, se
 }
 {{end}}
 // FindOneForUpdate locks a row using the caller's transaction and never reads the cache.
-// Pass the session supplied by SqlConn.TransactCtx; this method does not own the transaction.
+// Only pass the original session from SqlConn.TransactCtx, never a plain connection.
+// This rejects obvious SqlConn values but cannot verify arbitrary Session wrappers.
+// The caller owns commit/rollback; cached writes need a separate cache consistency strategy.
 func (m *default{{.upperStartCamelObject}}Model) FindOneForUpdate(ctx context.Context, session sqlx.Session, id {{.dataType}}) (*{{.upperStartCamelObject}}, error) {
     if session == nil {
+        return nil, modelx.ErrTransactionRequired
+    }
+    if _, isConn := session.(sqlx.SqlConn); isConn {
         return nil, modelx.ErrTransactionRequired
     }
     sb := sqlbuilder.PostgreSQL.NewSelectBuilder().Select(m.rows).From(m.table)
@@ -55,7 +60,7 @@ func (m *default{{.upperStartCamelObject}}Model) FindOneForUpdate(ctx context.Co
     statement, args := sb.Build()
     var row {{.upperStartCamelObject}}
     if err := session.QueryRowCtx(ctx, &row, statement, args...); err != nil {
-        if err == sqlx.ErrNotFound {
+        if errors.Is(err, sqlx.ErrNotFound) {
             return nil, ErrNotFound
         }
         return nil, err

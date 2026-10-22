@@ -20,6 +20,7 @@ import (
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/console/progress"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/dsn"
 	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/filex"
+	"github.com/polpo-space/pzero/cmd/pzero/internal/pkg/mod"
 )
 
 type PzeroModel struct {
@@ -253,7 +254,27 @@ func generateModelFromDatasource(tableName, goctlHome string) error {
 	}
 
 	cmd := exec.Command("goctl", "model", "pg", "datasource", "--url", datasourceUrl, "--schema", schema, "-t", bf, "--dir", modelDir, "--home", goctlHome, "--style", config.C.Style, "-i", strings.Join(getIgnoreColumns(bf), ","), "--cache="+fmt.Sprintf("%t", getIsCacheTable(bf)), "-p", config.C.Gen.ModelCachePrefix, "--strict="+fmt.Sprintf("%t", config.C.Gen.ModelStrict))
-	// Debug removed(cmd.String())
+	// goctl runs `go work use .` during project discovery. Each concurrent table
+	// generator needs its own workspace so it cannot rewrite the caller's file
+	// or race with another generator. GOWORK=off is not supported by goctl 1.9.2.
+	workDir, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	module, err := mod.GetGoMod(workDir)
+	if err != nil {
+		return err
+	}
+	workspaceDir, err := os.MkdirTemp(goctlHome, "workspace-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(workspaceDir)
+	workspace := filepath.Join(workspaceDir, "go.work")
+	if err := os.WriteFile(workspace, []byte(fmt.Sprintf("go %s\n\nuse %q\n", module.GoVersion, module.Dir)), 0o600); err != nil {
+		return err
+	}
+	cmd.Env = append(cmd.Environ(), "GOWORK="+workspace)
 	resp, err := cmd.CombinedOutput()
 	if err != nil {
 		return errors.Errorf("gen model code meet error. Err: %s:%s", err.Error(), resp)

@@ -86,6 +86,7 @@ func TestModelSQLImport(t *testing.T) {
 					t.Fatal("database/sql is required for the update result contract")
 				}
 				testSource := bytes.Replace(behavior, []byte("package device_states"), []byte("package "+file.Name.Name), 1)
+				testSource = bytes.ReplaceAll(testSource, []byte("MODEL_USES_CACHE"), []byte(fmt.Sprint(cached)))
 				if err := os.WriteFile(filepath.Join(dir, "behavior_test.go"), testSource, 0o600); err != nil {
 					t.Fatal(err)
 				}

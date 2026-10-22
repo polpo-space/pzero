@@ -1,5 +1,4 @@
 func (m *default{{.upperStartCamelObject}}Model) Insert(ctx context.Context, session sqlx.Session, data *{{.upperStartCamelObject}}) error {
-    {{if .withCache}}{{.keys}}{{end}}
     sb := sqlbuilder.PostgreSQL.NewInsertBuilder().
         InsertInto(m.table).
         Cols(m.rowsExpectAutoSet).
@@ -18,9 +17,11 @@ func (m *default{{.upperStartCamelObject}}Model) Insert(ctx context.Context, ses
         return err
     }
     data.{{.data.Table.PrimaryKey.Name.ToCamel}} = primaryKey
-    {{if .withCache}}return m.cachedConn.DelCacheCtx(ctx, {{.keyValues}}){{else}}return nil{{end}}
+    {{if .withCache}}{{.keys}}
+    return m.cachedConn.DelCacheCtx(ctx, {{.keyValues}}){{else}}return nil{{end}}
     {{else}}
-    {{if .withCache}}_, err := m.cachedConn.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (sql.Result, error) {
+    {{if .withCache}}{{.keys}}
+    _, err := m.cachedConn.ExecCtx(ctx, func(ctx context.Context, conn sqlx.SqlConn) (sql.Result, error) {
         if session != nil {
             return session.ExecCtx(ctx, statement, args...)
         }

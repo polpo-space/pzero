@@ -63,7 +63,7 @@ jobs:
       - name: Test PostgreSQL generated models
         env:
           PZERO_TEST_POSTGRES_DSN: postgres://postgres:postgres@127.0.0.1:5432/pzero_test?sslmode=disable
-        run: GOCTL="$RUNNER_TEMP/goctl" go test ./cmd/pzero/internal/command/gen/genmodel -run TestPostgresGeneratedModels -count=1
+        run: GOCTL="$RUNNER_TEMP/goctl" go test ./cmd/pzero/internal/command/gen/genmodel -run TestPostgresGeneratedModels -count=1 -v
 
       - name: Test RPC toolchain compatibility
         run: |

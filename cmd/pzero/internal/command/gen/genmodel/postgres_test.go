@@ -108,7 +108,8 @@ func TestPostgresGeneratedModels(t *testing.T) {
 			}
 			write("go.mod", "module example.com/modeltest\n\ngo 1.25.0\n\nrequire github.com/lib/pq v1.10.9\n")
 			workspace := filepath.Join(project, "go.work")
-			write("go.work", fmt.Sprintf("go 1.25.0\n\nuse (\n%q\n%q\n)\n", project, root))
+			workspaceContent := fmt.Sprintf("go 1.25.0\n\nuse (\n%q\n%q\n)\n", project, root)
+			write("go.work", workspaceContent)
 			write("model_test.go", string(tests))
 			if variant.mapped {
 				write("goctl.yaml", "model:\n  types_map:\n    _text:\n      type: types.StringList\n      null_type: types.StringList\n      pkg: example.com/modeltest/types\n")
@@ -177,6 +178,26 @@ func (m *customTicketsModel) UpdateFieldsByConditionAffected(ctx context.Context
 			cmd := exec.CommandContext(ctx, "go", "test", "-race", "-count=1", "./...")
 			cmd.Dir = project
 			cmd.Env = append(cmd.Environ(), "GOWORK="+workspace, "PZERO_TEST_POSTGRES_DSN="+scopedDSN, "PZERO_TEST_DRIVER="+variant.driver)
+			workspaceAfter, err := os.ReadFile(workspace)
+			if err != nil {
+				t.Fatalf("read go.work after generation: %v", err)
+			}
+			env := exec.CommandContext(ctx, "go", "env", "GOWORK", "GOMOD", "GOVERSION")
+			env.Dir, env.Env = cmd.Dir, cmd.Env
+			envOutput, err := env.CombinedOutput()
+			if err != nil {
+				t.Fatalf("inspect generated workspace: %v\n%s", err, envOutput)
+			}
+			t.Logf("go env GOWORK GOMOD GOVERSION:\n%s\ngo.work:\n%s", envOutput, workspaceAfter)
+			module := exec.CommandContext(ctx, "go", "list", "-m", "-f", "{{.Dir}}", "github.com/polpo-space/pzero")
+			module.Dir, module.Env = cmd.Dir, cmd.Env
+			moduleOutput, err := module.CombinedOutput()
+			if err != nil || strings.TrimSpace(string(moduleOutput)) != root {
+				t.Fatalf("workspace does not resolve checkout %s: %v\n%s", root, err, moduleOutput)
+			}
+			if string(workspaceAfter) != workspaceContent {
+				t.Fatalf("generator changed go.work:\n%s", workspaceAfter)
+			}
 			if output, err := cmd.CombinedOutput(); err != nil {
 				t.Fatalf("generated PostgreSQL model contract: %v\n%s", err, output)
 			}

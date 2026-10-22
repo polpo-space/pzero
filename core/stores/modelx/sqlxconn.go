@@ -13,10 +13,13 @@ import (
 
 // MustNewConn opens and checks a PostgreSQL connection without changing global SQL settings.
 // An empty driver name and the postgres alias both select pgx. Other databases are unsupported.
+// Config files must explicitly set DriverName: pgx: go-zero's config loader defaults it to mysql.
 func MustNewConn(c sqlx.SqlConf) sqlx.SqlConn {
 	switch c.DriverName {
 	case "", "postgres", "pgx":
 		c.DriverName = "pgx"
+	case "mysql":
+		panic("modelx: only PostgreSQL is supported; set DriverName: pgx explicitly (go-zero defaults an omitted DriverName to mysql)")
 	default:
 		panic(fmt.Errorf("modelx: only PostgreSQL is supported, got driver %q", c.DriverName))
 	}

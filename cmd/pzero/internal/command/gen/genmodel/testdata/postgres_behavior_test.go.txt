@@ -47,6 +47,11 @@ func TestPostgresBehavior(t *testing.T) {
 	for i, images := range fixtures {
 		t.Run(fmt.Sprintf("array_%d", i), func(t *testing.T) {
 			row := &tickets.Tickets{TicketSn: fmt.Sprintf("ticket-%d", i), ConsumerId: int64(i + 1), OrderSn: fmt.Sprintf("order-%d", i), ImageUrls: images, Status: 1}
+			// Identity starts at 1 in this fresh schema. Cache a miss before insert
+			// so invalidating the pre-insert zero ID cannot pass this test.
+			if _, err := model.FindOne(ctx, nil, int64(i+1)); !errors.Is(err, tickets.ErrNotFound) {
+				t.Fatalf("prime identity cache miss: %v", err)
+			}
 			if err := model.Insert(ctx, nil, row); err != nil {
 				t.Fatal(err)
 			}

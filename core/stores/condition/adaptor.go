@@ -8,6 +8,7 @@ import (
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
 
+// SelectByWhereRawSql mutates sb by selecting PostgreSQL and appending the predicates.
 func SelectByWhereRawSql(sb *sqlbuilder.SelectBuilder, originalField string, args ...any) {
 	sb.SetFlavor(sqlbuilder.PostgreSQL)
 	originalFields := strings.Split(originalField, " and ")

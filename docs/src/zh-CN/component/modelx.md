@@ -7,7 +7,8 @@ order: 2
 ## 特性
 
 * 仅支持 PostgreSQL，内置 pgx 驱动，无需手动导入。
-* `driverName` 可为 `pgx`、`postgres` 或空值，统一使用 pgx；其他值会在启动时失败。
+* 配置文件必须显式写 `DriverName: pgx`（或 `postgres`），统一使用 pgx；其他数据库不受支持。
+* go-zero 配置加载器会把省略的 `DriverName` 填成 `mysql`，并非空字符串。只有直接构造 Go 结构体时的空字符串才默认使用 pgx；漏配会在启动时提示补充驱动。
 * 不修改进程级 `sqlbuilder.DefaultFlavor`，model 和 condition 固定使用 PostgreSQL。
 
 ::: code-tabs#shell
