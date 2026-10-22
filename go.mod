@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/Masterminds/sprig/v3 v3.3.0
-	github.com/alicebob/miniredis/v2 v2.38.0
+	github.com/alicebob/miniredis/v2 v2.39.0
 	github.com/eddieowens/opts v0.1.0
 	github.com/go-co-op/gocron/v2 v2.22.0
 	github.com/golang-migrate/migrate/v4 v4.19.1
