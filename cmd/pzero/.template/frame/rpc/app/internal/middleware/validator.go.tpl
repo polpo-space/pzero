@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"context"
+	"errors"
 
 	"buf.build/go/protovalidate"
-	"github.com/pkg/errors"
 	"github.com/polpo-space/pzero/core/status"
 	"github.com/zeromicro/go-zero/core/logx"
 	"google.golang.org/grpc"
