@@ -66,6 +66,8 @@ func TestRunGeneratesErrcode(t *testing.T) {
 			validator, err := os.ReadFile(filepath.Join(projectDir, "internal", "middleware", "validator.go"))
 			require.NoError(t, err)
 			assert.Contains(t, string(validator), config.C.New.Module+"/internal/errcode")
+			assert.Contains(t, string(validator), `"errors"`)
+			assert.NotContains(t, string(validator), `"github.com/pkg/errors"`)
 			assert.Contains(t, string(validator), "status.ErrorMessage(errcode.InvalidParam")
 			assert.NotContains(t, string(validator), "google.golang.org/grpc/codes")
 		})

@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/polpo-space/pzero/core/status"
-	"github.com/pkg/errors"
 	"github.com/spf13/cast"
 	"github.com/zeromicro/go-zero/core/logx"
 )
