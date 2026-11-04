@@ -48,7 +48,6 @@ When helping with pzero development:
 - [Proto File Structure](references/rpc-patterns/proto-file-structure.md): Proto standards, multi-proto support, file structure, HTTP gateway, OpenAPI docs
 - [Proto Field Validation](references/rpc-patterns/proto-validation.md): Field validation with protovalidate, CEL expressions, built-in constraints
 - [Proto Middleware](references/rpc-patterns/proto-middleware.md): HTTP/RPC middleware at service and method levels
-- [Job Patterns](references/rpc-patterns/job-patterns.md): In-process scheduled jobs via `--features job` (ServiceGroup merge deploy)
 - [Shared Error Codes](references/rpc-patterns/error-codes.md): One code space across services and BFFs; numbers in `contracts` proto enums, messages in the emitting service, `status.FromError` in the BFF
 - [Error Handling](references/error-handling.md): API / RPC / BFF decision tree and real scenarios (read this before writing `return nil, err`)
 

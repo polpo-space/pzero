@@ -106,7 +106,4 @@ pzero new your_project --features model,cache
 
 # Use case: need to connect to relational database(model)
 pzero new your_project --features model
-
-# Use case: merge in-process scheduled jobs with gRPC (ServiceGroup)
-pzero new your_project --frame rpc --features job
 ```
